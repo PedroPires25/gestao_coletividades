@@ -1,0 +1,16 @@
+node_modules/
+.idea/
+.env
+.DS_Store
+dist/
+build/
+*.log
+package-lock.json
+yarn.lock
+.vscode/
+*.swp
+*.swo
+.DS_Store
+db.properties
+application.properties
+*.properties

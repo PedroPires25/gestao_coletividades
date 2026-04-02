@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 64 64"
+     fill="none"
+     stroke="white"
+     stroke-width="3"
+     stroke-linecap="round"
+     stroke-linejoin="round">
+
+  <!-- cabeça -->
+  <circle cx="33" cy="14" r="4"/>
+
+  <!-- tronco -->
+  <line x1="33" y1="18" x2="30" y2="28"/>
+
+  <!-- braços -->
+  <line x1="30" y1="22" x2="23" y2="20"/>
+  <line x1="31" y1="22" x2="38" y2="25"/>
+
+  <!-- perna apoio -->
+  <line x1="30" y1="28" x2="25" y2="39"/>
+
+  <!-- perna de controlo -->
+  <line x1="30" y1="28" x2="38" y2="36"/>
+
+  <!-- pé perto da bola -->
+  <line x1="38" y1="36" x2="44" y2="35"/>
+
+  <!-- bola -->
+  <circle cx="49" cy="36" r="3"/>
+
+</svg>

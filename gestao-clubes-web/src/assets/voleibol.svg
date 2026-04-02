@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 64 64"
+     fill="none"
+     stroke="white"
+     stroke-width="3"
+     stroke-linecap="round"
+     stroke-linejoin="round">
+
+  <!-- cabeça -->
+  <circle cx="32" cy="14" r="4"/>
+
+  <!-- tronco inclinado -->
+  <line x1="32" y1="18" x2="30" y2="30"/>
+
+  <!-- braços juntos para manchete -->
+  <line x1="30" y1="24" x2="22" y2="28"/>
+  <line x1="22" y1="28" x2="18" y2="30"/>
+
+  <!-- pernas -->
+  <line x1="30" y1="30" x2="24" y2="42"/>
+  <line x1="30" y1="30" x2="38" y2="40"/>
+
+  <!-- bola -->
+  <circle cx="16" cy="26" r="4"/>
+
+</svg>

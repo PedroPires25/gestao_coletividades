@@ -1,0 +1,125 @@
+/* ===========================
+   BASE
+   =========================== */
+
+/* ⚠️ Para apps tipo dashboard/login full screen, não limites o root */
+#root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+/* ===========================
+   LOGO — Institucional forte
+   =========================== */
+
+.logo {
+  width: clamp(200px, 22vw, 420px); /* mais visível (≈ 4x face ao original) */
+  height: auto;
+
+  position: fixed;
+  top: 22px;
+  left: 26px;
+  z-index: 999;
+
+  /* Placa institucional: gradiente + blur + borda suave */
+  padding: 14px 18px;
+  border-radius: 18px;
+
+  background: linear-gradient(
+          135deg,
+          rgba(12, 16, 26, 0.62),
+          rgba(12, 16, 26, 0.28)
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+
+  /* Sombra premium (presença) */
+  box-shadow:
+          0 18px 60px rgba(0, 0, 0, 0.5),
+          inset 0 1px 0 rgba(255, 255, 255, 0.10);
+
+  /* Entrada suave (discreta) */
+  opacity: 0;
+  transform: translateY(-10px) scale(0.96);
+  animation: logoIntro 900ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* Hover subtil (institucional = pouco “show off”) */
+.logo:hover {
+  transform: translateY(-6px) scale(0.985);
+  box-shadow:
+          0 22px 75px rgba(0, 0, 0, 0.58),
+          inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+@keyframes logoIntro {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  .logo {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* mobile: evita ocupar demais */
+@media (max-width: 720px) {
+  .logo {
+    width: clamp(150px, 34vw, 260px);
+    top: 14px;
+    left: 14px;
+    padding: 10px 12px;
+    border-radius: 14px;
+  }
+}
+
+/* ===========================
+   (Opcional) Vinheta no login
+   =========================== */
+
+/*
+  Se o teu login usa .login-page com imagem de fundo,
+  esta vinheta dá um ar bem “corporate” e melhora a leitura.
+  Se não tiveres .login-page, podes ignorar.
+*/
+.login-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+
+  /* vinheta suave + overlay para contraste institucional */
+  background:
+          radial-gradient(1200px 700px at 30% 35%, rgba(0,0,0,0.18), rgba(0,0,0,0.55)),
+          linear-gradient(180deg, rgba(0,0,0,0.20), rgba(0,0,0,0.35));
+}
+
+/* garante que o conteúdo do login fica acima do overlay */
+.login-page > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ===========================
+   Mantém as classes do template
+   =========================== */
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}

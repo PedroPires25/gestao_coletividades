@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 493 396">
+  <defs>
+    <linearGradient id="pink1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd6ea"/>
+      <stop offset="55%" stop-color="#f6a7cb"/>
+      <stop offset="100%" stop-color="#d96fb1"/>
+    </linearGradient>
+    <linearGradient id="pink2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffeff7"/>
+      <stop offset="100%" stop-color="#f4b7d6"/>
+    </linearGradient>
+    <linearGradient id="blue1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#b9f0ff"/>
+      <stop offset="55%" stop-color="#78caef"/>
+      <stop offset="100%" stop-color="#4ea6df"/>
+    </linearGradient>
+    <linearGradient id="green1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#eefc76"/>
+      <stop offset="55%" stop-color="#b8da2d"/>
+      <stop offset="100%" stop-color="#58a02b"/>
+    </linearGradient>
+    <linearGradient id="orange1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd46b"/>
+      <stop offset="50%" stop-color="#ffaf2a"/>
+      <stop offset="100%" stop-color="#ff6c00"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(0,4)">
+    <path d="M192 108 C214 86,247 75,279 76 C307 77,333 88,353 107 C337 109,323 117,311 127 C294 141,282 159,277 178 C269 157,253 139,231 125 C218 117,205 111,192 108 Z" fill="url(#pink1)"/>
+    <path d="M202 111 C214 97,232 88,254 85 C281 81,307 88,328 102 C297 107,273 125,259 150 C248 131,228 117,202 111 Z" fill="url(#pink2)" opacity="0.9"/>
+    <circle cx="239" cy="105" r="16" fill="#071d44"/>
+    <path d="M313 117 C331 124,346 141,356 165 C369 197,370 235,356 275 C342 283,322 289,299 292 C294 258,293 223,295 189 C298 158,304 134,313 117 Z" fill="url(#blue1)"/>
+    <path d="M191 145 C177 155,168 172,164 197 C161 223,166 250,181 278 C199 274,218 264,234 249 C233 223,234 198,239 174 C228 159,211 149,191 145 Z" fill="url(#green1)"/>
+    <path d="M247 252 C255 270,264 286,274 301 C262 304,249 305,235 304 C240 286,245 269,247 252 Z" fill="url(#orange1)"/>
+  </g>
+  <g fill="#ffffff" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">
+    <text x="246.5" y="330" font-size="32" font-weight="700" letter-spacing="0.5">GESTÃO DE COLETIVIDADES</text>
+    <text x="246.5" y="363" font-size="26" font-weight="700" letter-spacing="6">DESPORTO E CULTURA</text>
+  </g>
+</svg>
