@@ -50,7 +50,7 @@ public class ConexoBD {
                 // Valores padrão caso o ficheiro não exista
                 URL = "jdbc:mysql://localhost:3306/ci-java";
                 USERNAME = "root";
-                PASSWORD = "";
+                PASSWORD = "Brilhante-25";
                 DRIVER = "com.mysql.cj.jdbc.Driver";
                 SSL_CERT_PATH = "";
                 propertiesLoaded = true;

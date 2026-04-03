@@ -232,16 +232,9 @@ export default function LoginPage() {
         try {
             const response = await login(email.trim(), password);
 
-            const role = response?.user?.role;
-            const clubeId = response?.user?.clubeId;
-
-            if (role === "ATLETA" && clubeId) {
-                navigate(`/clubes/${clubeId}`, { replace: true });
-            } else if (role === "USER") {
-                navigate("/", { replace: true });
-            } else {
-                navigate("/menu", { replace: true });
-            }
+            // Usar a URL de redirecionamento retornada pelo backend
+            const redirectUrl = response?.redirectUrl || "/menu";
+            navigate(redirectUrl, { replace: true });
         } catch (e) {
             setErro(e.message || "Credenciais inválidas.");
         } finally {

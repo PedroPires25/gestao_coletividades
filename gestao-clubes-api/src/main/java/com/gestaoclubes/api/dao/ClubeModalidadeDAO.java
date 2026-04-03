@@ -4,11 +4,13 @@ import com.gestaoclubes.api.model.Clube;
 import com.gestaoclubes.api.model.ClubeModalidade;
 import com.gestaoclubes.api.model.Modalidade;
 import com.gestaoclubes.api.util.ConexoBD;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class ClubeModalidadeDAO {
 
     public boolean inserir(int clubeId, int modalidadeId, String epoca) {

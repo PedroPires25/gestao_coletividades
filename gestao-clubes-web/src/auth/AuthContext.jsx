@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
         session,
         token: session?.token ?? null,
         user: session?.user ?? null,
-        redirectPath: session?.redirectPath ?? "/menu",
+        redirectUrl: session?.redirectUrl ?? "/menu",
         isAuthenticated: !!session?.token,
         role,
         isAdmin: role === "ADMIN",
@@ -40,6 +40,8 @@ export function AuthProvider({ children }) {
         estadoRegisto: session?.user?.estadoRegisto ?? null,
         clubeId: session?.user?.clubeId ?? null,
         modalidadeId: session?.user?.modalidadeId ?? null,
+        coletividadeId: session?.user?.coletividadeId ?? null,
+        atividadeId: session?.user?.atividadeId ?? null,
         login,
         logout,
     }), [session, role]);

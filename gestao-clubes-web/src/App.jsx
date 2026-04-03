@@ -135,6 +135,15 @@ export default function App() {
                 />
 
                 <Route
+                    path="/clubes/:clubeId/modalidades/:modalidadeId"
+                    element={
+                        <RequireAuth>
+                            <ClubeModalidadesPage />
+                        </RequireAuth>
+                    }
+                />
+
+                <Route
                     path="/clubes/:clubeId/atletas"
                     element={
                         <RequireAuth>
@@ -209,6 +218,15 @@ export default function App() {
 
                 <Route
                     path="/coletividades/:coletividadeId/utentes/atividades/:coletividadeAtividadeId"
+                    element={
+                        <RequireAuth>
+                            <ColetividadeUtentesAtividadePage />
+                        </RequireAuth>
+                    }
+                />
+
+                <Route
+                    path="/coletividades/:coletividadeId/atividades/:atividadeId"
                     element={
                         <RequireAuth>
                             <ColetividadeUtentesAtividadePage />

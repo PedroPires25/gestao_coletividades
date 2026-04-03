@@ -4,6 +4,7 @@ import com.gestaoclubes.api.dao.PerfilDAO;
 import com.gestaoclubes.api.dao.UtilizadorDAO;
 import com.gestaoclubes.api.model.Utilizador;
 import com.gestaoclubes.api.security.JwtUtil;
+import com.gestaoclubes.api.service.RedirectService;
 import com.gestaoclubes.api.util.PasswordPolicyUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +18,13 @@ public class AuthRestController {
     private final UtilizadorDAO utilizadorDAO;
     private final PerfilDAO perfilDAO;
     private final JwtUtil jwtUtil;
+    private final RedirectService redirectService;
 
-    public AuthRestController(UtilizadorDAO utilizadorDAO, PerfilDAO perfilDAO, JwtUtil jwtUtil) {
+    public AuthRestController(UtilizadorDAO utilizadorDAO, PerfilDAO perfilDAO, JwtUtil jwtUtil, RedirectService redirectService) {
         this.utilizadorDAO = utilizadorDAO;
         this.perfilDAO = perfilDAO;
         this.jwtUtil = jwtUtil;
+        this.redirectService = redirectService;
     }
 
     public static class LoginRequest {
@@ -75,10 +78,12 @@ public class AuthRestController {
     public static class LoginResponse {
         public String token;
         public UserDto user;
+        public String redirectUrl;
 
-        public LoginResponse(String token, UserDto user) {
+        public LoginResponse(String token, UserDto user, String redirectUrl) {
             this.token = token;
             this.user = user;
+            this.redirectUrl = redirectUrl;
         }
     }
 
@@ -132,7 +137,10 @@ public class AuthRestController {
                 u.getAtividadeId()
         );
 
-        return ResponseEntity.ok(new LoginResponse(token, new UserDto(u, rolePlain)));
+        // Calcular URL de redirecionamento automático baseado no perfil e afetação
+        String redirectUrl = redirectService.calcularRedirectUrl(u, rolePlain);
+
+        return ResponseEntity.ok(new LoginResponse(token, new UserDto(u, rolePlain), redirectUrl));
     }
 
     @PostMapping("/register")
