@@ -320,6 +320,46 @@ export default function ClubeAtletasPage() {
                     <section className="card">
                         <div className="modalidades-toolbar">
                             <div className="toolbar-title-group">
+                                <h2>Gerir Eventos</h2>
+                                <span className="toolbar-count">Convocações</span>
+                            </div>
+                        </div>
+
+                        {loadingPagina ? (
+                            <p className="subtle">A carregar modalidades...</p>
+                        ) : modalidades.length === 0 ? (
+                            <p className="subtle">Este clube ainda não tem modalidades associadas.</p>
+                        ) : (
+                            <div className="modalidade-figuras-grid">
+                                {modalidades.map((item, index) => {
+                                    const nome = item?.modalidade?.nome || item?.nome || "Modalidade";
+                                    const colorClass = COLOR_CLASSES[index % COLOR_CLASSES.length];
+                                    const clubeModalidadeId = getClubeModalidadeId(item);
+
+                                    return (
+                                        <Link
+                                            key={`eventos-${clubeModalidadeId}`}
+                                            to={`/clubes/${clubeId}/clube-modalidade/${clubeModalidadeId}/eventos`}
+                                            className={`modalidade-figura-btn ${colorClass}`}
+                                            title={`Eventos - ${nome}`}
+                                        >
+                                            <span className="modalidade-figura-circle">
+                                                <span className="menu-style-icon">
+                                                    <span style={{ fontSize: "2em" }}>📅</span>
+                                                </span>
+                                            </span>
+
+                                            <span className="modalidade-figura-label">{nome}</span>
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </section>
+
+                    <section className="card">
+                        <div className="modalidades-toolbar">
+                            <div className="toolbar-title-group">
                                 <h2>Registar atleta</h2>
                                 <span className="toolbar-count">Base de dados</span>
                             </div>

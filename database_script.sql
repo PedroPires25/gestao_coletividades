@@ -722,3 +722,40 @@ ALTER TABLE atleta MODIFY COLUMN nome VARCHAR(255) NULL;
 ALTER TABLE inscrito MODIFY COLUMN nome VARCHAR(255) NULL;
 ALTER TABLE staff MODIFY COLUMN nome VARCHAR(255) NULL;
 ALTER TABLE staff_coletividade MODIFY COLUMN nome VARCHAR(255) NULL;
+
+-- -------------------------
+-- EVENTOS / CONVOCATÓRIAS
+-- -------------------------
+CREATE TABLE IF NOT EXISTS evento (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  titulo VARCHAR(120) NOT NULL,
+  data_hora DATETIME NOT NULL,
+  local VARCHAR(255),
+  clube_modalidade_id INT NOT NULL,
+  criado_por INT NOT NULL,
+
+  CONSTRAINT fk_evento_cm
+    FOREIGN KEY (clube_modalidade_id) REFERENCES clube_modalidade(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_evento_utilizador
+    FOREIGN KEY (criado_por) REFERENCES utilizadores(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  KEY idx_evento_cm (clube_modalidade_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS evento_atleta (
+  evento_id INT NOT NULL,
+  atleta_id INT NOT NULL,
+
+  PRIMARY KEY (evento_id, atleta_id),
+
+  CONSTRAINT fk_ea_evento
+    FOREIGN KEY (evento_id) REFERENCES evento(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+
+  CONSTRAINT fk_ea_atleta
+    FOREIGN KEY (atleta_id) REFERENCES atleta(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB;

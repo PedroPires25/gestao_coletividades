@@ -4,7 +4,6 @@ import com.gestaoclubes.api.dao.PerfilDAO;
 import com.gestaoclubes.api.dao.UtilizadorDAO;
 import com.gestaoclubes.api.model.Utilizador;
 import com.gestaoclubes.api.security.JwtUtil;
-import com.gestaoclubes.api.service.RedirectService;
 import com.gestaoclubes.api.util.PasswordPolicyUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +17,11 @@ public class AuthRestController {
     private final UtilizadorDAO utilizadorDAO;
     private final PerfilDAO perfilDAO;
     private final JwtUtil jwtUtil;
-    private final RedirectService redirectService;
 
-    public AuthRestController(UtilizadorDAO utilizadorDAO, PerfilDAO perfilDAO, JwtUtil jwtUtil, RedirectService redirectService) {
+    public AuthRestController(UtilizadorDAO utilizadorDAO, PerfilDAO perfilDAO, JwtUtil jwtUtil) {
         this.utilizadorDAO = utilizadorDAO;
         this.perfilDAO = perfilDAO;
         this.jwtUtil = jwtUtil;
-        this.redirectService = redirectService;
     }
 
     public static class LoginRequest {
@@ -78,12 +75,22 @@ public class AuthRestController {
     public static class LoginResponse {
         public String token;
         public UserDto user;
-        public String redirectUrl;
 
-        public LoginResponse(String token, UserDto user, String redirectUrl) {
+        public LoginResponse(String token, UserDto user) {
             this.token = token;
             this.user = user;
+        }
+    }
+
+    public static class GetRedirectUrlResponse {
+        public String redirectUrl;
+        public String reason;
+        public boolean valid;
+
+        public GetRedirectUrlResponse(String redirectUrl, String reason, boolean valid) {
             this.redirectUrl = redirectUrl;
+            this.reason = reason;
+            this.valid = valid;
         }
     }
 
@@ -137,10 +144,42 @@ public class AuthRestController {
                 u.getAtividadeId()
         );
 
-        // Calcular URL de redirecionamento automático baseado no perfil e afetação
-        String redirectUrl = redirectService.calcularRedirectUrl(u, rolePlain);
+        return ResponseEntity.ok(new LoginResponse(token, new UserDto(u, rolePlain)));
+    }
 
-        return ResponseEntity.ok(new LoginResponse(token, new UserDto(u, rolePlain), redirectUrl));
+    @GetMapping("/redirect-path")
+    public ResponseEntity<?> getRedirectPath() {
+        JwtUtil.JwtUser jwtUser = getAuthenticatedUser();
+        
+        if (jwtUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new GetRedirectUrlResponse(null, "Utilizador não autenticado.", false));
+        }
+
+        Utilizador utilizador = utilizadorDAO.buscarPorId(jwtUser.id());
+        if (utilizador == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new GetRedirectUrlResponse(null, "Utilizador não encontrado.", false));
+        }
+
+        if (!"APROVADO".equalsIgnoreCase(utilizador.getEstadoRegisto())) {
+            return ResponseEntity.ok(
+                    new GetRedirectUrlResponse(null, "Registo pendente de aprovação.", false)
+            );
+        }
+
+        String rolePlain = perfilDAO.obterDescricaoPerfil(utilizador.getPerfilId());
+        String redirectUrl = calcularRedirectUrl(rolePlain, utilizador);
+
+        if (redirectUrl == null || redirectUrl.isBlank()) {
+            return ResponseEntity.ok(
+                    new GetRedirectUrlResponse("/menu", "Redirecionamento para menu padrão.", true)
+            );
+        }
+
+        return ResponseEntity.ok(
+                new GetRedirectUrlResponse(redirectUrl, "Redirecionamento calculado.", true)
+        );
     }
 
     @PostMapping("/register")
@@ -370,5 +409,66 @@ public class AuthRestController {
 
     private String normalizarEstruturaTipo(String estruturaTipo) {
         return estruturaTipo == null ? null : estruturaTipo.trim().toUpperCase();
+    }
+
+    private JwtUtil.JwtUser getAuthenticatedUser() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof JwtUtil.JwtUser jwtUser) {
+            return jwtUser;
+        }
+        return null;
+    }
+
+    private String calcularRedirectUrl(String rolePlain, Utilizador u) {
+        if (rolePlain == null || rolePlain.isBlank()) {
+            return null;
+        }
+
+        return switch (rolePlain) {
+            case PerfilDAO.ADMIN -> "/admin/users";
+
+            case PerfilDAO.ATLETA -> {
+                if (u.getClubeId() != null && u.getModalidadeId() != null) {
+                    yield String.format("/clubes/%d/atletas/modalidades/%d", u.getClubeId(), u.getModalidadeId());
+                }
+                yield null;
+            }
+
+            case PerfilDAO.TREINADOR_PRINCIPAL -> {
+                if (u.getClubeId() != null && u.getModalidadeId() != null) {
+                    yield String.format("/clubes/%d/staff/modalidades/%d", u.getClubeId(), u.getModalidadeId());
+                }
+                yield null;
+            }
+
+            case PerfilDAO.DEPARTAMENTO_MEDICO -> {
+                if (u.getClubeId() != null) {
+                    yield String.format("/clubes/%d", u.getClubeId());
+                }
+                yield null;
+            }
+
+            case PerfilDAO.STAFF, PerfilDAO.SECRETARIO, PerfilDAO.PROFESSOR -> {
+                // Prioridade: CLUBE > COLETIVIDADE
+                if (u.getClubeId() != null) {
+                    yield String.format("/clubes/%d", u.getClubeId());
+                }
+                if (u.getColetividadeId() != null) {
+                    yield String.format("/coletividades/%d", u.getColetividadeId());
+                }
+                yield null;
+            }
+
+            case PerfilDAO.UTENTE -> {
+                if (u.getColetividadeId() != null && u.getAtividadeId() != null) {
+                    yield String.format("/coletividades/%d/utentes/atividades/%d", u.getColetividadeId(), u.getAtividadeId());
+                }
+                yield null;
+            }
+
+            case PerfilDAO.USER -> "/menu";
+
+            default -> null;
+        };
     }
 }

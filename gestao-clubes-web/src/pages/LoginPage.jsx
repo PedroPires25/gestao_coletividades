@@ -232,7 +232,13 @@ export default function LoginPage() {
         try {
             const response = await login(email.trim(), password);
 
-            // Usar a URL de redirecionamento retornada pelo backend
+            // Verificar se está pendente de aprovação
+            if (response?.user?.estadoRegisto !== "APROVADO") {
+                navigate("/pending-approval", { replace: true });
+                return;
+            }
+
+            // Usar redirectUrl calculado no AuthContext
             const redirectUrl = response?.redirectUrl || "/menu";
             navigate(redirectUrl, { replace: true });
         } catch (e) {

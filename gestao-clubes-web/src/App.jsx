@@ -9,6 +9,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import EmailFeedbackPage from "./pages/EmailFeedbackPage";
 import ResetSuccessPage from "./pages/ResetSuccessPage";
+import PendingApprovalPage from "./pages/PendingApprovalPage";
 
 // admin
 import AdminUsersPage from "./pages/AdminUsersPage";
@@ -23,6 +24,7 @@ import ClubeAtletasModalidadePage from "./pages/ClubeAtletasModalidadePage";
 import ClubeStaffPage from "./pages/ClubeStaffPage";
 import ClubeStaffModalidadePage from "./pages/ClubeStaffModalidadePage";
 import ClubeModalidadesPage from "./pages/ClubeModalidadesPage";
+import EventosPage from "./pages/EventosPage";
 
 // coletividades
 import ColetividadesPage from "./pages/ColetividadesPage";
@@ -50,6 +52,10 @@ function RequireAuth({ children }) {
     try {
         const parsed = JSON.parse(raw);
         if (!parsed?.token) return <Navigate to="/login" replace />;
+        // Se não está aprovado, redirecionar para pending-approval
+        if (parsed?.user?.estadoRegisto !== "APROVADO") {
+            return <Navigate to="/pending-approval" replace />;
+        }
     } catch {
         return <Navigate to="/login" replace />;
     }
@@ -68,6 +74,9 @@ export default function App() {
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/recuperar-password/confirmar" element={<EmailFeedbackPage />} />
                 <Route path="/reset-password/success" element={<ResetSuccessPage />} />
+
+                {/* Página de registo pendente */}
+                <Route path="/pending-approval" element={<PendingApprovalPage />} />
 
                 <Route
                     path="/menu"
@@ -135,15 +144,6 @@ export default function App() {
                 />
 
                 <Route
-                    path="/clubes/:clubeId/modalidades/:modalidadeId"
-                    element={
-                        <RequireAuth>
-                            <ClubeModalidadesPage />
-                        </RequireAuth>
-                    }
-                />
-
-                <Route
                     path="/clubes/:clubeId/atletas"
                     element={
                         <RequireAuth>
@@ -175,6 +175,15 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <ClubeStaffModalidadePage />
+                        </RequireAuth>
+                    }
+                />
+
+                <Route
+                    path="/clubes/:clubeId/clube-modalidade/:clubeModalidadeId/eventos"
+                    element={
+                        <RequireAuth>
+                            <EventosPage />
                         </RequireAuth>
                     }
                 />
@@ -218,15 +227,6 @@ export default function App() {
 
                 <Route
                     path="/coletividades/:coletividadeId/utentes/atividades/:coletividadeAtividadeId"
-                    element={
-                        <RequireAuth>
-                            <ColetividadeUtentesAtividadePage />
-                        </RequireAuth>
-                    }
-                />
-
-                <Route
-                    path="/coletividades/:coletividadeId/atividades/:atividadeId"
                     element={
                         <RequireAuth>
                             <ColetividadeUtentesAtividadePage />

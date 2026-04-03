@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 /**
  * Classe utilitária para gerir conexões com a base de dados MySQL.
@@ -18,12 +19,13 @@ import java.util.Properties;
  */
 public class ConexoBD {
 
+    private static final Logger LOGGER = Logger.getLogger(ConexoBD.class.getName());
+
     // Configurações da base de dados (carregadas do ficheiro properties)
     private static String URL;
     private static String USERNAME;
     private static String PASSWORD;
     private static String DRIVER;
-    private static String SSL_CERT_PATH;
 
     // Flag para indicar se as propriedades já foram carregadas
     private static boolean propertiesLoaded = false;
@@ -50,9 +52,8 @@ public class ConexoBD {
                 // Valores padrão caso o ficheiro não exista
                 URL = "jdbc:mysql://localhost:3306/ci-java";
                 USERNAME = "root";
-                PASSWORD = "Brilhante-25";
+                PASSWORD = "";
                 DRIVER = "com.mysql.cj.jdbc.Driver";
-                SSL_CERT_PATH = "";
                 propertiesLoaded = true;
                 return;
             }
@@ -63,25 +64,25 @@ public class ConexoBD {
             USERNAME = props.getProperty("db.username", "root");
             PASSWORD = props.getProperty("db.password", "");
             DRIVER = props.getProperty("db.driver", "com.mysql.cj.jdbc.Driver");
-            SSL_CERT_PATH = props.getProperty("db.ssl.cert.path", "");
+            String sslCertPath = props.getProperty("db.ssl.cert.path", "");
 
             // Se o certificado não estiver na URL e o caminho estiver definido, adiciona à URL
-            if (!URL.contains("serverSslCert") && SSL_CERT_PATH != null && !SSL_CERT_PATH.isEmpty()) {
+            if (!URL.contains("serverSslCert") && sslCertPath != null && !sslCertPath.isEmpty()) {
                 // Tenta usar o certificado do classpath primeiro
                 InputStream certStream = ConexoBD.class.getClassLoader()
-                        .getResourceAsStream(SSL_CERT_PATH);
+                        .getResourceAsStream(sslCertPath);
 
                 if (certStream != null) {
                     try { certStream.close(); } catch (Exception ignored) {}
 
                     if (!URL.contains("?")) {
-                        URL += "?useSSL=true&requireSSL=true&serverSslCert=classpath:" + SSL_CERT_PATH;
+                        URL += "?useSSL=true&requireSSL=true&serverSslCert=classpath:" + sslCertPath;
                     } else {
-                        URL += "&useSSL=true&requireSSL=true&serverSslCert=classpath:" + SSL_CERT_PATH;
+                        URL += "&useSSL=true&requireSSL=true&serverSslCert=classpath:" + sslCertPath;
                     }
                 } else {
                     // Tenta usar como arquivo do sistema
-                    File certFile = new File("src/" + SSL_CERT_PATH);
+                    File certFile = new File("src/" + sslCertPath);
                     if (certFile.exists()) {
                         String certPath = certFile.getAbsolutePath().replace("\\", "/");
                         if (!URL.contains("?")) {
@@ -90,7 +91,7 @@ public class ConexoBD {
                             URL += "&useSSL=true&requireSSL=true&serverSslCert=" + certPath;
                         }
                     } else {
-                        System.out.println("Aviso: Certificado SSL não encontrado em: " + SSL_CERT_PATH);
+                        LOGGER.warning("Certificado SSL não encontrado em: " + sslCertPath);
                     }
                 }
             }
@@ -100,15 +101,13 @@ public class ConexoBD {
             System.out.println("Conectando a: " + URL.split("\\?")[0]);
 
         } catch (Exception e) {
-            System.err.println("Erro ao carregar db.properties: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe("Erro ao carregar db.properties: " + e.getMessage());
 
             // Valores padrão em caso de erro
             URL = "jdbc:mysql://localhost:3306/ci-java";
             USERNAME = "root";
             PASSWORD = "";
             DRIVER = "com.mysql.cj.jdbc.Driver";
-            SSL_CERT_PATH = "";
             propertiesLoaded = true;
         }
     }

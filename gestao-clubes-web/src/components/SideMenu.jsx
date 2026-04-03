@@ -49,6 +49,7 @@ export default function SideMenu({
                                      logoSrc = "/logo.png",
                                      items = [],
                                      showBurger = true,
+                                     eventoBadge = null,
                                  }) {
     const [open, setOpen] = useState(false);
     const { theme, setTheme } = useTheme();
@@ -103,7 +104,14 @@ export default function SideMenu({
                     <aside className={`drawer ${open ? "open" : ""}`} role="dialog" aria-modal="true">
                         <div className="drawer-header">
                             <div>
-                                <div className="drawer-title">{title}</div>
+                                <div className="drawer-title">
+                                    {title}
+                                    {eventoBadge && (
+                                        <span className="badge badge-events" title="Eventos convocados">
+                                            {eventoBadge}
+                                        </span>
+                                    )}
+                                </div>
                                 {subtitle ? <div className="drawer-sub">{subtitle}</div> : null}
                             </div>
 

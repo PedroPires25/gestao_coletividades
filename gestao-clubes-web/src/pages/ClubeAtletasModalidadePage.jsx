@@ -112,11 +112,22 @@ function hasPendingName(value) {
 
 function PendingNameCell() {
     return (
-        <div>
-            <div style={{ color: "#ffcc66", fontWeight: 700 }}>
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+                padding: "8px 10px",
+                borderRadius: "10px",
+                background: "rgba(255, 193, 7, 0.14)",
+                border: "1px solid rgba(255, 193, 7, 0.38)",
+                boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.04)",
+            }}
+        >
+            <div style={{ color: "#ffd166", fontWeight: 800 }}>
                 ⚠ Completar dados de inscrição
             </div>
-            <div style={{ fontSize: "0.8rem", opacity: 0.8 }}>
+            <div style={{ fontSize: "0.8rem", opacity: 0.9 }}>
                 Registo criado por aprovação administrativa
             </div>
         </div>
@@ -199,7 +210,9 @@ export default function ClubeAtletasModalidadePage() {
             );
 
             if (!modalidadeSelecionada) {
-                throw new Error("Modalidade não encontrada para este clube.");
+                setErro("Modalidade não encontrada para este clube.");
+                setLoading(false);
+                return;
             }
 
             const atletasData = await getAtletasByClubeModalidade(
@@ -362,7 +375,14 @@ export default function ClubeAtletasModalidadePage() {
                                     return (
                                         <tr
                                             key={a.id}
-                                            style={pendingName ? { backgroundColor: "rgba(255, 200, 0, 0.08)" } : {}}
+                                            style={
+                                                pendingName
+                                                    ? {
+                                                        background: "rgba(255, 193, 7, 0.18)",
+                                                        boxShadow: "inset 5px 0 0 #ffcc33",
+                                                    }
+                                                    : {}
+                                            }
                                         >
                                             <td className="nowrap">
                                                 {pendingName ? <PendingNameCell /> : a.nome}
