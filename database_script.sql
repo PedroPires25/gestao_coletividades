@@ -729,20 +729,29 @@ ALTER TABLE staff_coletividade MODIFY COLUMN nome VARCHAR(255) NULL;
 CREATE TABLE IF NOT EXISTS evento (
   id INT AUTO_INCREMENT PRIMARY KEY,
   titulo VARCHAR(120) NOT NULL,
+  descricao TEXT NULL,
   data_hora DATETIME NOT NULL,
   local VARCHAR(255),
-  clube_modalidade_id INT NOT NULL,
+  observacoes TEXT NULL,
+  tipo ENUM('MODALIDADE','ATIVIDADE') NOT NULL DEFAULT 'MODALIDADE',
+  clube_modalidade_id INT NULL,
+  coletividade_atividade_id INT NULL,
   criado_por INT NOT NULL,
 
   CONSTRAINT fk_evento_cm
     FOREIGN KEY (clube_modalidade_id) REFERENCES clube_modalidade(id)
     ON DELETE RESTRICT ON UPDATE CASCADE,
 
+  CONSTRAINT fk_evento_ca
+    FOREIGN KEY (coletividade_atividade_id) REFERENCES coletividade_atividade(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
   CONSTRAINT fk_evento_utilizador
     FOREIGN KEY (criado_por) REFERENCES utilizadores(id)
     ON DELETE RESTRICT ON UPDATE CASCADE,
 
-  KEY idx_evento_cm (clube_modalidade_id)
+  KEY idx_evento_cm (clube_modalidade_id),
+  KEY idx_evento_ca (coletividade_atividade_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS evento_atleta (
@@ -757,5 +766,45 @@ CREATE TABLE IF NOT EXISTS evento_atleta (
 
   CONSTRAINT fk_ea_atleta
     FOREIGN KEY (atleta_id) REFERENCES atleta(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS evento_inscrito (
+  evento_id INT NOT NULL,
+  inscrito_id INT NOT NULL,
+
+  PRIMARY KEY (evento_id, inscrito_id),
+
+  CONSTRAINT fk_ei_evento
+    FOREIGN KEY (evento_id) REFERENCES evento(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+
+  CONSTRAINT fk_ei_inscrito
+    FOREIGN KEY (inscrito_id) REFERENCES inscrito(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- 1. Add new columns to existing evento table
+ALTER TABLE evento
+  ADD COLUMN descricao TEXT NULL AFTER titulo,
+  ADD COLUMN observacoes TEXT NULL AFTER local,
+  ADD COLUMN tipo ENUM('MODALIDADE','ATIVIDADE') NOT NULL DEFAULT 'MODALIDADE' AFTER observacoes,
+  ADD COLUMN coletividade_atividade_id INT NULL AFTER clube_modalidade_id,
+  MODIFY COLUMN clube_modalidade_id INT NULL,
+  ADD CONSTRAINT fk_evento_ca
+    FOREIGN KEY (coletividade_atividade_id) REFERENCES coletividade_atividade(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD KEY idx_evento_ca (coletividade_atividade_id);
+
+-- 2. Create evento_inscrito table
+CREATE TABLE IF NOT EXISTS evento_inscrito (
+  evento_id INT NOT NULL,
+  inscrito_id INT NOT NULL,
+  PRIMARY KEY (evento_id, inscrito_id),
+  CONSTRAINT fk_ei_evento
+    FOREIGN KEY (evento_id) REFERENCES evento(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_ei_inscrito
+    FOREIGN KEY (inscrito_id) REFERENCES inscrito(id)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;

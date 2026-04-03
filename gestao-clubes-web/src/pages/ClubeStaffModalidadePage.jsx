@@ -138,6 +138,7 @@ export default function ClubeStaffModalidadePage() {
             { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
             { label: "Staff", to: `/clubes/${clubeId}/staff` },
             { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
+            { label: "Eventos", to: `/clubes/${clubeId}/clube-modalidade/${clubeModalidadeId}/eventos` },
             {
                 label: "Logout",
                 onClick: () => {
