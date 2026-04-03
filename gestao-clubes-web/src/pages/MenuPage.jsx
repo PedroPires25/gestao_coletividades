@@ -7,6 +7,7 @@ import * as eventosService from "../services/eventos";
 import clubesIcon from "../assets/clubes.svg";
 import coletividadesIcon from "../assets/coletividades.svg";
 import perfisIcon from "../assets/perfis.svg";
+import eventosIcon from "../assets/eventos.svg";
 import logoutIcon from "../assets/logout.svg";
 
 const MENU_ACTIONS = {
@@ -17,7 +18,7 @@ const MENU_ACTIONS = {
 };
 
 export default function MenuPage() {
-    const { logout, isAdmin, clubeId } = useAuth();
+    const { logout, isAdmin, role, clubeId } = useAuth();
     const navigate = useNavigate();
     const [meusEventos, setMeusEventos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -57,6 +58,7 @@ export default function MenuPage() {
         { label: "Clubes", to: "/clubes" },
         { label: "Coletividades", to: "/coletividades" },
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+        ...((role === "ADMIN" || role === "SECRETARIO") ? [{ label: "Eventos", to: "/gestao/eventos" }] : []),
         {
             label: "Logout",
             onClick: () => {
@@ -106,6 +108,17 @@ export default function MenuPage() {
                                 </span>
                             </span>
                             <span className="quick-action-label">Perfis</span>
+                        </Link>
+                    )}
+
+                    {(role === "ADMIN" || role === "SECRETARIO") && (
+                        <Link to="/gestao/eventos" className="quick-action quick-action-purple">
+                            <span className="quick-action-circle">
+                                <span className="quick-action-icon">
+                                    <img src={eventosIcon} alt="Eventos" />
+                                </span>
+                            </span>
+                            <span className="quick-action-label">Eventos</span>
                         </Link>
                     )}
 

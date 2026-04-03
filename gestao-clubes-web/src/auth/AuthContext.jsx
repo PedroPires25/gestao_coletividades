@@ -16,11 +16,11 @@ function calcularRedirectUrl(user) {
 
     switch (role) {
         case "ADMIN":
-            return "/admin/users";
+            return "/menu";
 
         case "ATLETA":
             if (clubeId && modalidadeId) {
-                return `/clubes/${clubeId}/atletas/modalidades/${modalidadeId}`;
+                return `/clubes/${clubeId}/clube-modalidade/${modalidadeId}/modalidade`;
             }
             return null;
 
@@ -37,9 +37,10 @@ function calcularRedirectUrl(user) {
             return null;
 
         case "STAFF":
-        case "SECRETARIO":
         case "PROFESSOR":
-            // Prioridade: CLUBE > COLETIVIDADE
+            if (clubeId && modalidadeId) {
+                return `/clubes/${clubeId}/clube-modalidade/${modalidadeId}/modalidade`;
+            }
             if (clubeId) {
                 return `/clubes/${clubeId}`;
             }
@@ -47,6 +48,9 @@ function calcularRedirectUrl(user) {
                 return `/coletividades/${coletividadeId}`;
             }
             return null;
+
+        case "SECRETARIO":
+            return "/menu";
 
         case "UTENTE":
             if (coletividadeId && atividadeId) {

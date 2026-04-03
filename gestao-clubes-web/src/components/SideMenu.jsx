@@ -13,6 +13,7 @@ import staffIcon from "../assets/staff.svg";
 import transferenciasIcon from "../assets/transferencias.svg";
 import utilizadoresAprovarIcon from "../assets/utilizadores-por-aprovar.svg";
 import utilizadoresAutorizadosIcon from "../assets/utilizadores-autorizados.svg";
+import eventosIcon from "../assets/eventos.svg";
 
 
 const MENU_ICONS = {
@@ -27,6 +28,7 @@ const MENU_ICONS = {
     Transferências: transferenciasIcon,
     utilizadoresAprovar: utilizadoresAprovarIcon,
     utilizadoresAutorizados: utilizadoresAutorizadosIcon,
+    Eventos: eventosIcon,
 
 };
 

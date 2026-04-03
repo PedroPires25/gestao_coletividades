@@ -25,6 +25,8 @@ import ClubeStaffPage from "./pages/ClubeStaffPage";
 import ClubeStaffModalidadePage from "./pages/ClubeStaffModalidadePage";
 import ClubeModalidadesPage from "./pages/ClubeModalidadesPage";
 import EventosPage from "./pages/EventosPage";
+import GestaoEventosPage from "./pages/GestaoEventosPage";
+import ModalidadeEventosPage from "./pages/ModalidadeEventosPage";
 
 // coletividades
 import ColetividadesPage from "./pages/ColetividadesPage";
@@ -248,6 +250,24 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <ColetividadeStaffAtividadePage />
+                        </RequireAuth>
+                    }
+                />
+
+                <Route
+                    path="/clubes/:clubeId/clube-modalidade/:clubeModalidadeId/modalidade"
+                    element={
+                        <RequireAuth>
+                            <ModalidadeEventosPage />
+                        </RequireAuth>
+                    }
+                />
+
+                <Route
+                    path="/gestao/eventos"
+                    element={
+                        <RequireAuth>
+                            <GestaoEventosPage />
                         </RequireAuth>
                     }
                 />
