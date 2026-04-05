@@ -1,0 +1,363 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import SideMenu from "../components/SideMenu";
+import { useAuth } from "../auth/AuthContext";
+import { getAllEventos } from "../services/eventos";
+
+import eventosIcon from "../assets/eventos.svg";
+import defaultIcon from "../assets/default.svg";
+
+export default function EventosPage() {
+    const navigate = useNavigate();
+    const { logout, user } = useAuth();
+
+    const [eventos, setEventos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [erro, setErro] = useState(null);
+    const [filtroModalidade, setFiltroModalidade] = useState("todos");
+    const [eventoSelecionado, setEventoSelecionado] = useState(null);
+    const [showModal, setShowModal] = useState(false);
+
+    useEffect(() => {
+        carregarEventos();
+    }, []);
+
+    async function carregarEventos() {
+        try {
+            setLoading(true);
+            setErro(null);
+            const dados = await getAllEventos();
+            setEventos(dados || []);
+        } catch (err) {
+            console.error(err);
+            setErro("Erro ao carregar eventos: " + err.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const eventosFiltrados = eventos.filter((evento) => {
+        if (filtroModalidade === "minhaModalidade") {
+            return evento.temAcessoCompleto;
+        }
+        if (filtroModalidade === "outrasModalidades") {
+            return !evento.temAcessoCompleto;
+        }
+        return true;
+    });
+
+    function abrirDetalhes(evento) {
+        setEventoSelecionado(evento);
+        setShowModal(true);
+    }
+
+    function fecharModal() {
+        setShowModal(false);
+        setEventoSelecionado(null);
+    }
+
+    function formatarData(dataHora) {
+        if (!dataHora) return "";
+        try {
+            const data = new Date(dataHora);
+            return data.toLocaleString("pt-PT", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+        } catch {
+            return dataHora;
+        }
+    }
+
+    if (loading) {
+        return (
+            <div style={{ display: "flex", height: "100vh" }}>
+                <SideMenu />
+                <div style={{ flex: 1, padding: "20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <p>Carregando eventos...</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ display: "flex", height: "100vh" }}>
+            <SideMenu />
+            <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+                <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
+                        <h1 style={{ margin: 0 }}>Eventos</h1>
+                        <button
+                            onClick={() => logout()}
+                            style={{
+                                padding: "8px 16px",
+                                backgroundColor: "#ff6b6b",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "4px",
+                                cursor: "pointer",
+                            }}
+                        >
+                            Logout
+                        </button>
+                    </div>
+
+                    {erro && (
+                        <div style={{ padding: "12px", backgroundColor: "#ffe0e0", color: "#c92a2a", borderRadius: "4px", marginBottom: "20px" }}>
+                            {erro}
+                        </div>
+                    )}
+
+                    <div style={{ marginBottom: "20px" }}>
+                        <label style={{ marginRight: "20px" }}>
+                            <input
+                                type="radio"
+                                name="filtro"
+                                value="todos"
+                                checked={filtroModalidade === "todos"}
+                                onChange={(e) => setFiltroModalidade(e.target.value)}
+                            />
+                            {" Todos os Eventos"}
+                        </label>
+                        <label style={{ marginRight: "20px" }}>
+                            <input
+                                type="radio"
+                                name="filtro"
+                                value="minhaModalidade"
+                                checked={filtroModalidade === "minhaModalidade"}
+                                onChange={(e) => setFiltroModalidade(e.target.value)}
+                            />
+                            {" Minha Modalidade"}
+                        </label>
+                        <label>
+                            <input
+                                type="radio"
+                                name="filtro"
+                                value="outrasModalidades"
+                                checked={filtroModalidade === "outrasModalidades"}
+                                onChange={(e) => setFiltroModalidade(e.target.value)}
+                            />
+                            {" Outras Modalidades"}
+                        </label>
+                    </div>
+
+                    {eventosFiltrados.length === 0 ? (
+                        <div style={{ padding: "20px", backgroundColor: "#f5f5f5", borderRadius: "4px", textAlign: "center" }}>
+                            <p>Nenhum evento encontrado</p>
+                        </div>
+                    ) : (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "20px" }}>
+                            {eventosFiltrados.map((evento) => (
+                                <div
+                                    key={evento.id}
+                                    onClick={() => abrirDetalhes(evento)}
+                                    style={{
+                                        border: "1px solid #ddd",
+                                        borderRadius: "8px",
+                                        padding: "16px",
+                                        cursor: "pointer",
+                                        backgroundColor: "#fff",
+                                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                        transition: "all 0.3s ease",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+                                        e.currentTarget.style.transform = "translateY(-2px)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                                        e.currentTarget.style.transform = "translateY(0)";
+                                    }}
+                                >
+                                    <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "12px" }}>
+                                        <img
+                                            src={eventosIcon || defaultIcon}
+                                            alt="Evento"
+                                            style={{ width: "40px", height: "40px" }}
+                                        />
+                                        <div style={{ flex: 1 }}>
+                                            <h3 style={{ margin: "0 0 4px 0", fontSize: "16px" }}>{evento.titulo}</h3>
+                                            {evento.temAcessoCompleto && (
+                                                <span
+                                                    style={{
+                                                        display: "inline-block",
+                                                        backgroundColor: "#51cf66",
+                                                        color: "white",
+                                                        padding: "2px 8px",
+                                                        borderRadius: "4px",
+                                                        fontSize: "12px",
+                                                    }}
+                                                >
+                                                    Minha Modalidade
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <p style={{ margin: "8px 0", fontSize: "14px", color: "#666" }}>
+                                        <strong>Data:</strong> {formatarData(evento.dataHora)}
+                                    </p>
+                                    {evento.local && (
+                                        <p style={{ margin: "8px 0", fontSize: "14px", color: "#666" }}>
+                                            <strong>Local:</strong> {evento.local}
+                                        </p>
+                                    )}
+                                    {evento.descricao && (
+                                        <p style={{ margin: "8px 0", fontSize: "14px", color: "#666" }}>
+                                            <strong>Descrição:</strong> {evento.descricao.substring(0, 100)}
+                                            {evento.descricao.length > 100 ? "..." : ""}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Modal de Detalhes */}
+                {showModal && eventoSelecionado && (
+                    <div
+                        style={{
+                            position: "fixed",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: "rgba(0,0,0,0.5)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            zIndex: 1000,
+                        }}
+                        onClick={fecharModal}
+                    >
+                        <div
+                            style={{
+                                backgroundColor: "white",
+                                padding: "24px",
+                                borderRadius: "8px",
+                                maxWidth: "600px",
+                                width: "90%",
+                                maxHeight: "80vh",
+                                overflowY: "auto",
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                                <h2 style={{ margin: 0 }}>{eventoSelecionado.titulo}</h2>
+                                <button
+                                    onClick={fecharModal}
+                                    style={{
+                                        backgroundColor: "transparent",
+                                        border: "none",
+                                        fontSize: "24px",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            <div style={{ marginBottom: "16px" }}>
+                                {eventoSelecionado.temAcessoCompleto && (
+                                    <span
+                                        style={{
+                                            display: "inline-block",
+                                            backgroundColor: "#51cf66",
+                                            color: "white",
+                                            padding: "4px 12px",
+                                            borderRadius: "4px",
+                                            fontSize: "14px",
+                                            marginRight: "8px",
+                                        }}
+                                    >
+                                        Acesso Completo
+                                    </span>
+                                )}
+                                <span
+                                    style={{
+                                        display: "inline-block",
+                                        backgroundColor: "#868e96",
+                                        color: "white",
+                                        padding: "4px 12px",
+                                        borderRadius: "4px",
+                                        fontSize: "14px",
+                                    }}
+                                >
+                                    {eventoSelecionado.tipo || "MODALIDADE"}
+                                </span>
+                            </div>
+
+                            <div style={{ marginBottom: "12px" }}>
+                                <strong>Data e Hora:</strong>
+                                <p style={{ margin: "4px 0", color: "#666" }}>{formatarData(eventoSelecionado.dataHora)}</p>
+                            </div>
+
+                            {eventoSelecionado.local && (
+                                <div style={{ marginBottom: "12px" }}>
+                                    <strong>Local:</strong>
+                                    <p style={{ margin: "4px 0", color: "#666" }}>{eventoSelecionado.local}</p>
+                                </div>
+                            )}
+
+                            {eventoSelecionado.descricao && (
+                                <div style={{ marginBottom: "12px" }}>
+                                    <strong>Descrição:</strong>
+                                    <p style={{ margin: "4px 0", color: "#666" }}>{eventoSelecionado.descricao}</p>
+                                </div>
+                            )}
+
+                            {eventoSelecionado.observacoes && (
+                                <div style={{ marginBottom: "12px" }}>
+                                    <strong>Observações:</strong>
+                                    <p style={{ margin: "4px 0", color: "#666" }}>{eventoSelecionado.observacoes}</p>
+                                </div>
+                            )}
+
+                            {eventoSelecionado.temAcessoCompleto && (
+                                <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid #ddd" }}>
+                                    <h3 style={{ margin: "0 0 12px 0" }}>Convocatórias</h3>
+                                    <p style={{ color: "#666", fontSize: "14px" }}>
+                                        Aqui aparecerão as convocatórias deste evento (quando disponíveis)
+                                    </p>
+                                </div>
+                            )}
+
+                            {!eventoSelecionado.temAcessoCompleto && (
+                                <div
+                                    style={{
+                                        marginTop: "20px",
+                                        padding: "12px",
+                                        backgroundColor: "#fff3bf",
+                                        borderRadius: "4px",
+                                        color: "#856404",
+                                        fontSize: "14px",
+                                    }}
+                                >
+                                    ℹ️ Este evento é de outra modalidade. Apenas informações básicas são visíveis.
+                                </div>
+                            )}
+
+                            <div style={{ marginTop: "20px", display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                                <button
+                                    onClick={fecharModal}
+                                    style={{
+                                        padding: "8px 16px",
+                                        backgroundColor: "#f1f3f5",
+                                        border: "1px solid #ddd",
+                                        borderRadius: "4px",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    Fechar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
