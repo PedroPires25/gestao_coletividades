@@ -16,6 +16,7 @@ public class EventoDAO {
         String sql = """
             SELECT e.id, e.titulo, e.descricao, e.data_hora, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
+                   e.latitude, e.longitude,
                    cm.clube_id,
                    c.nome AS clube_nome,
                    m.nome AS modalidade_nome,
@@ -47,6 +48,7 @@ public class EventoDAO {
         String sql = """
             SELECT e.id, e.titulo, e.descricao, e.data_hora, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
+                   e.latitude, e.longitude,
                    cm.clube_id,
                    c.nome AS clube_nome,
                    m.nome AS modalidade_nome
@@ -80,6 +82,7 @@ public class EventoDAO {
         String sql = """
             SELECT e.id, e.titulo, e.descricao, e.data_hora, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
+                   e.latitude, e.longitude,
                    cm.clube_id,
                    m.nome AS modalidade_nome
             FROM evento e
@@ -112,6 +115,7 @@ public class EventoDAO {
         String sql = """
             SELECT e.id, e.titulo, e.descricao, e.data_hora, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
+                   e.latitude, e.longitude,
                    cm.clube_id,
                    m.nome AS modalidade_nome
             FROM evento e
@@ -143,7 +147,8 @@ public class EventoDAO {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
             SELECT e.id, e.titulo, e.descricao, e.data_hora, e.local, e.observacoes,
-                   e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por
+                   e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
+                   e.latitude, e.longitude
             FROM evento e
             WHERE e.coletividade_atividade_id = ?
             ORDER BY e.data_hora DESC
@@ -170,8 +175,9 @@ public class EventoDAO {
     public Integer inserirEDevolverId(Evento evento) {
         String sql = """
             INSERT INTO evento (titulo, descricao, data_hora, local, observacoes, tipo,
-                                clube_modalidade_id, coletividade_atividade_id, criado_por)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                clube_modalidade_id, coletividade_atividade_id, criado_por,
+                                latitude, longitude)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = ConexoBD.getConnection();
@@ -188,6 +194,10 @@ public class EventoDAO {
             if (evento.getColetividadeAtividadeId() != null) ps.setInt(8, evento.getColetividadeAtividadeId());
             else ps.setNull(8, Types.INTEGER);
             ps.setInt(9, evento.getCriadoPor());
+            if (evento.getLatitude() != null) ps.setDouble(10, evento.getLatitude());
+            else ps.setNull(10, Types.DOUBLE);
+            if (evento.getLongitude() != null) ps.setDouble(11, evento.getLongitude());
+            else ps.setNull(11, Types.DOUBLE);
 
             ps.executeUpdate();
 
@@ -205,7 +215,8 @@ public class EventoDAO {
     public boolean atualizar(int id, Evento evento) {
         String sql = """
             UPDATE evento
-            SET titulo = ?, descricao = ?, data_hora = ?, local = ?, observacoes = ?
+            SET titulo = ?, descricao = ?, data_hora = ?, local = ?, observacoes = ?,
+                latitude = ?, longitude = ?
             WHERE id = ?
         """;
 
@@ -217,7 +228,11 @@ public class EventoDAO {
             ps.setTimestamp(3, evento.getDataHora());
             ps.setString(4, evento.getLocal());
             ps.setString(5, evento.getObservacoes());
-            ps.setInt(6, id);
+            if (evento.getLatitude() != null) ps.setDouble(6, evento.getLatitude());
+            else ps.setNull(6, Types.DOUBLE);
+            if (evento.getLongitude() != null) ps.setDouble(7, evento.getLongitude());
+            else ps.setNull(7, Types.DOUBLE);
+            ps.setInt(8, id);
 
             return ps.executeUpdate() > 0;
 
@@ -251,6 +266,10 @@ public class EventoDAO {
         row.put("clubeModalidadeId", rs.getObject("clube_modalidade_id"));
         row.put("coletividadeAtividadeId", rs.getObject("coletividade_atividade_id"));
         row.put("criadoPor", rs.getInt("criado_por"));
+        Double lat = rs.getObject("latitude") != null ? rs.getDouble("latitude") : null;
+        Double lng = rs.getObject("longitude") != null ? rs.getDouble("longitude") : null;
+        row.put("latitude", lat);
+        row.put("longitude", lng);
         tryPut(row, rs, "clubeId", "clube_id");
         tryPut(row, rs, "clubeNome", "clube_nome");
         tryPut(row, rs, "modalidadeNome", "modalidade_nome");

@@ -13,6 +13,8 @@ public class Evento {
     private Integer clubeModalidadeId;
     private Integer coletividadeAtividadeId;
     private int criadoPor;
+    private Double latitude;
+    private Double longitude;
 
     public Evento() {}
 
@@ -65,4 +67,8 @@ public class Evento {
     public void setColetividadeAtividadeId(Integer coletividadeAtividadeId) { this.coletividadeAtividadeId = coletividadeAtividadeId; }
     public int getCriadoPor() { return criadoPor; }
     public void setCriadoPor(int criadoPor) { this.criadoPor = criadoPor; }
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }
