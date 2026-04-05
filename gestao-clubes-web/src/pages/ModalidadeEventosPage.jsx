@@ -142,6 +142,7 @@ export default function ModalidadeEventosPage() {
                                         <div
                                             key={evento.id}
                                             style={{
+                                                position: "relative",
                                                 background: isMinhaModalidade
                                                     ? "rgba(40,199,111,0.10)"
                                                     : "var(--bg-input)",
@@ -154,8 +155,17 @@ export default function ModalidadeEventosPage() {
                                                 color: "var(--text)",
                                             }}
                                         >
+                                            {evento.latitude && evento.longitude && (
+                                                <div style={{ position: "absolute", top: 16, right: 20, zIndex: 1 }}>
+                                                    <MiniMap
+                                                        latitude={evento.latitude}
+                                                        longitude={evento.longitude}
+                                                        onClick={() => setViewingMap(evento)}
+                                                    />
+                                                </div>
+                                            )}
                                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ flex: 1, minWidth: 0, paddingRight: evento.latitude && evento.longitude ? 140 : 0 }}>
                                                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
                                                         {isMinhaModalidade ? (
                                                             <span className="toolbar-count" style={{ color: "var(--ok)", borderColor: "var(--ok)" }}>
@@ -178,20 +188,9 @@ export default function ModalidadeEventosPage() {
                                                         </p>
                                                     )}
 
-                                                    <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "0.875rem", color: "var(--muted)" }}>
-                                                        <div style={{ display: "flex", gap: 18, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
-                                                            <span>📅 {formatDataHora(evento.dataHora)}</span>
-                                                            {evento.local && <span>📍 {evento.local}</span>}
-                                                        </div>
-                                                        {evento.latitude && evento.longitude && (
-                                                            <div style={{ flexShrink: 0 }}>
-                                                                <MiniMap
-                                                                    latitude={evento.latitude}
-                                                                    longitude={evento.longitude}
-                                                                    onClick={() => setViewingMap(evento)}
-                                                                />
-                                                            </div>
-                                                        )}
+                                                    <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: "0.875rem", color: "var(--muted)" }}>
+                                                        <span>📅 {formatDataHora(evento.dataHora)}</span>
+                                                        {evento.local && <span>📍 {evento.local}</span>}
                                                     </div>
 
                                                     {evento.observacoes && (
