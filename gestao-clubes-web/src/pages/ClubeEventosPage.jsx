@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import MapPicker from "../components/MapPicker";
+import MiniMap from "../components/MiniMap";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById } from "../api";
 import { getEventosPorClube, listarAtletasEvento } from "../services/eventos";
@@ -176,17 +177,17 @@ export default function ClubeEventosPage() {
                                                     <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: "0.875rem", color: "var(--muted)" }}>
                                                         <span>📅 {formatDataHora(evento.dataHora)}</span>
                                                         {evento.local && <span>📍 {evento.local}</span>}
-                                                        {evento.latitude && evento.longitude && (
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-sm btn-outline"
-                                                                onClick={() => setViewingMap(evento)}
-                                                                style={{ padding: "2px 8px", fontSize: "0.8rem" }}
-                                                            >
-                                                                🗺️ Ver Mapa
-                                                            </button>
-                                                        )}
                                                     </div>
+
+                                                    {evento.latitude && evento.longitude && (
+                                                        <div style={{ marginTop: 8 }}>
+                                                            <MiniMap
+                                                                latitude={evento.latitude}
+                                                                longitude={evento.longitude}
+                                                                onClick={() => setViewingMap(evento)}
+                                                            />
+                                                        </div>
+                                                    )}
 
                                                     {evento.observacoes && (
                                                         <p className="subtle" style={{ marginTop: 6, fontStyle: "italic" }}>

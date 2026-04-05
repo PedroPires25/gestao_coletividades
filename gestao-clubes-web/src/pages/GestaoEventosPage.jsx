@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import MapPicker from "../components/MapPicker";
+import MiniMap from "../components/MiniMap";
 import { useAuth } from "../auth/AuthContext";
 import * as eventosService from "../services/eventos";
 import { getModalidadesByClube, getAtletasByClubeModalidade } from "../services/atletas";
@@ -590,14 +591,13 @@ export default function GestaoEventosPage() {
                                         <td>
                                             {ev.local}
                                             {ev.latitude && ev.longitude && (
-                                                <button
-                                                    className="btn btn-sm btn-outline"
-                                                    style={{ marginLeft: "0.5rem" }}
-                                                    onClick={() => setViewingMap(ev)}
-                                                    title="Ver no mapa"
-                                                >
-                                                    📍
-                                                </button>
+                                                <div style={{ marginTop: 6 }}>
+                                                    <MiniMap
+                                                        latitude={ev.latitude}
+                                                        longitude={ev.longitude}
+                                                        onClick={() => setViewingMap(ev)}
+                                                    />
+                                                </div>
                                             )}
                                         </td>
                                         <td>
