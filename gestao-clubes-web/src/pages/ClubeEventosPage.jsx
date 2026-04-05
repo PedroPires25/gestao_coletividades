@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
+import MapPicker from "../components/MapPicker";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById } from "../api";
 import { getEventosPorClube, listarAtletasEvento } from "../services/eventos";
@@ -26,6 +27,7 @@ export default function ClubeEventosPage() {
     const [expandedId, setExpandedId] = useState(null);
     const [convocadosMap, setConvocadosMap] = useState({});
     const [loadingConvId, setLoadingConvId] = useState(null);
+    const [viewingMap, setViewingMap] = useState(null);
 
     const carregar = useCallback(async () => {
         if (!clubeId) return;
@@ -174,6 +176,16 @@ export default function ClubeEventosPage() {
                                                     <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: "0.875rem", color: "var(--muted)" }}>
                                                         <span>📅 {formatDataHora(evento.dataHora)}</span>
                                                         {evento.local && <span>📍 {evento.local}</span>}
+                                                        {evento.latitude && evento.longitude && (
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-sm btn-outline"
+                                                                onClick={() => setViewingMap(evento)}
+                                                                style={{ padding: "2px 8px", fontSize: "0.8rem" }}
+                                                            >
+                                                                🗺️ Ver Mapa
+                                                            </button>
+                                                        )}
                                                     </div>
 
                                                     {evento.observacoes && (
@@ -240,6 +252,24 @@ export default function ClubeEventosPage() {
                     </section>
                 </div>
             </div>
+
+            {viewingMap && (
+                <div className="modal-overlay" onClick={() => setViewingMap(null)}>
+                    <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
+                        <div className="modal-header">
+                            <h3>📍 {viewingMap.titulo} — {viewingMap.local}</h3>
+                            <button className="modal-close" onClick={() => setViewingMap(null)}>✕</button>
+                        </div>
+                        <div className="modal-body">
+                            <MapPicker
+                                latitude={viewingMap.latitude}
+                                longitude={viewingMap.longitude}
+                                readOnly
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
