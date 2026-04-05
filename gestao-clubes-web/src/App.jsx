@@ -182,6 +182,15 @@ export default function App() {
                 />
 
                 <Route
+                    path="/eventos"
+                    element={
+                        <RequireAuth>
+                            <EventosPage />
+                        </RequireAuth>
+                    }
+                />
+
+                <Route
                     path="/clubes/:clubeId/clube-modalidade/:clubeModalidadeId/eventos"
                     element={
                         <RequireAuth>
