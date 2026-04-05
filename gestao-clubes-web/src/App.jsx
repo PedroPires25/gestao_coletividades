@@ -24,6 +24,7 @@ import ClubeAtletasModalidadePage from "./pages/ClubeAtletasModalidadePage";
 import ClubeStaffPage from "./pages/ClubeStaffPage";
 import ClubeStaffModalidadePage from "./pages/ClubeStaffModalidadePage";
 import ClubeModalidadesPage from "./pages/ClubeModalidadesPage";
+import ClubeEventosPage from "./pages/ClubeEventosPage";
 import EventosPage from "./pages/EventosPage";
 import GestaoEventosPage from "./pages/GestaoEventosPage";
 import ModalidadeEventosPage from "./pages/ModalidadeEventosPage";
@@ -177,6 +178,15 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <ClubeStaffModalidadePage />
+                        </RequireAuth>
+                    }
+                />
+
+                <Route
+                    path="/clubes/:clubeId/eventos"
+                    element={
+                        <RequireAuth>
+                            <ClubeEventosPage />
                         </RequireAuth>
                     }
                 />

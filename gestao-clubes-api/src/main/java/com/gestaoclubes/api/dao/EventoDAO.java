@@ -284,6 +284,79 @@ public class EventoDAO {
         return null;
     }
 
+    public List<Map<String, Object>> listarPorClube(Integer clubeId) {
+        List<Map<String, Object>> lista = new ArrayList<>();
+
+        String sql = """
+            SELECT 
+                e.id, e.titulo, e.descricao, e.data_hora, e.local, 
+                e.observacoes, e.tipo, e.clube_modalidade_id, 
+                e.coletividade_atividade_id,
+                cm.id as cm_id, cm.clube_id, cm.modalidade_id, cm.epoca,
+                m.id as m_id, m.nome as modalidade_nome,
+                c.id as clube_id, c.nome as clube_nome
+            FROM evento e
+            LEFT JOIN clube_modalidade cm ON e.clube_modalidade_id = cm.id
+            LEFT JOIN modalidade m ON cm.modalidade_id = m.id
+            LEFT JOIN clube c ON cm.clube_id = c.id
+            WHERE cm.clube_id = ? OR c.id = ?
+            ORDER BY e.data_hora DESC
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, clubeId);
+            ps.setInt(2, clubeId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("id", rs.getInt("id"));
+                    map.put("titulo", rs.getString("titulo"));
+                    map.put("descricao", rs.getString("descricao"));
+                    
+                    Timestamp ts = rs.getTimestamp("data_hora");
+                    if (ts != null) {
+                        map.put("dataHora", ts.toLocalDateTime());
+                    }
+                    
+                    map.put("local", rs.getString("local"));
+                    map.put("observacoes", rs.getString("observacoes"));
+                    map.put("tipo", rs.getString("tipo"));
+                    
+                    Integer cmId = rs.getInt("cm_id");
+                    if (!rs.wasNull()) {
+                        Map<String, Object> cmMap = new LinkedHashMap<>();
+                        cmMap.put("id", cmId);
+                        cmMap.put("clubeId", rs.getInt("clube_id"));
+                        cmMap.put("modalidadeId", rs.getInt("modalidade_id"));
+                        cmMap.put("epoca", rs.getString("epoca"));
+                        
+                        Map<String, Object> modalidadeMap = new LinkedHashMap<>();
+                        modalidadeMap.put("id", rs.getInt("m_id"));
+                        modalidadeMap.put("nome", rs.getString("modalidade_nome"));
+                        cmMap.put("modalidade", modalidadeMap);
+                        
+                        Map<String, Object> clubeMap = new LinkedHashMap<>();
+                        clubeMap.put("id", rs.getInt("clube_id"));
+                        clubeMap.put("nome", rs.getString("clube_nome"));
+                        cmMap.put("clube", clubeMap);
+                        
+                        map.put("clubeModalidade", cmMap);
+                    }
+                    
+                    lista.add(map);
+                }
+            }
+
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Erro ao listar eventos por clube", e);
+        }
+
+        return lista;
+    }
+
     private Evento mapResultSetToEvento(ResultSet rs) throws java.sql.SQLException {
         Evento evento = new Evento();
         evento.setId(rs.getInt("id"));

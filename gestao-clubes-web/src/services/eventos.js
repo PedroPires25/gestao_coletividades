@@ -70,6 +70,10 @@ export async function getEventosPorClubeModalidade(clubeModalidadeId) {
     return http(`/eventos?clubeModalidadeId=${clubeModalidadeId}`);
 }
 
+export async function getEventosPorClube(clubeId) {
+    return http(`/eventos/clube/${clubeId}`);
+}
+
 export async function listarMeusEventos(clubeId) {
     // For now, just load all events and filter client-side
     // In the future, this could be optimized with a backend filter
