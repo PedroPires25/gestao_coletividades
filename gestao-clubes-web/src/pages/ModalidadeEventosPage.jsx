@@ -166,7 +166,7 @@ export default function ModalidadeEventosPage() {
                                             )}
                                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
                                                 <div style={{ flex: 1, minWidth: 0, paddingRight: evento.latitude && evento.longitude ? 140 : 0 }}>
-                                                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                                                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8, alignItems: "center" }}>
                                                         {isMinhaModalidade ? (
                                                             <span className="toolbar-count" style={{ color: "var(--ok)", borderColor: "var(--ok)" }}>
                                                                 ⭐ {evento.modalidadeNome || "A tua modalidade"}
@@ -175,6 +175,16 @@ export default function ModalidadeEventosPage() {
                                                             <span className="toolbar-count" style={{ opacity: 0.6 }}>
                                                                 {evento.modalidadeNome || "Outra modalidade"}
                                                             </span>
+                                                        )}
+                                                        {isMinhaModalidade && (
+                                                            <button
+                                                                type="button"
+                                                                className={isExpanded ? "btn btn-primary btn-sm" : "btn btn-secondary btn-sm"}
+                                                                onClick={() => toggleConvocados(evento.id)}
+                                                                style={{ whiteSpace: "nowrap" }}
+                                                            >
+                                                                {isExpanded ? "▲ Fechar" : "▼ Convocados"}
+                                                            </button>
                                                         )}
                                                     </div>
 
@@ -199,17 +209,6 @@ export default function ModalidadeEventosPage() {
                                                         </p>
                                                     )}
                                                 </div>
-
-                                                {isMinhaModalidade && (
-                                                    <button
-                                                        type="button"
-                                                        className={isExpanded ? "btn btn-primary btn-sm" : "btn btn-secondary btn-sm"}
-                                                        onClick={() => toggleConvocados(evento.id)}
-                                                        style={{ whiteSpace: "nowrap", flexShrink: 0 }}
-                                                    >
-                                                        {isExpanded ? "▲ Fechar" : "▼ Convocados"}
-                                                    </button>
-                                                )}
                                             </div>
 
                                             {isMinhaModalidade && isExpanded && (
