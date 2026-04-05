@@ -8,12 +8,14 @@ import modalidadesIcon from "../assets/modalidades.svg";
 import atletasIcon from "../assets/atletas.svg";
 import staffIcon from "../assets/staff.svg";
 import transferenciasIcon from "../assets/transferencias.svg";
+import eventosIcon from "../assets/eventos.svg";
 
 const QUICK_ICONS = {
     "Modalidades do Clube": modalidadesIcon,
     "Atletas": atletasIcon,
     "Staff": staffIcon,
     "Transferências": transferenciasIcon,
+    "Eventos": eventosIcon,
 };
 
 export default function ClubeHomePage() {
@@ -81,6 +83,7 @@ export default function ClubeHomePage() {
         { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
         { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
         { label: "Staff", to: `/clubes/${clubeId}/staff` },
+        { label: "Eventos", to: `/clubes/${clubeId}/eventos` },
         { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
     ];
 
@@ -89,6 +92,7 @@ export default function ClubeHomePage() {
         "icon-orange",
         "icon-red",
         "icon-green",
+        "icon-purple",
     ];
 
     return (
