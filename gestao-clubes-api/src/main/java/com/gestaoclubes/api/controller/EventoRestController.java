@@ -214,6 +214,41 @@ public class EventoRestController {
         }
     }
 
+    @GetMapping("/clube/{clubeId}")
+    public ResponseEntity<List<Map<String, Object>>> listarPorClube(@PathVariable Integer clubeId) {
+        try {
+            String currentRole = SecurityUtils.currentRole();
+            Integer currentModalidadeId = SecurityUtils.currentModalidadeId();
+            
+            List<Map<String, Object>> eventos = eventoDAO.listarPorClube(clubeId);
+            
+            // Filter and add access information
+            List<Map<String, Object>> resultado = eventos.stream().map(evento -> {
+                Map<String, Object> eventoMap = new LinkedHashMap<>(evento);
+                
+                // Check if user has access to convocatories
+                boolean temAcessoCompleto = verificarAcessoCompleto(currentRole, currentModalidadeId, evento);
+                eventoMap.put("temAcessoCompleto", temAcessoCompleto);
+                
+                // Add modality info for the event
+                if (evento.containsKey("clubeModalidade") && evento.get("clubeModalidade") != null) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> cmMap = (Map<String, Object>) evento.get("clubeModalidade");
+                    Integer eventModalidadeId = (Integer) cmMap.get("modalidadeId");
+                    eventoMap.put("eventoModalidadeId", eventModalidadeId);
+                }
+                
+                return eventoMap;
+            }).collect(Collectors.toList());
+            
+            return ResponseEntity.ok(resultado);
+            
+        } catch (Exception e) {
+            logger.severe("Erro ao listar eventos do clube: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     /**
      * Verifica se o utilizador tem acesso completo ao evento (incluindo convocatórias)
      * - ADMIN: sempre tem acesso completo
