@@ -737,6 +737,8 @@ CREATE TABLE IF NOT EXISTS evento (
   clube_modalidade_id INT NULL,
   coletividade_atividade_id INT NULL,
   criado_por INT NOT NULL,
+  latitude DECIMAL(10,7) NULL,
+  longitude DECIMAL(10,7) NULL,
 
   CONSTRAINT fk_evento_cm
     FOREIGN KEY (clube_modalidade_id) REFERENCES clube_modalidade(id)
@@ -796,7 +798,12 @@ ALTER TABLE evento
     ON DELETE RESTRICT ON UPDATE CASCADE,
   ADD KEY idx_evento_ca (coletividade_atividade_id);
 
--- 2. Create evento_inscrito table
+-- 2. Add latitude/longitude columns to evento table
+ALTER TABLE evento
+  ADD COLUMN latitude DECIMAL(10,7) NULL AFTER criado_por,
+  ADD COLUMN longitude DECIMAL(10,7) NULL AFTER latitude;
+
+-- 3. Create evento_inscrito table
 CREATE TABLE IF NOT EXISTS evento_inscrito (
   evento_id INT NOT NULL,
   inscrito_id INT NOT NULL,

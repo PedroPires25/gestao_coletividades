@@ -99,8 +99,13 @@ public class GestaoEventoRestController {
 
         int criadoPor = SecurityUtils.currentUserId();
 
+        Double latitude = body.get("latitude") != null ? ((Number) body.get("latitude")).doubleValue() : null;
+        Double longitude = body.get("longitude") != null ? ((Number) body.get("longitude")).doubleValue() : null;
+
         Evento evento = new Evento(titulo, descricao, dataHora, local, observacoes, tipo,
                 clubeModalidadeId, coletividadeAtividadeId, criadoPor);
+        evento.setLatitude(latitude);
+        evento.setLongitude(longitude);
 
         Integer eventoId = eventoDAO.inserirEDevolverId(evento);
         if (eventoId == null) {
@@ -161,6 +166,11 @@ public class GestaoEventoRestController {
         Evento eventoAtualizado = new Evento(id, titulo, descricao, dataHora, local, observacoes,
                 tipo, clubeModalidadeId, coletividadeAtividadeId,
                 ((Number) existente.get("criadoPor")).intValue());
+
+        Double latitude = body.get("latitude") != null ? ((Number) body.get("latitude")).doubleValue() : null;
+        Double longitude = body.get("longitude") != null ? ((Number) body.get("longitude")).doubleValue() : null;
+        eventoAtualizado.setLatitude(latitude);
+        eventoAtualizado.setLongitude(longitude);
 
         boolean ok = eventoDAO.atualizar(id, eventoAtualizado);
         if (!ok) {

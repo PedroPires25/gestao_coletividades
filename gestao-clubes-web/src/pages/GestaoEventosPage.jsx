@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
+import MapPicker from "../components/MapPicker";
 import { useAuth } from "../auth/AuthContext";
 import * as eventosService from "../services/eventos";
 import { getModalidadesByClube, getAtletasByClubeModalidade } from "../services/atletas";
@@ -57,6 +58,8 @@ const FORM_EMPTY = {
     coletividadeId: "",
     coletividadeAtividadeId: "",
     convocados: [],
+    latitude: null,
+    longitude: null,
 };
 
 export default function GestaoEventosPage() {
@@ -87,6 +90,8 @@ export default function GestaoEventosPage() {
 
     // Convocados view modal
     const [viewingConvocados, setViewingConvocados] = useState(null);
+    // Map view modal
+    const [viewingMap, setViewingMap] = useState(null);
     const [convocadosList, setConvocadosList] = useState([]);
 
     const canManage = role === "ADMIN" || role === "SECRETARIO";
@@ -192,6 +197,8 @@ export default function GestaoEventosPage() {
             coletividadeId: "",
             coletividadeAtividadeId: evento.coletividadeAtividadeId || "",
             convocados: convocadosExistentes,
+            latitude: evento.latitude || null,
+            longitude: evento.longitude || null,
         });
 
         setShowForm(true);
@@ -213,6 +220,8 @@ export default function GestaoEventosPage() {
                 clubeModalidadeId: form.tipo === "MODALIDADE" ? Number(form.clubeModalidadeId) || null : null,
                 coletividadeAtividadeId: form.tipo === "ATIVIDADE" ? Number(form.coletividadeAtividadeId) || null : null,
                 convocados: form.convocados,
+                latitude: form.latitude || null,
+                longitude: form.longitude || null,
             };
 
             if (editingId) {
@@ -316,7 +325,7 @@ export default function GestaoEventosPage() {
                                 <div className="form-group">
                                     <label>Título *</label>
                                     <input
-                                        className="form-control"
+                                        className="input"
                                         value={form.titulo}
                                         onChange={e => setForm(p => ({ ...p, titulo: e.target.value }))}
                                         required
@@ -328,7 +337,7 @@ export default function GestaoEventosPage() {
                                     <label>Data e Hora *</label>
                                     <input
                                         type="datetime-local"
-                                        className="form-control"
+                                        className="input"
                                         value={form.dataHora}
                                         onChange={e => setForm(p => ({ ...p, dataHora: e.target.value }))}
                                         required
@@ -339,10 +348,27 @@ export default function GestaoEventosPage() {
                                 <div className="form-group">
                                     <label>Local *</label>
                                     <input
-                                        className="form-control"
+                                        className="input"
                                         value={form.local}
                                         onChange={e => setForm(p => ({ ...p, local: e.target.value }))}
                                         required
+                                    />
+                                </div>
+
+                                {/* Mapa */}
+                                <div style={{ gridColumn: "1 / -1" }}>
+                                    <label>📍 Localização no Mapa</label>
+                                    <MapPicker
+                                        latitude={form.latitude}
+                                        longitude={form.longitude}
+                                        onLocationChange={(lat, lng, address) => {
+                                            setForm(p => ({
+                                                ...p,
+                                                latitude: lat,
+                                                longitude: lng,
+                                                ...(address ? { local: address } : {}),
+                                            }));
+                                        }}
                                     />
                                 </div>
 
@@ -373,7 +399,7 @@ export default function GestaoEventosPage() {
                                         <div className="form-group">
                                             <label>Clube *</label>
                                             <select
-                                                className="form-control"
+                                                className="input"
                                                 value={form.clubeId}
                                                 onChange={e => setForm(p => ({ ...p, clubeId: e.target.value, clubeModalidadeId: "", convocados: [] }))}
                                                 required
@@ -387,7 +413,7 @@ export default function GestaoEventosPage() {
                                         <div className="form-group">
                                             <label>Modalidade *</label>
                                             <select
-                                                className="form-control"
+                                                className="input"
                                                 value={form.clubeModalidadeId}
                                                 onChange={e => setForm(p => ({ ...p, clubeModalidadeId: e.target.value, convocados: [] }))}
                                                 required
@@ -408,7 +434,7 @@ export default function GestaoEventosPage() {
                                         <div className="form-group">
                                             <label>Coletividade *</label>
                                             <select
-                                                className="form-control"
+                                                className="input"
                                                 value={form.coletividadeId}
                                                 onChange={e => setForm(p => ({ ...p, coletividadeId: e.target.value, coletividadeAtividadeId: "", convocados: [] }))}
                                                 required
@@ -422,7 +448,7 @@ export default function GestaoEventosPage() {
                                         <div className="form-group">
                                             <label>Atividade *</label>
                                             <select
-                                                className="form-control"
+                                                className="input"
                                                 value={form.coletividadeAtividadeId}
                                                 onChange={e => setForm(p => ({ ...p, coletividadeAtividadeId: e.target.value, convocados: [] }))}
                                                 required
@@ -441,7 +467,7 @@ export default function GestaoEventosPage() {
                                 <div className="form-group" style={{ gridColumn: "1 / -1" }}>
                                     <label>Descrição</label>
                                     <textarea
-                                        className="form-control"
+                                        className="input"
                                         rows={3}
                                         value={form.descricao}
                                         onChange={e => setForm(p => ({ ...p, descricao: e.target.value }))}
@@ -452,7 +478,7 @@ export default function GestaoEventosPage() {
                                 <div className="form-group" style={{ gridColumn: "1 / -1" }}>
                                     <label>Observações</label>
                                     <textarea
-                                        className="form-control"
+                                        className="input"
                                         rows={2}
                                         value={form.observacoes}
                                         onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))}
@@ -468,7 +494,7 @@ export default function GestaoEventosPage() {
                                     </h3>
                                     <div style={{ display: "flex", gap: "1rem", marginBottom: "0.75rem", alignItems: "center" }}>
                                         <input
-                                            className="form-control"
+                                            className="input"
                                             placeholder="Filtrar por nome..."
                                             value={convocadosSearch}
                                             onChange={e => setConvocadosSearch(e.target.value)}
@@ -561,7 +587,19 @@ export default function GestaoEventosPage() {
                                                 : `${ev.coletividadeNome || ""} — ${ev.atividadeNome || ""}`}
                                         </td>
                                         <td>{formatDataHora(ev.dataHora)}</td>
-                                        <td>{ev.local}</td>
+                                        <td>
+                                            {ev.local}
+                                            {ev.latitude && ev.longitude && (
+                                                <button
+                                                    className="btn btn-sm btn-outline"
+                                                    style={{ marginLeft: "0.5rem" }}
+                                                    onClick={() => setViewingMap(ev)}
+                                                    title="Ver no mapa"
+                                                >
+                                                    📍
+                                                </button>
+                                            )}
+                                        </td>
                                         <td>
                                             <button
                                                 className="btn btn-sm btn-outline"
@@ -617,6 +655,24 @@ export default function GestaoEventosPage() {
                                     ))}
                                 </ul>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* ── Map View Modal ── */}
+            {viewingMap && (
+                <div className="modal-overlay" onClick={() => setViewingMap(null)}>
+                    <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
+                        <div className="modal-header">
+                            <h3>📍 {viewingMap.titulo} — {viewingMap.local}</h3>
+                            <button className="modal-close" onClick={() => setViewingMap(null)}>✕</button>
+                        </div>
+                        <div className="modal-body">
+                            <MapPicker
+                                latitude={viewingMap.latitude}
+                                longitude={viewingMap.longitude}
+                                readOnly
+                            />
                         </div>
                     </div>
                 </div>
