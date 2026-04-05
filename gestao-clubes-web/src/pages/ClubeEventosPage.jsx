@@ -1,387 +1,245 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById } from "../api";
-import { getEventosPorClube } from "../services/eventos";
-
+import { getEventosPorClube, listarAtletasEvento } from "../services/eventos";
 import eventosIcon from "../assets/eventos.svg";
-import defaultIcon from "../assets/default.svg";
+
+function formatDataHora(val) {
+    if (!val) return "-";
+    const d = new Date(String(val).replace(" ", "T"));
+    if (Number.isNaN(d.getTime())) return val;
+    const p = (n) => String(n).padStart(2, "0");
+    return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
 export default function ClubeEventosPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, user } = useAuth();
+    const { logout, modalidadeId } = useAuth(); // modalidadeId = clube_modalidade.id
 
     const [clube, setClube] = useState(null);
     const [eventos, setEventos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState(null);
-    const [eventoSelecionado, setEventoSelecionado] = useState(null);
-    const [showModal, setShowModal] = useState(false);
+    const [expandedId, setExpandedId] = useState(null);
+    const [convocadosMap, setConvocadosMap] = useState({});
+    const [loadingConvId, setLoadingConvId] = useState(null);
 
-    useEffect(() => {
-        carregarDados();
-    }, [clubeId]);
-
-    async function carregarDados() {
+    const carregar = useCallback(async () => {
+        if (!clubeId) return;
+        setErro(null);
+        setLoading(true);
         try {
-            setLoading(true);
-            setErro(null);
-
-            const clubeData = await getClubeById(clubeId);
+            const [clubeData, eventosData] = await Promise.all([
+                getClubeById(parseInt(clubeId)),
+                getEventosPorClube(clubeId),
+            ]);
             setClube(clubeData);
-
-            const eventosData = await getEventosPorClube(clubeId);
-            setEventos(eventosData || []);
+            setEventos(Array.isArray(eventosData) ? eventosData : []);
         } catch (err) {
-            console.error(err);
-            setErro("Erro ao carregar dados: " + err.message);
+            setErro("Erro ao carregar dados: " + (err.message || err));
         } finally {
             setLoading(false);
         }
-    }
+    }, [clubeId]);
 
-    function abrirDetalhes(evento) {
-        setEventoSelecionado(evento);
-        setShowModal(true);
-    }
+    useEffect(() => { carregar(); }, [carregar]);
 
-    function fecharModal() {
-        setShowModal(false);
-        setEventoSelecionado(null);
-    }
-
-    function formatarData(dataHora) {
-        if (!dataHora) return "";
+    async function toggleConvocados(eventoId) {
+        if (expandedId === eventoId) { setExpandedId(null); return; }
+        setExpandedId(eventoId);
+        if (convocadosMap[eventoId]) return;
+        setLoadingConvId(eventoId);
         try {
-            const data = new Date(dataHora);
-            return data.toLocaleString("pt-PT", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-            });
+            const dados = await listarAtletasEvento(eventoId);
+            setConvocadosMap((prev) => ({ ...prev, [eventoId]: Array.isArray(dados) ? dados : [] }));
         } catch {
-            return dataHora;
+            setConvocadosMap((prev) => ({ ...prev, [eventoId]: [] }));
+        } finally {
+            setLoadingConvId(null);
         }
     }
 
-    function verificarAcessoCompleto(evento) {
-        if (!user || !user.modalidadeId) {
-            return false;
-        }
-
-        if (evento.eventoModalidadeId && evento.eventoModalidadeId === user.modalidadeId) {
-            return true;
-        }
-
-        return evento.temAcessoCompleto === true;
-    }
-
-    function isEventoDaMinhaModalidade(evento) {
-        return verificarAcessoCompleto(evento);
-    }
+    const menuItems = [
+        { label: "Voltar ao Clube", onClick: () => navigate(`/clubes/${clubeId}`) },
+        { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
+    ];
 
     if (loading) {
         return (
-            <div style={{ display: "flex", height: "100vh" }}>
-                <SideMenu />
-                <div style={{ flex: 1, padding: "20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <p>Carregando eventos...</p>
+            <div>
+                <SideMenu title={clube?.nome || "Clube"} subtitle="Eventos do Clube" logoHref="/menu" logoSrc="/logo.png" items={menuItems} />
+                <div className="container" style={{ paddingTop: 24 }}>
+                    <p>A carregar...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div style={{ display: "flex", height: "100vh" }}>
-            <SideMenu title={`${clube?.nome || "Clube"}`} />
-            <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
-                <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
-                        <div>
-                            <h1 style={{ margin: "0 0 8px 0" }}>Eventos</h1>
-                            {clube && <p style={{ margin: 0, color: "#666", fontSize: "16px" }}>Clube: {clube.nome}</p>}
+        <>
+            <SideMenu
+                title={clube?.nome || "Clube"}
+                subtitle="Eventos do Clube"
+                logoHref="/menu"
+                logoSrc="/logo.png"
+                items={menuItems}
+            />
+
+            <div className="container" style={{ paddingTop: 24 }}>
+                <div className="page-title page-title-with-icon">
+                    <div className="page-title-main-wrap">
+                        <span className="page-title-icon-circle">
+                            <img src={eventosIcon} alt="Eventos" className="page-title-icon" />
+                        </span>
+                        <div className="page-title-texts">
+                            <h1>Eventos do Clube</h1>
                         </div>
-                        <button
-                            onClick={() => navigate(`/clubes/${clubeId}`)}
-                            style={{
-                                padding: "8px 16px",
-                                backgroundColor: "#228be6",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "4px",
-                                cursor: "pointer",
-                                marginRight: "8px",
-                            }}
-                        >
-                            Voltar ao Clube
-                        </button>
                     </div>
-
-                    {erro && (
-                        <div style={{ padding: "12px", backgroundColor: "#ffe0e0", color: "#c92a2a", borderRadius: "4px", marginBottom: "20px" }}>
-                            {erro}
-                        </div>
-                    )}
-
-                    {eventos.length === 0 ? (
-                        <div style={{ padding: "20px", backgroundColor: "#f5f5f5", borderRadius: "4px", textAlign: "center" }}>
-                            <p>Nenhum evento encontrado para este clube</p>
-                        </div>
-                    ) : (
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "20px" }}>
-                            {eventos.map((evento) => {
-                                const isMeuEvento = isEventoDaMinhaModalidade(evento);
-                                const modalidade = evento.clubeModalidade?.modalidade?.nome || "Sem modalidade";
-
-                                return (
-                                    <div
-                                        key={evento.id}
-                                        onClick={() => abrirDetalhes(evento)}
-                                        style={{
-                                            border: isMeuEvento ? "3px solid #51cf66" : "1px solid #ddd",
-                                            borderRadius: "8px",
-                                            padding: "16px",
-                                            cursor: "pointer",
-                                            backgroundColor: isMeuEvento ? "#f1fdf4" : "#fff",
-                                            boxShadow: isMeuEvento ? "0 2px 8px rgba(81, 207, 102, 0.2)" : "0 2px 4px rgba(0,0,0,0.1)",
-                                            transition: "all 0.3s ease",
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.boxShadow = isMeuEvento
-                                                ? "0 4px 12px rgba(81, 207, 102, 0.3)"
-                                                : "0 4px 8px rgba(0,0,0,0.15)";
-                                            e.currentTarget.style.transform = "translateY(-2px)";
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.boxShadow = isMeuEvento
-                                                ? "0 2px 8px rgba(81, 207, 102, 0.2)"
-                                                : "0 2px 4px rgba(0,0,0,0.1)";
-                                            e.currentTarget.style.transform = "translateY(0)";
-                                        }}
-                                    >
-                                        <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "12px" }}>
-                                            <img
-                                                src={eventosIcon || defaultIcon}
-                                                alt="Evento"
-                                                style={{ width: "40px", height: "40px" }}
-                                            />
-                                            <div style={{ flex: 1 }}>
-                                                <h3 style={{ margin: "0 0 4px 0", fontSize: "16px" }}>{evento.titulo}</h3>
-                                                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                                                    <span
-                                                        style={{
-                                                            display: "inline-block",
-                                                            backgroundColor: "#868e96",
-                                                            color: "white",
-                                                            padding: "2px 8px",
-                                                            borderRadius: "4px",
-                                                            fontSize: "12px",
-                                                        }}
-                                                    >
-                                                        {modalidade}
-                                                    </span>
-                                                    {isMeuEvento && (
-                                                        <span
-                                                            style={{
-                                                                display: "inline-block",
-                                                                backgroundColor: "#51cf66",
-                                                                color: "white",
-                                                                padding: "2px 8px",
-                                                                borderRadius: "4px",
-                                                                fontSize: "12px",
-                                                                fontWeight: "bold",
-                                                            }}
-                                                        >
-                                                            ⭐ Minha Modalidade
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <p style={{ margin: "8px 0", fontSize: "14px", color: "#666" }}>
-                                            <strong>📅 Data:</strong> {formatarData(evento.dataHora)}
-                                        </p>
-
-                                        {evento.local && (
-                                            <p style={{ margin: "8px 0", fontSize: "14px", color: "#666" }}>
-                                                <strong>📍 Local:</strong> {evento.local}
-                                            </p>
-                                        )}
-
-                                        {evento.descricao && (
-                                            <p style={{ margin: "8px 0", fontSize: "14px", color: "#666" }}>
-                                                <strong>ℹ️ Descrição:</strong> {evento.descricao.substring(0, 80)}
-                                                {evento.descricao.length > 80 ? "..." : ""}
-                                            </p>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                    <div className="hint">{clube?.nome || ""}</div>
                 </div>
 
-                {/* Modal de Detalhes */}
-                {showModal && eventoSelecionado && (
-                    <div
-                        style={{
-                            position: "fixed",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            backgroundColor: "rgba(0,0,0,0.5)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            zIndex: 1000,
-                        }}
-                        onClick={fecharModal}
-                    >
-                        <div
-                            style={{
-                                backgroundColor: "white",
-                                padding: "24px",
-                                borderRadius: "8px",
-                                maxWidth: "600px",
-                                width: "90%",
-                                maxHeight: "80vh",
-                                overflowY: "auto",
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                                <h2 style={{ margin: 0 }}>{eventoSelecionado.titulo}</h2>
-                                <button
-                                    onClick={fecharModal}
-                                    style={{
-                                        backgroundColor: "transparent",
-                                        border: "none",
-                                        fontSize: "24px",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    ✕
-                                </button>
-                            </div>
+                {erro && <div className="alert error">{erro}</div>}
 
-                            <div style={{ marginBottom: "16px" }}>
-                                {isEventoDaMinhaModalidade(eventoSelecionado) && (
-                                    <span
-                                        style={{
-                                            display: "inline-block",
-                                            backgroundColor: "#51cf66",
-                                            color: "white",
-                                            padding: "4px 12px",
-                                            borderRadius: "4px",
-                                            fontSize: "14px",
-                                            marginRight: "8px",
-                                            fontWeight: "bold",
-                                        }}
-                                    >
-                                        ⭐ Acesso Completo
-                                    </span>
-                                )}
-                                <span
-                                    style={{
-                                        display: "inline-block",
-                                        backgroundColor: "#868e96",
-                                        color: "white",
-                                        padding: "4px 12px",
-                                        borderRadius: "4px",
-                                        fontSize: "14px",
-                                        marginRight: "8px",
-                                    }}
-                                >
-                                    {eventoSelecionado.clubeModalidade?.modalidade?.nome || "Sem modalidade"}
-                                </span>
-                                <span
-                                    style={{
-                                        display: "inline-block",
-                                        backgroundColor: "#5c7cfa",
-                                        color: "white",
-                                        padding: "4px 12px",
-                                        borderRadius: "4px",
-                                        fontSize: "14px",
-                                    }}
-                                >
-                                    {eventoSelecionado.tipo || "MODALIDADE"}
-                                </span>
-                            </div>
-
-                            <div style={{ marginBottom: "12px" }}>
-                                <strong>📅 Data e Hora:</strong>
-                                <p style={{ margin: "4px 0", color: "#666" }}>{formatarData(eventoSelecionado.dataHora)}</p>
-                            </div>
-
-                            {eventoSelecionado.local && (
-                                <div style={{ marginBottom: "12px" }}>
-                                    <strong>📍 Local:</strong>
-                                    <p style={{ margin: "4px 0", color: "#666" }}>{eventoSelecionado.local}</p>
-                                </div>
-                            )}
-
-                            {eventoSelecionado.descricao && (
-                                <div style={{ marginBottom: "12px" }}>
-                                    <strong>ℹ️ Descrição:</strong>
-                                    <p style={{ margin: "4px 0", color: "#666" }}>{eventoSelecionado.descricao}</p>
-                                </div>
-                            )}
-
-                            {eventoSelecionado.observacoes && (
-                                <div style={{ marginBottom: "12px" }}>
-                                    <strong>📝 Observações:</strong>
-                                    <p style={{ margin: "4px 0", color: "#666" }}>{eventoSelecionado.observacoes}</p>
-                                </div>
-                            )}
-
-                            {isEventoDaMinhaModalidade(eventoSelecionado) && (
-                                <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid #ddd" }}>
-                                    <h3 style={{ margin: "0 0 12px 0" }}>👥 Convocatórias</h3>
-                                    <p style={{ color: "#666", fontSize: "14px" }}>
-                                        Aqui aparecerão as convocatórias deste evento (quando disponíveis)
-                                    </p>
-                                </div>
-                            )}
-
-                            {!isEventoDaMinhaModalidade(eventoSelecionado) && (
-                                <div
-                                    style={{
-                                        marginTop: "20px",
-                                        padding: "12px",
-                                        backgroundColor: "#fff3bf",
-                                        borderRadius: "4px",
-                                        color: "#856404",
-                                        fontSize: "14px",
-                                    }}
-                                >
-                                    🔒 Este evento é de outra modalidade. Apenas informações básicas são visíveis.
-                                </div>
-                            )}
-
-                            <div style={{ marginTop: "20px", display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                                <button
-                                    onClick={fecharModal}
-                                    style={{
-                                        padding: "8px 16px",
-                                        backgroundColor: "#f1f3f5",
-                                        border: "1px solid #ddd",
-                                        borderRadius: "4px",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    Fechar
-                                </button>
+                <div className="stack-sections">
+                    <section className="card">
+                        <div className="modalidades-toolbar">
+                            <div className="toolbar-title-group">
+                                <h2>Eventos</h2>
+                                <span className="toolbar-count">{eventos.length}</span>
                             </div>
                         </div>
-                    </div>
-                )}
+
+                        {modalidadeId && (
+                            <p className="subtle">
+                                Os eventos marcados com ⭐ são da tua modalidade — tens acesso à lista de convocados.
+                            </p>
+                        )}
+
+                        {eventos.length === 0 ? (
+                            <p className="subtle">Não existem eventos registados para este clube.</p>
+                        ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                                {eventos.map((evento) => {
+                                    const isMinhaModalidade =
+                                        modalidadeId != null &&
+                                        evento.clubeModalidadeId != null &&
+                                        Number(evento.clubeModalidadeId) === Number(modalidadeId);
+
+                                    const isExpanded = expandedId === evento.id;
+                                    const convocados = convocadosMap[evento.id] ?? null;
+
+                                    return (
+                                        <div
+                                            key={evento.id}
+                                            style={{
+                                                background: isMinhaModalidade
+                                                    ? "rgba(40,199,111,0.10)"
+                                                    : "var(--bg-input)",
+                                                border: isMinhaModalidade
+                                                    ? "1px solid var(--ok)"
+                                                    : "1px solid var(--border)",
+                                                borderLeft: isMinhaModalidade ? "4px solid var(--ok)" : "1px solid var(--border)",
+                                                borderRadius: 12,
+                                                padding: "16px 20px",
+                                                color: "var(--text)",
+                                            }}
+                                        >
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                                                        {isMinhaModalidade ? (
+                                                            <span className="toolbar-count" style={{ color: "var(--ok)", borderColor: "var(--ok)" }}>
+                                                                ⭐ {evento.modalidadeNome || "A tua modalidade"}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="toolbar-count" style={{ opacity: 0.6 }}>
+                                                                {evento.modalidadeNome || "Outra modalidade"}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <h3 style={{ margin: "0 0 6px", fontSize: "1rem", color: "var(--text)" }}>
+                                                        {evento.titulo}
+                                                    </h3>
+
+                                                    {evento.descricao && (
+                                                        <p className="subtle" style={{ margin: "0 0 6px" }}>
+                                                            {evento.descricao}
+                                                        </p>
+                                                    )}
+
+                                                    <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: "0.875rem", color: "var(--muted)" }}>
+                                                        <span>📅 {formatDataHora(evento.dataHora)}</span>
+                                                        {evento.local && <span>📍 {evento.local}</span>}
+                                                    </div>
+
+                                                    {evento.observacoes && (
+                                                        <p className="subtle" style={{ marginTop: 6, fontStyle: "italic" }}>
+                                                            {evento.observacoes}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                {isMinhaModalidade && (
+                                                    <button
+                                                        type="button"
+                                                        className={isExpanded ? "btn btn-primary btn-sm" : "btn btn-secondary btn-sm"}
+                                                        onClick={() => toggleConvocados(evento.id)}
+                                                        style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+                                                    >
+                                                        {isExpanded ? "▲ Fechar" : "▼ Convocados"}
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {isMinhaModalidade && isExpanded && (
+                                                <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
+                                                    <h4 style={{ margin: "0 0 10px", fontSize: "0.9rem", color: "var(--ok)" }}>
+                                                        👥 Lista de Convocados
+                                                    </h4>
+                                                    {loadingConvId === evento.id ? (
+                                                        <p className="subtle">A carregar...</p>
+                                                    ) : !convocados || convocados.length === 0 ? (
+                                                        <p className="subtle">Sem convocados registados.</p>
+                                                    ) : (
+                                                        <ul style={{
+                                                            listStyle: "none", padding: 0, margin: 0,
+                                                            display: "grid",
+                                                            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+                                                            gap: 6,
+                                                        }}>
+                                                            {convocados.map((c) => (
+                                                                <li key={c.id} style={{
+                                                                    padding: "6px 10px",
+                                                                    background: "var(--bg-card-soft)",
+                                                                    borderRadius: 6,
+                                                                    border: "1px solid var(--border)",
+                                                                    fontSize: "0.87rem",
+                                                                    color: "var(--text)",
+                                                                }}>
+                                                                    <span style={{ fontWeight: 600 }}>{c.nome}</span>
+                                                                    {c.escalao && (
+                                                                        <span className="subtle" style={{ display: "block", fontSize: "0.78rem" }}>
+                                                                            {c.escalao}
+                                                                        </span>
+                                                                    )}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </section>
+                </div>
             </div>
-        </div>
+        </>
     );
 }

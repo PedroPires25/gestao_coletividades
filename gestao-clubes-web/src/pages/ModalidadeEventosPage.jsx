@@ -3,8 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById } from "../api";
-import { getModalidadesByClube } from "../services/atletas";
-import { listarEventos, listarAtletasEvento } from "../services/eventos";
+import { getEventosPorClube, listarAtletasEvento } from "../services/eventos";
 import eventosIcon from "../assets/eventos.svg";
 
 function formatDataHora(val) {
@@ -17,183 +16,233 @@ function formatDataHora(val) {
 
 export default function ModalidadeEventosPage() {
     const { clubeId, clubeModalidadeId } = useParams();
-    const { logout, role } = useAuth();
+    const { logout } = useAuth();
     const navigate = useNavigate();
 
     const [clube, setClube] = useState(null);
-    const [modalidade, setModalidade] = useState(null);
     const [eventos, setEventos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState("");
 
-    // Convocados expanded per event
     const [expandedId, setExpandedId] = useState(null);
     const [convocadosMap, setConvocadosMap] = useState({});
-    const [loadingConv, setLoadingConv] = useState(false);
+    const [loadingConvId, setLoadingConvId] = useState(null);
 
     const carregar = useCallback(async () => {
-        if (!clubeId || !clubeModalidadeId) return;
+        if (!clubeId) return;
         setErro("");
         setLoading(true);
         try {
-            const [clubeData, modalidadesData, eventosData] = await Promise.all([
+            const [clubeData, eventosData] = await Promise.all([
                 getClubeById(parseInt(clubeId)),
-                getModalidadesByClube(parseInt(clubeId)),
-                listarEventos(parseInt(clubeId), parseInt(clubeModalidadeId)),
+                getEventosPorClube(clubeId),
             ]);
             setClube(clubeData);
-            setModalidade(
-                (Array.isArray(modalidadesData) ? modalidadesData : []).find(
-                    (m) => String(m.id) === String(clubeModalidadeId)
-                ) || null
-            );
             setEventos(Array.isArray(eventosData) ? eventosData : []);
         } catch (e) {
             setErro(e.message || "Erro ao carregar dados.");
         } finally {
             setLoading(false);
         }
-    }, [clubeId, clubeModalidadeId]);
+    }, [clubeId]);
 
     useEffect(() => { carregar(); }, [carregar]);
 
     async function toggleConvocados(eventoId) {
-        if (expandedId === eventoId) {
-            setExpandedId(null);
-            return;
-        }
+        if (expandedId === eventoId) { setExpandedId(null); return; }
         setExpandedId(eventoId);
         if (convocadosMap[eventoId]) return;
-        setLoadingConv(true);
+        setLoadingConvId(eventoId);
         try {
             const dados = await listarAtletasEvento(eventoId);
             setConvocadosMap((prev) => ({ ...prev, [eventoId]: Array.isArray(dados) ? dados : [] }));
         } catch {
             setConvocadosMap((prev) => ({ ...prev, [eventoId]: [] }));
         } finally {
-            setLoadingConv(false);
+            setLoadingConvId(null);
         }
     }
 
-    const nomeModalidade =
-        modalidade?.modalidade?.nome ||
-        modalidade?.nome ||
-        modalidade?.nomeModalidade ||
-        "Modalidade";
-
     const menuItems = [
-        {
-            label: "Logout",
-            onClick: () => { logout(); navigate("/login", { replace: true }); },
-        },
+        { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
     ];
+
+    if (loading) {
+        return (
+            <div>
+                <SideMenu title={clube?.nome || "Clube"} subtitle="Eventos do Clube" logoHref={`/clubes/${clubeId}/clube-modalidade/${clubeModalidadeId}/modalidade`} logoSrc="/logo.png" items={menuItems} />
+                <div className="container" style={{ paddingTop: 24 }}><p>A carregar...</p></div>
+            </div>
+        );
+    }
 
     return (
         <>
             <SideMenu
                 title={clube?.nome || "Clube"}
-                subtitle={nomeModalidade}
+                subtitle="Eventos do Clube"
                 logoHref={`/clubes/${clubeId}/clube-modalidade/${clubeModalidadeId}/modalidade`}
                 logoSrc="/logo.png"
                 items={menuItems}
             />
 
             <div className="container" style={{ paddingTop: 24 }}>
-                {/* Header */}
-                <div className="page-title page-title-with-icon" style={{ marginBottom: "1.5rem" }}>
+                <div className="page-title page-title-with-icon">
                     <div className="page-title-main-wrap">
                         <span className="page-title-icon-circle">
                             <img src={eventosIcon} alt="Eventos" className="page-title-icon" />
                         </span>
                         <div className="page-title-texts">
-                            <h1>{nomeModalidade}</h1>
-                            {clube && <p style={{ margin: 0, opacity: 0.7 }}>{clube.nome}</p>}
+                            <h1>Eventos do Clube</h1>
                         </div>
                     </div>
+                    <div className="hint">{clube?.nome || ""}</div>
                 </div>
 
-                {erro && <div className="alert alert-danger">{erro}</div>}
+                {erro && <div className="alert error">{erro}</div>}
 
-                {loading ? (
-                    <p className="loading-text">A carregar eventos...</p>
-                ) : eventos.length === 0 ? (
-                    <div className="card" style={{ padding: "2rem", textAlign: "center", opacity: 0.7 }}>
-                        <p>Não existem eventos registados para esta modalidade.</p>
-                    </div>
-                ) : (
-                    <div className="eventos-list">
-                        {eventos.map((evento) => {
-                            const isExpanded = expandedId === evento.id;
-                            const convocados = convocadosMap[evento.id] || [];
+                <div className="stack-sections">
+                    <section className="card">
+                        <div className="modalidades-toolbar">
+                            <div className="toolbar-title-group">
+                                <h2>Eventos</h2>
+                                <span className="toolbar-count">{eventos.length}</span>
+                            </div>
+                        </div>
 
-                            return (
-                                <div key={evento.id} className="card" style={{ marginBottom: "1rem", padding: "1.25rem" }}>
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
-                                        <div style={{ flex: 1 }}>
-                                            <h3 style={{ margin: "0 0 0.5rem" }}>{evento.titulo}</h3>
-                                            {evento.descricao && (
-                                                <p style={{ margin: "0 0 0.5rem", opacity: 0.85 }}>{evento.descricao}</p>
-                                            )}
-                                            <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", fontSize: "0.9rem", opacity: 0.8 }}>
-                                                <span>📅 {formatDataHora(evento.dataHora)}</span>
-                                                {evento.local && <span>📍 {evento.local}</span>}
-                                                <span>👥 {evento.totalAtletas ?? 0} convocados</span>
-                                            </div>
-                                            {evento.observacoes && (
-                                                <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", opacity: 0.7 }}>
-                                                    <em>{evento.observacoes}</em>
-                                                </p>
-                                            )}
-                                        </div>
+                        <p className="subtle">
+                            Os eventos marcados com ⭐ são da tua modalidade — tens acesso à lista de convocados.
+                        </p>
 
-                                        <button
-                                            type="button"
-                                            className="btn btn-secondary btn-sm"
-                                            onClick={() => toggleConvocados(evento.id)}
-                                            style={{ whiteSpace: "nowrap" }}
+                        {eventos.length === 0 ? (
+                            <p className="subtle">Não existem eventos registados para este clube.</p>
+                        ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                                {[...eventos]
+                                    .sort((a, b) => {
+                                        const aIsMinha = clubeModalidadeId != null && a.clubeModalidadeId != null && Number(a.clubeModalidadeId) === parseInt(clubeModalidadeId);
+                                        const bIsMinha = clubeModalidadeId != null && b.clubeModalidadeId != null && Number(b.clubeModalidadeId) === parseInt(clubeModalidadeId);
+                                        if (aIsMinha && !bIsMinha) return -1;
+                                        if (!aIsMinha && bIsMinha) return 1;
+                                        return new Date(a.dataHora) - new Date(b.dataHora);
+                                    })
+                                    .map((evento) => {
+                                    const isMinhaModalidade =
+                                        clubeModalidadeId != null &&
+                                        evento.clubeModalidadeId != null &&
+                                        Number(evento.clubeModalidadeId) === parseInt(clubeModalidadeId);
+
+                                    const isExpanded = expandedId === evento.id;
+                                    const convocados = convocadosMap[evento.id] ?? null;
+
+                                    return (
+                                        <div
+                                            key={evento.id}
+                                            style={{
+                                                background: isMinhaModalidade
+                                                    ? "rgba(40,199,111,0.10)"
+                                                    : "var(--bg-input)",
+                                                border: isMinhaModalidade
+                                                    ? "1px solid var(--ok)"
+                                                    : "1px solid var(--border)",
+                                                borderLeft: isMinhaModalidade ? "4px solid var(--ok)" : "1px solid var(--border)",
+                                                borderRadius: 12,
+                                                padding: "16px 20px",
+                                                color: "var(--text)",
+                                            }}
                                         >
-                                            {isExpanded ? "▲ Fechar" : "▼ Convocados"}
-                                        </button>
-                                    </div>
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                                                        {isMinhaModalidade ? (
+                                                            <span className="toolbar-count" style={{ color: "var(--ok)", borderColor: "var(--ok)" }}>
+                                                                ⭐ {evento.modalidadeNome || "A tua modalidade"}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="toolbar-count" style={{ opacity: 0.6 }}>
+                                                                {evento.modalidadeNome || "Outra modalidade"}
+                                                            </span>
+                                                        )}
+                                                    </div>
 
-                                    {/* Convocados list */}
-                                    {isExpanded && (
-                                        <div style={{
-                                            marginTop: "1rem",
-                                            borderTop: "1px solid var(--border-color, #444)",
-                                            paddingTop: "1rem",
-                                        }}>
-                                            <h4 style={{ margin: "0 0 0.75rem", fontSize: "0.95rem" }}>Lista de Convocados</h4>
-                                            {loadingConv && !convocados.length ? (
-                                                <p style={{ opacity: 0.6 }}>A carregar...</p>
-                                            ) : convocados.length === 0 ? (
-                                                <p style={{ opacity: 0.6 }}>Sem convocados registados.</p>
-                                            ) : (
-                                                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "0.4rem" }}>
-                                                    {convocados.map((c) => (
-                                                        <li key={c.id} style={{
-                                                            padding: "0.4rem 0.6rem",
-                                                            background: "var(--card-bg-alt, rgba(255,255,255,0.05))",
-                                                            borderRadius: "4px",
-                                                            fontSize: "0.9rem",
+                                                    <h3 style={{ margin: "0 0 6px", fontSize: "1rem", color: "var(--text)" }}>
+                                                        {evento.titulo}
+                                                    </h3>
+
+                                                    {evento.descricao && (
+                                                        <p className="subtle" style={{ margin: "0 0 6px" }}>
+                                                            {evento.descricao}
+                                                        </p>
+                                                    )}
+
+                                                    <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: "0.875rem", color: "var(--muted)" }}>
+                                                        <span>📅 {formatDataHora(evento.dataHora)}</span>
+                                                        {evento.local && <span>📍 {evento.local}</span>}
+                                                    </div>
+
+                                                    {evento.observacoes && (
+                                                        <p className="subtle" style={{ marginTop: 6, fontStyle: "italic" }}>
+                                                            {evento.observacoes}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                {isMinhaModalidade && (
+                                                    <button
+                                                        type="button"
+                                                        className={isExpanded ? "btn btn-primary btn-sm" : "btn btn-secondary btn-sm"}
+                                                        onClick={() => toggleConvocados(evento.id)}
+                                                        style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+                                                    >
+                                                        {isExpanded ? "▲ Fechar" : "▼ Convocados"}
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {isMinhaModalidade && isExpanded && (
+                                                <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
+                                                    <h4 style={{ margin: "0 0 10px", fontSize: "0.9rem", color: "var(--ok)" }}>
+                                                        👥 Lista de Convocados
+                                                    </h4>
+                                                    {loadingConvId === evento.id ? (
+                                                        <p className="subtle">A carregar...</p>
+                                                    ) : !convocados || convocados.length === 0 ? (
+                                                        <p className="subtle">Sem convocados registados.</p>
+                                                    ) : (
+                                                        <ul style={{
+                                                            listStyle: "none", padding: 0, margin: 0,
+                                                            display: "grid",
+                                                            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+                                                            gap: 6,
                                                         }}>
-                                                            {c.nome}
-                                                            {c.escalao && (
-                                                                <span style={{ opacity: 0.6, fontSize: "0.8rem", marginLeft: "0.4rem" }}>
-                                                                    {c.escalao}
-                                                                </span>
-                                                            )}
-                                                        </li>
-                                                    ))}
-                                                </ul>
+                                                            {convocados.map((c) => (
+                                                                <li key={c.id} style={{
+                                                                    padding: "6px 10px",
+                                                                    background: "var(--bg-card-soft)",
+                                                                    borderRadius: 6,
+                                                                    border: "1px solid var(--border)",
+                                                                    fontSize: "0.87rem",
+                                                                    color: "var(--text)",
+                                                                }}>
+                                                                    <span style={{ fontWeight: 600 }}>{c.nome}</span>
+                                                                    {c.escalao && (
+                                                                        <span className="subtle" style={{ display: "block", fontSize: "0.78rem" }}>
+                                                                            {c.escalao}
+                                                                        </span>
+                                                                    )}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </section>
+                </div>
             </div>
         </>
     );

@@ -125,8 +125,6 @@ export default function GestaoEventosPage() {
         } else {
             setModalidades([]);
         }
-        setForm(prev => ({ ...prev, clubeModalidadeId: "", convocados: [] }));
-        setAtletas([]);
     }, [form.clubeId, form.tipo]);
 
     // Load atletas when modalidade changes
@@ -138,7 +136,6 @@ export default function GestaoEventosPage() {
         } else {
             setAtletas([]);
         }
-        setForm(prev => ({ ...prev, convocados: [] }));
     }, [form.clubeModalidadeId, form.clubeId, form.tipo]);
 
     // Load atividades when coletividade changes
@@ -150,8 +147,6 @@ export default function GestaoEventosPage() {
         } else {
             setAtividades([]);
         }
-        setForm(prev => ({ ...prev, coletividadeAtividadeId: "", convocados: [] }));
-        setUtentes([]);
     }, [form.coletividadeId, form.tipo]);
 
     // Load utentes when atividade changes
@@ -163,7 +158,6 @@ export default function GestaoEventosPage() {
         } else {
             setUtentes([]);
         }
-        setForm(prev => ({ ...prev, convocados: [] }));
     }, [form.coletividadeAtividadeId, form.coletividadeId, form.tipo]);
 
     function abrirCriar() {
@@ -193,7 +187,7 @@ export default function GestaoEventosPage() {
             local: evento.local || "",
             observacoes: evento.observacoes || "",
             tipo: evento.tipo || "MODALIDADE",
-            clubeId: "",
+            clubeId: evento.clubeId ? String(evento.clubeId) : "",
             clubeModalidadeId: evento.clubeModalidadeId || "",
             coletividadeId: "",
             coletividadeAtividadeId: evento.coletividadeAtividadeId || "",
@@ -381,7 +375,7 @@ export default function GestaoEventosPage() {
                                             <select
                                                 className="form-control"
                                                 value={form.clubeId}
-                                                onChange={e => setForm(p => ({ ...p, clubeId: e.target.value }))}
+                                                onChange={e => setForm(p => ({ ...p, clubeId: e.target.value, clubeModalidadeId: "", convocados: [] }))}
                                                 required
                                             >
                                                 <option value="">-- Selecione o clube --</option>
@@ -395,7 +389,7 @@ export default function GestaoEventosPage() {
                                             <select
                                                 className="form-control"
                                                 value={form.clubeModalidadeId}
-                                                onChange={e => setForm(p => ({ ...p, clubeModalidadeId: e.target.value }))}
+                                                onChange={e => setForm(p => ({ ...p, clubeModalidadeId: e.target.value, convocados: [] }))}
                                                 required
                                                 disabled={!form.clubeId}
                                             >
@@ -416,7 +410,7 @@ export default function GestaoEventosPage() {
                                             <select
                                                 className="form-control"
                                                 value={form.coletividadeId}
-                                                onChange={e => setForm(p => ({ ...p, coletividadeId: e.target.value }))}
+                                                onChange={e => setForm(p => ({ ...p, coletividadeId: e.target.value, coletividadeAtividadeId: "", convocados: [] }))}
                                                 required
                                             >
                                                 <option value="">-- Selecione a coletividade --</option>
@@ -430,7 +424,7 @@ export default function GestaoEventosPage() {
                                             <select
                                                 className="form-control"
                                                 value={form.coletividadeAtividadeId}
-                                                onChange={e => setForm(p => ({ ...p, coletividadeAtividadeId: e.target.value }))}
+                                                onChange={e => setForm(p => ({ ...p, coletividadeAtividadeId: e.target.value, convocados: [] }))}
                                                 required
                                                 disabled={!form.coletividadeId}
                                             >
@@ -532,7 +526,7 @@ export default function GestaoEventosPage() {
                 )}
 
                 {/* ── Events Table ── */}
-                {loading ? (
+                {!showForm && (loading ? (
                     <p className="loading-text">A carregar eventos...</p>
                 ) : eventos.length === 0 ? (
                     <div className="card" style={{ padding: "2rem", textAlign: "center", opacity: 0.7 }}>
@@ -599,7 +593,7 @@ export default function GestaoEventosPage() {
                             </tbody>
                         </table>
                     </div>
-                )}
+                ))}
             </div>
 
             {/* ── Convocados Modal ── */}

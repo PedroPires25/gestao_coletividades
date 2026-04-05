@@ -57,9 +57,8 @@ export default function MenuPage() {
         { label: "Home", to: "/menu" },
         { label: "Clubes", to: "/clubes" },
         { label: "Coletividades", to: "/coletividades" },
-        { label: "Eventos", to: "/eventos" },
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
-        ...((role === "ADMIN" || role === "SECRETARIO") ? [{ label: "Gestão de Eventos", to: "/gestao/eventos" }] : []),
+        ...((role === "ADMIN" || role === "SECRETARIO") ? [{ label: "Eventos", to: "/gestao/eventos" }] : []),
         {
             label: "Logout",
             onClick: () => {
@@ -116,21 +115,12 @@ export default function MenuPage() {
                         <Link to="/gestao/eventos" className="quick-action quick-action-purple">
                             <span className="quick-action-circle">
                                 <span className="quick-action-icon">
-                                    <img src={eventosIcon} alt="Gestão de Eventos" />
+                                    <img src={eventosIcon} alt="Eventos" />
                                 </span>
                             </span>
-                            <span className="quick-action-label">Gestão de Eventos</span>
+                            <span className="quick-action-label">Eventos</span>
                         </Link>
                     )}
-
-                    <Link to="/eventos" className="quick-action quick-action-purple">
-                        <span className="quick-action-circle">
-                            <span className="quick-action-icon">
-                                <img src={eventosIcon} alt="Eventos" />
-                            </span>
-                        </span>
-                        <span className="quick-action-label">Eventos</span>
-                    </Link>
 
                     <button
                         className="quick-action quick-action-green quick-action-button"
