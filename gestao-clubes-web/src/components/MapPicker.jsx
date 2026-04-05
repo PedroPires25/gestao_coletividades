@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap, LayersControl } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -145,13 +145,31 @@ export default function MapPicker({ latitude, longitude, onLocationChange, readO
                 <MapContainer
                     center={center}
                     zoom={zoom}
-                    style={{ height: readOnly ? 220 : 300, width: "100%" }}
-                    scrollWheelZoom={!readOnly}
+                    style={{ height: readOnly ? 300 : 300, width: "100%" }}
+                    scrollWheelZoom={true}
+                    zoomControl={true}
+                    dragging={true}
                 >
-                    <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
+                    <LayersControl position="topright">
+                        <LayersControl.BaseLayer checked name="Mapa">
+                            <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            />
+                        </LayersControl.BaseLayer>
+                        <LayersControl.BaseLayer name="Satélite">
+                            <TileLayer
+                                attribution='&copy; Esri'
+                                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                            />
+                        </LayersControl.BaseLayer>
+                        <LayersControl.BaseLayer name="Terreno">
+                            <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | Tiles &copy; Esri'
+                                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+                            />
+                        </LayersControl.BaseLayer>
+                    </LayersControl>
                     {latitude && longitude && (
                         <Marker position={[latitude, longitude]} />
                     )}
