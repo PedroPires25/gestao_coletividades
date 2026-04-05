@@ -174,15 +174,19 @@ export default function ClubeEventosPage() {
                                                         </p>
                                                     )}
 
-                                                    <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: "0.875rem", color: "var(--muted)", alignItems: "center" }}>
-                                                        <span>📅 {formatDataHora(evento.dataHora)}</span>
-                                                        {evento.local && <span>📍 {evento.local}</span>}
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "0.875rem", color: "var(--muted)" }}>
+                                                        <div style={{ display: "flex", gap: 18, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+                                                            <span>📅 {formatDataHora(evento.dataHora)}</span>
+                                                            {evento.local && <span>📍 {evento.local}</span>}
+                                                        </div>
                                                         {evento.latitude && evento.longitude && (
-                                                            <MiniMap
-                                                                latitude={evento.latitude}
-                                                                longitude={evento.longitude}
-                                                                onClick={() => setViewingMap(evento)}
-                                                            />
+                                                            <div style={{ flexShrink: 0 }}>
+                                                                <MiniMap
+                                                                    latitude={evento.latitude}
+                                                                    longitude={evento.longitude}
+                                                                    onClick={() => setViewingMap(evento)}
+                                                                />
+                                                            </div>
                                                         )}
                                                     </div>
 

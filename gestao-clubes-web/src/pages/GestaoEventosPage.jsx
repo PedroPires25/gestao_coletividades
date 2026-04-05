@@ -590,13 +590,15 @@ export default function GestaoEventosPage() {
                                         <td>{formatDataHora(ev.dataHora)}</td>
                                         <td>
                                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                                <span>{ev.local}</span>
+                                                <span style={{ flex: 1, minWidth: 0 }}>{ev.local}</span>
                                                 {ev.latitude && ev.longitude && (
-                                                    <MiniMap
-                                                        latitude={ev.latitude}
-                                                        longitude={ev.longitude}
-                                                        onClick={() => setViewingMap(ev)}
-                                                    />
+                                                    <div style={{ flexShrink: 0 }}>
+                                                        <MiniMap
+                                                            latitude={ev.latitude}
+                                                            longitude={ev.longitude}
+                                                            onClick={() => setViewingMap(ev)}
+                                                        />
+                                                    </div>
                                                 )}
                                             </div>
                                         </td>
