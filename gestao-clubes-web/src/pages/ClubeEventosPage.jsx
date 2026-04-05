@@ -177,7 +177,7 @@ export default function ClubeEventosPage() {
                                                                 type="button"
                                                                 className={isExpanded ? "btn btn-primary btn-sm" : "btn btn-secondary btn-sm"}
                                                                 onClick={() => toggleConvocados(evento.id)}
-                                                                style={{ whiteSpace: "nowrap", fontSize: 12 }}
+                                                                style={{ whiteSpace: "nowrap", fontSize: 12, padding: "6px 10px", borderRadius: 999 }}
                                                             >
                                                                 {isExpanded ? "▲ Fechar" : "▼ Convocados"}
                                                             </button>
