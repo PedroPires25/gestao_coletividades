@@ -178,20 +178,17 @@ export default function ModalidadeEventosPage() {
                                                         </p>
                                                     )}
 
-                                                    <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: "0.875rem", color: "var(--muted)" }}>
+                                                    <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: "0.875rem", color: "var(--muted)", alignItems: "center" }}>
                                                         <span>📅 {formatDataHora(evento.dataHora)}</span>
                                                         {evento.local && <span>📍 {evento.local}</span>}
-                                                    </div>
-
-                                                    {evento.latitude && evento.longitude && (
-                                                        <div style={{ marginTop: 8 }}>
+                                                        {evento.latitude && evento.longitude && (
                                                             <MiniMap
                                                                 latitude={evento.latitude}
                                                                 longitude={evento.longitude}
                                                                 onClick={() => setViewingMap(evento)}
                                                             />
-                                                        </div>
-                                                    )}
+                                                        )}
+                                                    </div>
 
                                                     {evento.observacoes && (
                                                         <p className="subtle" style={{ marginTop: 6, fontStyle: "italic" }}>
