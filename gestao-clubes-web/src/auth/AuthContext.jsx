@@ -58,8 +58,13 @@ function calcularRedirectUrl(user) {
             }
             return null;
 
-        case "USER":
+        case "USER": {
+            const clubeId = user.clubeId ?? null;
+            const coletividadeId = user.coletividadeId ?? null;
+            if (clubeId) return `/minha-area/clube/${clubeId}`;
+            if (coletividadeId) return `/minha-area/coletividade/${coletividadeId}`;
             return "/menu";
+        }
 
         default:
             return "/menu";

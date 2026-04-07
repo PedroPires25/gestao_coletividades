@@ -243,9 +243,8 @@ public class AuthRestController {
         }
 
         if (PerfilDAO.USER.equals(perfil)) {
-            clubeId = null;
+            // USER só precisa de clube ou coletividade; limpar modalidade e atividade
             modalidadeId = null;
-            coletividadeId = null;
             atividadeId = null;
         }
 
@@ -344,6 +343,15 @@ public class AuthRestController {
     private String validarEstruturaNoRegisto(String perfil, String estruturaTipo, RegisterRequest req) {
         switch (perfil) {
             case PerfilDAO.USER:
+                if (!"CLUBE".equals(estruturaTipo) && !"COLETIVIDADE".equals(estruturaTipo)) {
+                    return "Utilizador tem de escolher CLUBE ou COLETIVIDADE.";
+                }
+                if ("CLUBE".equals(estruturaTipo) && req.clubeId == null) {
+                    return "Utilizador tem de escolher um clube.";
+                }
+                if ("COLETIVIDADE".equals(estruturaTipo) && req.coletividadeId == null) {
+                    return "Utilizador tem de escolher uma coletividade.";
+                }
                 return null;
 
             case PerfilDAO.ATLETA:
@@ -466,7 +474,15 @@ public class AuthRestController {
                 yield null;
             }
 
-            case PerfilDAO.USER -> "/menu";
+            case PerfilDAO.USER -> {
+                if (u.getClubeId() != null) {
+                    yield String.format("/minha-area/clube/%d", u.getClubeId());
+                }
+                if (u.getColetividadeId() != null) {
+                    yield String.format("/minha-area/coletividade/%d", u.getColetividadeId());
+                }
+                yield "/menu";
+            }
 
             default -> null;
         };

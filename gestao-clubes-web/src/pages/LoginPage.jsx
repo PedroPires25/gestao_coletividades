@@ -49,7 +49,7 @@ const eyeButtonStyle = {
 
 const PERFIS_CLUBE = ["ATLETA", "TREINADOR_PRINCIPAL", "DEPARTAMENTO_MEDICO"];
 const PERFIS_COLETIVIDADE = ["UTENTE"];
-const PERFIS_MISTOS = ["STAFF", "SECRETARIO", "PROFESSOR"];
+const PERFIS_MISTOS = ["STAFF", "SECRETARIO", "PROFESSOR", "USER"];
 
 export default function LoginPage() {
     const { login } = useAuth();
@@ -480,7 +480,7 @@ export default function LoginPage() {
                                 </select>
                             )}
 
-                            {needsClube && (
+                            {needsClube && rPerfil !== "USER" && (
                                 <select
                                     className="input"
                                     value={rModalidadeId}
@@ -513,7 +513,7 @@ export default function LoginPage() {
                                 </select>
                             )}
 
-                            {needsColetividade && (
+                            {needsColetividade && rPerfil !== "USER" && (
                                 <select
                                     className="input"
                                     value={rAtividadeId}
