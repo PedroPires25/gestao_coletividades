@@ -732,6 +732,7 @@ public class UtilizadorDAO {
         u.setColetividadeId((Integer) rs.getObject("coletividade_id"));
         u.setAtividadeId((Integer) rs.getObject("atividade_id"));
         u.setPalavraChave(incluirPassword ? rs.getString("palavra_chave") : null);
+        try { u.setLogoPath(rs.getString("logo_path")); } catch (SQLException ignored) {}
         return u;
     }
 
@@ -767,5 +768,21 @@ public class UtilizadorDAO {
         }
 
         return lista;
+    }
+
+    public boolean atualizarLogoPath(int userId, String logoPath) {
+        String sql = "UPDATE utilizadores SET logo_path=? WHERE id=?";
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, logoPath);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

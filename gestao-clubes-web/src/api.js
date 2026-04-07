@@ -236,3 +236,48 @@ export async function editarModalidade(id, { nome, descricao = "" }) {
 export async function getAtividades() {
     return http("/atividades");
 }
+
+// ---- UPLOAD DE LOGO / AVATAR ----
+
+async function httpUpload(path, file) {
+    const token = getStoredToken();
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const headers = {};
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
+    const res = await fetch(`${API_BASE}${path}`, {
+        method: "POST",
+        headers,
+        body: formData,
+    });
+
+    if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || `Erro HTTP ${res.status}`);
+    }
+
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("application/json")) return res.json();
+    return res.text();
+}
+
+export async function uploadClubeLogo(id, file) {
+    return httpUpload(`/clubes/${id}/logo`, file);
+}
+
+export async function uploadColetividadeLogo(id, file) {
+    return httpUpload(`/coletividades/${id}/logo`, file);
+}
+
+export async function uploadUtilizadorAvatar(id, file) {
+    return httpUpload(`/utilizadores/${id}/avatar`, file);
+}
+
+export function getUploadUrl(relativePath) {
+    if (!relativePath) return null;
+    return `${API_BASE}/uploads/${relativePath}`;
+}

@@ -13,6 +13,7 @@ public class Utilizador {
     private Integer modalidadeId;
     private Integer coletividadeId;
     private Integer atividadeId;
+    private String logoPath;
 
     public Utilizador() {
     }
@@ -120,5 +121,13 @@ public class Utilizador {
 
     public void setAtividadeId(Integer atividadeId) {
         this.atividadeId = atividadeId;
+    }
+
+    public String getLogoPath() {
+        return logoPath;
+    }
+
+    public void setLogoPath(String logoPath) {
+        this.logoPath = logoPath;
     }
 }

@@ -14,7 +14,7 @@ public class ColetividadeDAO {
     }
 
     public boolean inserir(Coletividade c) {
-        String sql = "INSERT INTO coletividade (nome, nif, email, telefone, morada, codigo_postal, localidade, data_fundacao) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO coletividade (nome, nif, email, telefone, morada, codigo_postal, localidade, data_fundacao, logo_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -26,6 +26,7 @@ public class ColetividadeDAO {
             ps.setString(6, c.getCodigoPostal());
             ps.setString(7, c.getLocalidade());
             ps.setDate(8, toSql(c.getDataFundacao()));
+            ps.setString(9, c.getLogoPath());
 
             return ps.executeUpdate() > 0;
 
@@ -44,7 +45,7 @@ public class ColetividadeDAO {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                lista.add(new Coletividade(
+                Coletividade col = new Coletividade(
                         rs.getInt("id"),
                         rs.getString("nome"),
                         rs.getString("nif"),
@@ -54,7 +55,9 @@ public class ColetividadeDAO {
                         rs.getString("codigo_postal"),
                         rs.getString("localidade"),
                         rs.getDate("data_fundacao")
-                ));
+                );
+                col.setLogoPath(rs.getString("logo_path"));
+                lista.add(col);
             }
 
         } catch (SQLException e) {
@@ -74,7 +77,7 @@ public class ColetividadeDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new Coletividade(
+                    Coletividade col = new Coletividade(
                             rs.getInt("id"),
                             rs.getString("nome"),
                             rs.getString("nif"),
@@ -85,6 +88,8 @@ public class ColetividadeDAO {
                             rs.getString("localidade"),
                             rs.getDate("data_fundacao")
                     );
+                    col.setLogoPath(rs.getString("logo_path"));
+                    return col;
                 }
             }
 
@@ -96,7 +101,7 @@ public class ColetividadeDAO {
     }
 
     public boolean atualizar(int id, Coletividade c) {
-        String sql = "UPDATE coletividade SET nome=?, nif=?, email=?, telefone=?, morada=?, codigo_postal=?, localidade=?, data_fundacao=? WHERE id=?";
+        String sql = "UPDATE coletividade SET nome=?, nif=?, email=?, telefone=?, morada=?, codigo_postal=?, localidade=?, data_fundacao=?, logo_path=? WHERE id=?";
 
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -109,7 +114,8 @@ public class ColetividadeDAO {
             ps.setString(6, c.getCodigoPostal());
             ps.setString(7, c.getLocalidade());
             ps.setDate(8, toSql(c.getDataFundacao()));
-            ps.setInt(9, id);
+            ps.setString(9, c.getLogoPath());
+            ps.setInt(10, id);
 
             return ps.executeUpdate() > 0;
 
@@ -129,6 +135,22 @@ public class ColetividadeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    public boolean atualizarLogoPath(int id, String logoPath) {
+        String sql = "UPDATE coletividade SET logo_path=? WHERE id=?";
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, logoPath);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
             return false;
         }
     }

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
-import { createClube, deleteClube, getClubes, updateClube } from "../api";
+import { createClube, deleteClube, getClubes, updateClube, uploadClubeLogo, getUploadUrl } from "../api";
 import { useAuth } from "../auth/AuthContext";
+import defaultLogo from "../assets/default-logo.svg";
 
 function formatDateISOToPt(dateISO) {
     if (!dateISO) return "";
@@ -39,6 +40,8 @@ export default function ClubesPage() {
         localidade: "",
         dataFundacao: "",
     });
+    const [logoFile, setLogoFile] = useState(null);
+    const [logoPreview, setLogoPreview] = useState(null);
 
     const [editOpen, setEditOpen] = useState(false);
     const [editErro, setEditErro] = useState("");
@@ -53,6 +56,8 @@ export default function ClubesPage() {
         localidade: "",
         dataFundacao: "",
     });
+    const [editLogoFile, setEditLogoFile] = useState(null);
+    const [editLogoPreview, setEditLogoPreview] = useState(null);
 
     async function carregar() {
         setErro("");
@@ -76,6 +81,26 @@ export default function ClubesPage() {
         setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
     }
 
+    function onLogoChange(e) {
+        const file = e.target.files[0];
+        setLogoFile(file || null);
+        if (file) {
+            setLogoPreview(URL.createObjectURL(file));
+        } else {
+            setLogoPreview(null);
+        }
+    }
+
+    function onEditLogoChange(e) {
+        const file = e.target.files[0];
+        setEditLogoFile(file || null);
+        if (file) {
+            setEditLogoPreview(URL.createObjectURL(file));
+        } else {
+            setEditLogoPreview(null);
+        }
+    }
+
     async function onSubmit(e) {
         e.preventDefault();
         if (!isAdmin) return;
@@ -89,6 +114,19 @@ export default function ClubesPage() {
                 dataFundacao: form.dataFundacao ? form.dataFundacao : null,
             });
 
+            // Se houver logo, faz upload após criar
+            if (logoFile) {
+                try {
+                    const data = await getClubes();
+                    const novo = Array.isArray(data) ? data.find(c => c.nome === form.nome) : null;
+                    if (novo) {
+                        await uploadClubeLogo(novo.id, logoFile);
+                    }
+                } catch (uploadErr) {
+                    console.warn("Clube criado, mas logo falhou:", uploadErr.message);
+                }
+            }
+
             setMsg("Clube criado com sucesso!");
             setForm({
                 nome: "",
@@ -100,6 +138,8 @@ export default function ClubesPage() {
                 localidade: "",
                 dataFundacao: "",
             });
+            setLogoFile(null);
+            setLogoPreview(null);
             await carregar();
         } catch (e) {
             setErro(e.message);
@@ -138,6 +178,8 @@ export default function ClubesPage() {
             localidade: clube.localidade || "",
             dataFundacao: isoToInputDate(clube.dataFundacao),
         });
+        setEditLogoFile(null);
+        setEditLogoPreview(clube.logoPath ? getUploadUrl(clube.logoPath) : null);
         setEditOpen(true);
     }
 
@@ -164,8 +206,19 @@ export default function ClubesPage() {
                 localidade: edit.localidade,
                 dataFundacao: edit.dataFundacao ? edit.dataFundacao : null,
             });
+
+            if (editLogoFile) {
+                try {
+                    await uploadClubeLogo(edit.id, editLogoFile);
+                } catch (uploadErr) {
+                    console.warn("Clube atualizado, mas logo falhou:", uploadErr.message);
+                }
+            }
+
             setMsg("Clube atualizado com sucesso!");
             setEditOpen(false);
+            setEditLogoFile(null);
+            setEditLogoPreview(null);
             await carregar();
         } catch (e) {
             setEditErro(e.message);
@@ -252,6 +305,7 @@ export default function ClubesPage() {
                             <table>
                                 <thead>
                                 <tr>
+                                    <th>Logo</th>
                                     <th>ID</th>
                                     <th>Nome</th>
                                     <th>Email</th>
@@ -267,6 +321,13 @@ export default function ClubesPage() {
                                 <tbody>
                                 {clubesFiltrados.map((c) => (
                                     <tr key={c.id}>
+                                        <td>
+                                            <img
+                                                src={c.logoPath ? getUploadUrl(c.logoPath) : defaultLogo}
+                                                alt="Logo"
+                                                style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6 }}
+                                            />
+                                        </td>
                                         <td className="nowrap">{c.id}</td>
                                         <td>
                                             <Link
@@ -301,7 +362,7 @@ export default function ClubesPage() {
 
                                 {!loading && clubesFiltrados.length === 0 && (
                                     <tr>
-                                        <td colSpan={isAdmin ? 10 : 9} className="cell-muted" style={{ padding: 14 }}>
+                                        <td colSpan={isAdmin ? 11 : 10} className="cell-muted" style={{ padding: 14 }}>
                                             Sem resultados para a pesquisa.
                                         </td>
                                     </tr>
@@ -395,12 +456,31 @@ export default function ClubesPage() {
                                     />
                                 </div>
 
+                                <div className="row">
+                                    <label className="field-label" htmlFor="logoFile">
+                                        Logo do clube
+                                    </label>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                        <img
+                                            src={logoPreview || defaultLogo}
+                                            alt="Preview"
+                                            style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8, border: "1px solid var(--border)" }}
+                                        />
+                                        <input
+                                            id="logoFile"
+                                            type="file"
+                                            accept="image/png,image/jpeg,image/gif,image/webp"
+                                            onChange={onLogoChange}
+                                        />
+                                    </div>
+                                </div>
+
                                 <div className="actions">
                                     <button className="btn btn-primary" type="submit">Criar</button>
                                     <button
                                         className="btn"
                                         type="button"
-                                        onClick={() =>
+                                        onClick={() => {
                                             setForm({
                                                 nome: "",
                                                 email: "",
@@ -410,8 +490,10 @@ export default function ClubesPage() {
                                                 codigoPostal: "",
                                                 localidade: "",
                                                 dataFundacao: "",
-                                            })
-                                        }
+                                            });
+                                            setLogoFile(null);
+                                            setLogoPreview(null);
+                                        }}
                                     >
                                         Limpar
                                     </button>
@@ -507,6 +589,25 @@ export default function ClubesPage() {
                                         value={edit.dataFundacao}
                                         onChange={onEditChange}
                                     />
+                                </div>
+
+                                <div className="row">
+                                    <label className="field-label" htmlFor="editLogoFile">
+                                        Logo do clube
+                                    </label>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                        <img
+                                            src={editLogoPreview || defaultLogo}
+                                            alt="Preview"
+                                            style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8, border: "1px solid var(--border)" }}
+                                        />
+                                        <input
+                                            id="editLogoFile"
+                                            type="file"
+                                            accept="image/png,image/jpeg,image/gif,image/webp"
+                                            onChange={onEditLogoChange}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="actions">
