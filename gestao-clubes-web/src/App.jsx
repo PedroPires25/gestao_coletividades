@@ -40,6 +40,10 @@ import ColetividadeUtentesAtividadePage from "./pages/ColetividadeUtentesAtivida
 import ColetividadeStaffPage from "./pages/ColetividadeStaffPage";
 import ColetividadeStaffAtividadePage from "./pages/ColetividadeStaffAtividadePage";
 
+// área de acesso (utilizador)
+import AreaAcessoClubePage from "./pages/AreaAcessoClubePage";
+import AreaAcessoColetividadePage from "./pages/AreaAcessoColetividadePage";
+
 function NotFoundPage() {
     return (
         <div style={{ padding: 24 }}>
@@ -287,6 +291,24 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <GestaoEventosPage />
+                        </RequireAuth>
+                    }
+                />
+
+                {/* ÁREA DE ACESSO — utilizador vinculado a clube ou coletividade */}
+                <Route
+                    path="/minha-area/clube/:clubeId"
+                    element={
+                        <RequireAuth>
+                            <AreaAcessoClubePage />
+                        </RequireAuth>
+                    }
+                />
+                <Route
+                    path="/minha-area/coletividade/:coletividadeId"
+                    element={
+                        <RequireAuth>
+                            <AreaAcessoColetividadePage />
                         </RequireAuth>
                     }
                 />
