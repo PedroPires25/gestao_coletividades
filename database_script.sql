@@ -815,3 +815,15 @@ CREATE TABLE IF NOT EXISTS evento_inscrito (
     FOREIGN KEY (inscrito_id) REFERENCES inscrito(id)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
+
+-- -------------------------
+-- LOGO / AVATAR SUPPORT
+-- -------------------------
+ALTER TABLE clube
+  ADD COLUMN logo_path VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE coletividade
+  ADD COLUMN logo_path VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE utilizadores
+  ADD COLUMN logo_path VARCHAR(255) DEFAULT NULL;

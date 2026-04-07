@@ -4,9 +4,9 @@ import SideMenu from "../components/SideMenu";
 import MapPicker from "../components/MapPicker";
 import MiniMap from "../components/MiniMap";
 import { useAuth } from "../auth/AuthContext";
-import { getClubeById } from "../api";
+import { getClubeById, getUploadUrl } from "../api";
 import { getEventosPorClube, listarAtletasEvento } from "../services/eventos";
-import eventosIcon from "../assets/eventos.svg";
+import defaultLogo from "../assets/default-logo.svg";
 
 function formatDataHora(val) {
     if (!val) return "-";
@@ -92,14 +92,16 @@ export default function ModalidadeEventosPage() {
             <div className="container" style={{ paddingTop: 24 }}>
                 <div className="page-title page-title-with-icon">
                     <div className="page-title-main-wrap">
-                        <span className="page-title-icon-circle">
-                            <img src={eventosIcon} alt="Eventos" className="page-title-icon" />
-                        </span>
+                        <img
+                            src={clube?.logoPath ? getUploadUrl(clube.logoPath) : defaultLogo}
+                            alt="Logo"
+                            style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 10, border: "1px solid var(--border)" }}
+                        />
                         <div className="page-title-texts">
-                            <h1>Eventos do Clube</h1>
+                            <h1 style={{ fontSize: "1.35rem" }}>Eventos</h1>
+                            <span style={{ fontSize: "1rem", color: "var(--text-secondary)", fontWeight: 500 }}>{clube?.nome || ""}</span>
                         </div>
                     </div>
-                    <div className="hint">{clube?.nome || ""}</div>
                 </div>
 
                 {erro && <div className="alert error">{erro}</div>}

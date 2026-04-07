@@ -13,6 +13,7 @@ public class Clube {
     private String codigoPostal;
     private String localidade;
     private Date dataFundacao;
+    private String logoPath;
 
     public Clube() {}
 
@@ -43,6 +44,8 @@ public class Clube {
     public String getCodigoPostal() { return codigoPostal; }
     public String getLocalidade() { return localidade; }
     public Date getDataFundacao() { return dataFundacao; }
+    public String getLogoPath() { return logoPath; }
+    public void setLogoPath(String logoPath) { this.logoPath = logoPath; }
 
     @Override
     public String toString() {

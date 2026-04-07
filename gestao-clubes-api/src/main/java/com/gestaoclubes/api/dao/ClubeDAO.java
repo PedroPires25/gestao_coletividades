@@ -14,7 +14,7 @@ public class ClubeDAO {
     }
 
     public boolean inserir(Clube c) {
-        String sql = "INSERT INTO clube (nome, nif, email, telefone, morada, codigo_postal, localidade, data_fundacao) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO clube (nome, nif, email, telefone, morada, codigo_postal, localidade, data_fundacao, logo_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -26,6 +26,7 @@ public class ClubeDAO {
             ps.setString(6, c.getCodigoPostal());
             ps.setString(7, c.getLocalidade());
             ps.setDate(8, toSql(c.getDataFundacao()));
+            ps.setString(9, c.getLogoPath());
 
             return ps.executeUpdate() > 0;
 
@@ -44,7 +45,7 @@ public class ClubeDAO {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                lista.add(new Clube(
+                Clube clube = new Clube(
                         rs.getInt("id"),
                         rs.getString("nome"),
                         rs.getString("nif"),
@@ -54,7 +55,9 @@ public class ClubeDAO {
                         rs.getString("codigo_postal"),
                         rs.getString("localidade"),
                         rs.getDate("data_fundacao")
-                ));
+                );
+                clube.setLogoPath(rs.getString("logo_path"));
+                lista.add(clube);
             }
 
         } catch (SQLException e) {
@@ -74,7 +77,7 @@ public class ClubeDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new Clube(
+                    Clube clube = new Clube(
                             rs.getInt("id"),
                             rs.getString("nome"),
                             rs.getString("nif"),
@@ -85,6 +88,8 @@ public class ClubeDAO {
                             rs.getString("localidade"),
                             rs.getDate("data_fundacao")
                     );
+                    clube.setLogoPath(rs.getString("logo_path"));
+                    return clube;
                 }
             }
 
@@ -96,7 +101,7 @@ public class ClubeDAO {
     }
 
     public boolean atualizar(int id, Clube c) {
-        String sql = "UPDATE clube SET nome=?, nif=?, email=?, telefone=?, morada=?, codigo_postal=?, localidade=?, data_fundacao=? WHERE id=?";
+        String sql = "UPDATE clube SET nome=?, nif=?, email=?, telefone=?, morada=?, codigo_postal=?, localidade=?, data_fundacao=?, logo_path=? WHERE id=?";
 
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -109,7 +114,8 @@ public class ClubeDAO {
             ps.setString(6, c.getCodigoPostal());
             ps.setString(7, c.getLocalidade());
             ps.setDate(8, toSql(c.getDataFundacao()));
-            ps.setInt(9, id);
+            ps.setString(9, c.getLogoPath());
+            ps.setInt(10, id);
 
             return ps.executeUpdate() > 0;
 
@@ -129,6 +135,22 @@ public class ClubeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    public boolean atualizarLogoPath(int id, String logoPath) {
+        String sql = "UPDATE clube SET logo_path=? WHERE id=?";
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, logoPath);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
             return false;
         }
     }

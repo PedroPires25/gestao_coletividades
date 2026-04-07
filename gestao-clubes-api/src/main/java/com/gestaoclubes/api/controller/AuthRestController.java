@@ -56,6 +56,7 @@ public class AuthRestController {
         public Integer modalidadeId;
         public Integer coletividadeId;
         public Integer atividadeId;
+        public String logoPath;
 
         public UserDto(Utilizador u, String role) {
             this.id = u.getId();
@@ -69,6 +70,7 @@ public class AuthRestController {
             this.modalidadeId = u.getModalidadeId();
             this.coletividadeId = u.getColetividadeId();
             this.atividadeId = u.getAtividadeId();
+            this.logoPath = u.getLogoPath();
         }
     }
 

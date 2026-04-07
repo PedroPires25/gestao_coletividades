@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { getColetividadeById } from "../api";
 import { useAuth } from "../auth/AuthContext";
+import { getUploadUrl } from "../api";
+import defaultLogo from "../assets/default-logo.svg";
 
 import modalidadesIcon from "../assets/modalidades.svg";
 import atletasIcon from "../assets/atletas.svg";
@@ -113,10 +115,17 @@ export default function ColetividadeHomePage() {
             />
 
             <div className="container" style={{ paddingTop: 24 }}>
-                <div className="page-title">
-                    <h1>{subtitle}</h1>
-                    <div className="hint">
-                        Usa os atalhos abaixo para navegar nas secções da coletividade.
+                <div className="page-title" style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <img
+                        src={coletividade?.logoPath ? getUploadUrl(coletividade.logoPath) : defaultLogo}
+                        alt="Logo"
+                        style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 10, border: "1px solid var(--border)" }}
+                    />
+                    <div>
+                        <h1>{subtitle}</h1>
+                        <div className="hint">
+                            Usa os atalhos abaixo para navegar nas secções da coletividade.
+                        </div>
                     </div>
                 </div>
 

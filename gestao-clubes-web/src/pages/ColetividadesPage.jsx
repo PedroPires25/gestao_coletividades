@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
-import { createColetividade, deleteColetividade, getColetividades, updateColetividade } from "../api";
+import { createColetividade, deleteColetividade, getColetividades, updateColetividade, uploadColetividadeLogo, getUploadUrl } from "../api";
 import { useAuth } from "../auth/AuthContext";
+import defaultLogo from "../assets/default-logo.svg";
 
 function formatDateISOToPt(dateISO) {
     if (!dateISO) return "";
@@ -39,6 +40,8 @@ export default function ColetividadesPage() {
         localidade: "",
         dataFundacao: "",
     });
+    const [logoFile, setLogoFile] = useState(null);
+    const [logoPreview, setLogoPreview] = useState(null);
 
     const [editOpen, setEditOpen] = useState(false);
     const [editErro, setEditErro] = useState("");
@@ -53,6 +56,8 @@ export default function ColetividadesPage() {
         localidade: "",
         dataFundacao: "",
     });
+    const [editLogoFile, setEditLogoFile] = useState(null);
+    const [editLogoPreview, setEditLogoPreview] = useState(null);
 
     async function carregar() {
         setErro("");
@@ -76,6 +81,26 @@ export default function ColetividadesPage() {
         setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
     }
 
+    function onLogoChange(e) {
+        const file = e.target.files[0];
+        setLogoFile(file || null);
+        if (file) {
+            setLogoPreview(URL.createObjectURL(file));
+        } else {
+            setLogoPreview(null);
+        }
+    }
+
+    function onEditLogoChange(e) {
+        const file = e.target.files[0];
+        setEditLogoFile(file || null);
+        if (file) {
+            setEditLogoPreview(URL.createObjectURL(file));
+        } else {
+            setEditLogoPreview(null);
+        }
+    }
+
     async function onSubmit(e) {
         e.preventDefault();
         if (!isAdmin) return;
@@ -89,6 +114,18 @@ export default function ColetividadesPage() {
                 dataFundacao: form.dataFundacao ? form.dataFundacao : null,
             });
 
+            if (logoFile) {
+                try {
+                    const data = await getColetividades();
+                    const nova = Array.isArray(data) ? data.find(c => c.nome === form.nome) : null;
+                    if (nova) {
+                        await uploadColetividadeLogo(nova.id, logoFile);
+                    }
+                } catch (uploadErr) {
+                    console.warn("Coletividade criada, mas logo falhou:", uploadErr.message);
+                }
+            }
+
             setMsg("Coletividade criada com sucesso!");
             setForm({
                 nome: "",
@@ -100,6 +137,8 @@ export default function ColetividadesPage() {
                 localidade: "",
                 dataFundacao: "",
             });
+            setLogoFile(null);
+            setLogoPreview(null);
             await carregar();
         } catch (e) {
             setErro(e.message);
@@ -138,6 +177,8 @@ export default function ColetividadesPage() {
             localidade: coletividade.localidade || "",
             dataFundacao: isoToInputDate(coletividade.dataFundacao),
         });
+        setEditLogoFile(null);
+        setEditLogoPreview(coletividade.logoPath ? getUploadUrl(coletividade.logoPath) : null);
         setEditOpen(true);
     }
 
@@ -164,8 +205,19 @@ export default function ColetividadesPage() {
                 localidade: edit.localidade,
                 dataFundacao: edit.dataFundacao ? edit.dataFundacao : null,
             });
+
+            if (editLogoFile) {
+                try {
+                    await uploadColetividadeLogo(edit.id, editLogoFile);
+                } catch (uploadErr) {
+                    console.warn("Coletividade atualizada, mas logo falhou:", uploadErr.message);
+                }
+            }
+
             setMsg("Coletividade atualizada com sucesso!");
             setEditOpen(false);
+            setEditLogoFile(null);
+            setEditLogoPreview(null);
             await carregar();
         } catch (e) {
             setEditErro(e.message);
@@ -258,12 +310,31 @@ export default function ColetividadesPage() {
                                     />
                                 </div>
 
+                                <div className="row">
+                                    <label className="field-label" htmlFor="logoFileCol">
+                                        Logo da coletividade
+                                    </label>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                        <img
+                                            src={logoPreview || defaultLogo}
+                                            alt="Preview"
+                                            style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8, border: "1px solid var(--border)" }}
+                                        />
+                                        <input
+                                            id="logoFileCol"
+                                            type="file"
+                                            accept="image/png,image/jpeg,image/gif,image/webp"
+                                            onChange={onLogoChange}
+                                        />
+                                    </div>
+                                </div>
+
                                 <div className="actions">
                                     <button className="btn btn-primary" type="submit">Criar</button>
                                     <button
                                         className="btn"
                                         type="button"
-                                        onClick={() =>
+                                        onClick={() => {
                                             setForm({
                                                 nome: "",
                                                 email: "",
@@ -273,8 +344,10 @@ export default function ColetividadesPage() {
                                                 codigoPostal: "",
                                                 localidade: "",
                                                 dataFundacao: "",
-                                            })
-                                        }
+                                            });
+                                            setLogoFile(null);
+                                            setLogoPreview(null);
+                                        }}
                                     >
                                         Limpar
                                     </button>
@@ -305,6 +378,7 @@ export default function ColetividadesPage() {
                             <table>
                                 <thead>
                                 <tr>
+                                    <th>Logo</th>
                                     <th>ID</th>
                                     <th>Nome</th>
                                     <th>Email</th>
@@ -320,6 +394,13 @@ export default function ColetividadesPage() {
                                 <tbody>
                                 {coletividadesFiltradas.map((c) => (
                                     <tr key={c.id}>
+                                        <td>
+                                            <img
+                                                src={c.logoPath ? getUploadUrl(c.logoPath) : defaultLogo}
+                                                alt="Logo"
+                                                style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6 }}
+                                            />
+                                        </td>
                                         <td className="nowrap">{c.id}</td>
                                         <td>
                                             <Link
@@ -350,7 +431,7 @@ export default function ColetividadesPage() {
 
                                 {!loading && coletividadesFiltradas.length === 0 && (
                                     <tr>
-                                        <td colSpan={isAdmin ? 10 : 9} className="cell-muted" style={{ padding: 14 }}>
+                                        <td colSpan={isAdmin ? 11 : 10} className="cell-muted" style={{ padding: 14 }}>
                                             Sem resultados para a pesquisa.
                                         </td>
                                     </tr>
@@ -402,6 +483,25 @@ export default function ColetividadesPage() {
                                         value={edit.dataFundacao}
                                         onChange={onEditChange}
                                     />
+                                </div>
+
+                                <div className="row">
+                                    <label className="field-label" htmlFor="editLogoFileCol">
+                                        Logo da coletividade
+                                    </label>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                        <img
+                                            src={editLogoPreview || defaultLogo}
+                                            alt="Preview"
+                                            style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8, border: "1px solid var(--border)" }}
+                                        />
+                                        <input
+                                            id="editLogoFileCol"
+                                            type="file"
+                                            accept="image/png,image/jpeg,image/gif,image/webp"
+                                            onChange={onEditLogoChange}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="actions">

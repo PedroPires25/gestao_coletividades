@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <rect width="120" height="120" rx="16" fill="#e0e5ec"/>
+  <circle cx="60" cy="42" r="18" stroke="#8e99a4" stroke-width="3" fill="none"/>
+  <path d="M60 60 L72 80 H48 Z" stroke="#8e99a4" stroke-width="3" fill="none" stroke-linejoin="round"/>
+  <rect x="50" y="78" width="20" height="8" rx="2" stroke="#8e99a4" stroke-width="2" fill="none"/>
+  <text x="60" y="108" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#8e99a4">SEM LOGO</text>
+</svg>
