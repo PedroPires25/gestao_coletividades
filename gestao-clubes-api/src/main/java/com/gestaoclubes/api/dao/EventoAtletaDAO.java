@@ -15,7 +15,7 @@ public class EventoAtletaDAO {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
             SELECT a.id, a.nome, a.data_nascimento, a.email, a.telefone, a.morada, a.remuneracao,
-                   a.clube_atual_id, ea.id AS estado_id, ea.descricao AS estado,
+                   a.clube_atual_id, a.foto_path, ea.id AS estado_id, ea.descricao AS estado,
                    e.id AS escalao_id, e.nome AS escalao
             FROM evento_atleta evt_a
             JOIN atleta a ON a.id = evt_a.atleta_id
@@ -41,6 +41,7 @@ public class EventoAtletaDAO {
                     row.put("morada", rs.getString("morada"));
                     row.put("remuneracao", rs.getBigDecimal("remuneracao"));
                     row.put("clubeAtualId", rs.getInt("clube_atual_id"));
+                    row.put("fotoPath", rs.getString("foto_path"));
                     row.put("estadoId", rs.getInt("estado_id"));
                     row.put("estado", rs.getString("estado"));
                     row.put("escalaoId", rs.getInt("escalao_id"));

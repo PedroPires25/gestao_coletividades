@@ -3,9 +3,13 @@ package com.gestaoclubes.api.controller;
 import com.gestaoclubes.api.dao.ClubeDAO;
 import com.gestaoclubes.api.dao.ColetividadeDAO;
 import com.gestaoclubes.api.dao.UtilizadorDAO;
+import com.gestaoclubes.api.dao.AtletaDAO;
+import com.gestaoclubes.api.dao.StaffDAO;
 import com.gestaoclubes.api.model.Clube;
 import com.gestaoclubes.api.model.Coletividade;
 import com.gestaoclubes.api.model.Utilizador;
+import com.gestaoclubes.api.model.Atleta;
+import com.gestaoclubes.api.model.Staff;
 import com.gestaoclubes.api.service.FileUploadService;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -31,6 +35,8 @@ public class UploadRestController {
     private final ClubeDAO clubeDAO = new ClubeDAO();
     private final ColetividadeDAO coletividadeDAO = new ColetividadeDAO();
     private final UtilizadorDAO utilizadorDAO;
+    private final AtletaDAO atletaDAO = new AtletaDAO();
+    private final StaffDAO staffDAO = new StaffDAO();
 
     public UploadRestController(FileUploadService uploadService, UtilizadorDAO utilizadorDAO) {
         this.uploadService = uploadService;
@@ -110,12 +116,70 @@ public class UploadRestController {
                 uploadService.removerFicheiro(user.getLogoPath());
             }
 
-            String relativePath = uploadService.guardarFicheiro(file, "utilizadores");
+            String relativePath = uploadService.guardarAvatar(file, "utilizadores");
             utilizadorDAO.atualizarLogoPath(id, relativePath);
 
             return ResponseEntity.ok(Map.of(
                     "message", "Avatar atualizado com sucesso.",
                     "logoPath", relativePath
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Erro ao guardar ficheiro."));
+        }
+    }
+
+    // ---- UPLOAD DE FOTO PARA ATLETAS ----
+    @PostMapping("/atletas/{id}/foto")
+    public ResponseEntity<?> uploadAtletaFoto(@PathVariable int id,
+                                              @RequestParam("file") MultipartFile file) {
+        Atleta atleta = atletaDAO.buscarPorId(id);
+        if (atleta == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            if (atleta.getFotoPath() != null) {
+                uploadService.removerFicheiro(atleta.getFotoPath());
+            }
+
+            String relativePath = uploadService.guardarAvatar(file, "atletas");
+            atletaDAO.atualizarFotoPath(id, relativePath);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Foto do atleta atualizada com sucesso.",
+                    "fotoPath", relativePath
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Erro ao guardar ficheiro."));
+        }
+    }
+
+    // ---- UPLOAD DE FOTO PARA STAFF ----
+    @PostMapping("/staff/{id}/foto")
+    public ResponseEntity<?> uploadStaffFoto(@PathVariable int id,
+                                             @RequestParam("file") MultipartFile file) {
+        Staff staff = staffDAO.buscarPorId(id);
+        if (staff == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            if (staff.getFotoPath() != null) {
+                uploadService.removerFicheiro(staff.getFotoPath());
+            }
+
+            String relativePath = uploadService.guardarAvatar(file, "staff");
+            staffDAO.atualizarFotoPath(id, relativePath);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Foto do staff atualizada com sucesso.",
+                    "fotoPath", relativePath
             ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

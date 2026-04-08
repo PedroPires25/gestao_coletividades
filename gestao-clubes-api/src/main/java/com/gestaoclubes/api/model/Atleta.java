@@ -15,9 +15,15 @@ public class Atleta {
     // NOVOS CAMPOS
     private int escalaoId;
     private double remuneracao;
+    private String fotoPath;
 
     public Atleta(int id, String nome, Date dataNascimento, String email, String telefone, String morada,
                   int clubeAtualId, int estadoId, int escalaoId, double remuneracao) {
+        this(id, nome, dataNascimento, email, telefone, morada, clubeAtualId, estadoId, escalaoId, remuneracao, null);
+    }
+
+    public Atleta(int id, String nome, Date dataNascimento, String email, String telefone, String morada,
+                  int clubeAtualId, int estadoId, int escalaoId, double remuneracao, String fotoPath) {
         this.id = id;
         this.nome = nome;
         this.dataNascimento = dataNascimento;
@@ -28,6 +34,7 @@ public class Atleta {
         this.estadoId = estadoId;
         this.escalaoId = escalaoId;
         this.remuneracao = remuneracao;
+        this.fotoPath = fotoPath;
     }
 
     public Atleta(String nome, Date dataNascimento, String email, String telefone, String morada,
@@ -57,4 +64,6 @@ public class Atleta {
 
     public int getEscalaoId() { return escalaoId; }
     public double getRemuneracao() { return remuneracao; }
+    public String getFotoPath() { return fotoPath; }
+    public void setFotoPath(String fotoPath) { this.fotoPath = fotoPath; }
 }

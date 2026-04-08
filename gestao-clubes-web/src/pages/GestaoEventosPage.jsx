@@ -4,6 +4,7 @@ import SideMenu from "../components/SideMenu";
 import MapPicker from "../components/MapPicker";
 import MiniMap from "../components/MiniMap";
 import { useAuth } from "../auth/AuthContext";
+import { getUploadUrl } from "../api";
 import * as eventosService from "../services/eventos";
 import { getModalidadesByClube, getAtletasByClubeModalidade } from "../services/atletas";
 import { getAtividadesByColetividade } from "../services/coletividadeAtividades";
@@ -527,7 +528,14 @@ export default function GestaoEventosPage() {
                                                     checked={form.convocados.includes(p.id)}
                                                     onChange={() => toggleConvocado(p.id)}
                                                 />
-                                                {p.nome}
+                                                <span className="nome-com-avatar">
+                                                    {p.fotoPath ? (
+                                                        <img src={getUploadUrl(p.fotoPath)} alt={p.nome} className="avatar-circle-sm" />
+                                                    ) : (
+                                                        <span className="avatar-circle-sm avatar-initials-sm">{(p.nome || "?")[0].toUpperCase()}</span>
+                                                    )}
+                                                    {p.nome}
+                                                </span>
                                                 {p.escalao && <span style={{ fontSize: "0.8em", opacity: 0.7 }}> — {p.escalao}</span>}
                                             </label>
                                         ))}
@@ -650,8 +658,15 @@ export default function GestaoEventosPage() {
                             ) : (
                                 <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                                     {convocadosList.map(c => (
-                                        <li key={c.id} style={{ padding: "0.4rem 0", borderBottom: "1px solid var(--border-color, #333)" }}>
-                                            {c.nome}
+                                        <li key={c.id} style={{ padding: "0.4rem 0", borderBottom: "1px solid var(--border-color, #333)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                            <span className="nome-com-avatar">
+                                                {c.fotoPath ? (
+                                                    <img src={getUploadUrl(c.fotoPath)} alt={c.nome} className="avatar-circle-sm" />
+                                                ) : (
+                                                    <span className="avatar-circle-sm avatar-initials-sm">{(c.nome || "?")[0].toUpperCase()}</span>
+                                                )}
+                                                {c.nome}
+                                            </span>
                                             {c.escalao && <span style={{ opacity: 0.65, marginLeft: "0.5rem" }}>({c.escalao})</span>}
                                         </li>
                                     ))}

@@ -10,8 +10,13 @@ public class Staff {
 
 
     private double remuneracao;
+    private String fotoPath;
 
     public Staff(int id, String nome, String email, String telefone, String morada, String numRegisto, double remuneracao) {
+        this(id, nome, email, telefone, morada, numRegisto, remuneracao, null);
+    }
+
+    public Staff(int id, String nome, String email, String telefone, String morada, String numRegisto, double remuneracao, String fotoPath) {
         this.id = id;
         this.nome = nome;
         this.email = email;
@@ -19,6 +24,7 @@ public class Staff {
         this.morada = morada;
         this.numRegisto = numRegisto;
         this.remuneracao = remuneracao;
+        this.fotoPath = fotoPath;
     }
 
     public Staff(String nome, String email, String telefone, String morada, String numRegisto, double remuneracao) {
@@ -42,4 +48,6 @@ public class Staff {
     public String getNumRegisto() { return numRegisto; }
 
     public double getRemuneracao() { return remuneracao; }
+    public String getFotoPath() { return fotoPath; }
+    public void setFotoPath(String fotoPath) { this.fotoPath = fotoPath; }
 }

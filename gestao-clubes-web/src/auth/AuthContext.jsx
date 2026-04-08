@@ -100,6 +100,14 @@ export function AuthProvider({ children }) {
         localStorage.removeItem(LS_KEY);
     }
 
+    function updateSession(updatedUser) {
+        setSession((prev) => {
+            const next = { ...prev, user: { ...prev?.user, ...updatedUser } };
+            localStorage.setItem(LS_KEY, JSON.stringify(next));
+            return next;
+        });
+    }
+
     const role = session?.user?.role ?? null;
     const redirectUrl = session?.redirectUrl ?? calcularRedirectUrl(session?.user) ?? "/menu";
 
@@ -118,8 +126,11 @@ export function AuthProvider({ children }) {
         modalidadeId: session?.user?.modalidadeId ?? null,
         coletividadeId: session?.user?.coletividadeId ?? null,
         atividadeId: session?.user?.atividadeId ?? null,
+        nome: session?.user?.nome ?? null,
+        logoPath: session?.user?.logoPath ?? null,
         login,
         logout,
+        updateSession,
     }), [session, role, redirectUrl]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

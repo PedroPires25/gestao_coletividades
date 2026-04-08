@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS utilizadores (
   palavra_chave VARCHAR(255) NOT NULL,
   perfil_id INT NOT NULL,
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
+  nome VARCHAR(200) DEFAULT NULL,
   CONSTRAINT fk_utilizadores_perfis
     FOREIGN KEY (perfil_id) REFERENCES perfis(id)
     ON DELETE RESTRICT ON UPDATE CASCADE
@@ -104,6 +105,7 @@ CREATE TABLE IF NOT EXISTS atleta (
   morada VARCHAR(255),
   clube_atual_id INT NOT NULL,
   estado_id INT NOT NULL DEFAULT 1,
+  foto_path VARCHAR(255) DEFAULT NULL,
 
   CONSTRAINT fk_atleta_clube
     FOREIGN KEY (clube_atual_id) REFERENCES clube(id)
@@ -167,7 +169,8 @@ CREATE TABLE IF NOT EXISTS staff (
   email VARCHAR(120),
   telefone VARCHAR(30),
   morada VARCHAR(255),
-  num_registo VARCHAR(60)
+  num_registo VARCHAR(60),
+  foto_path VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS staff_afetacao (
@@ -827,3 +830,15 @@ ALTER TABLE coletividade
 
 ALTER TABLE utilizadores
   ADD COLUMN logo_path VARCHAR(255) DEFAULT NULL;
+
+-- -------------------------
+-- NOME DO UTILIZADOR + FOTO PARA ATLETA/STAFF
+-- -------------------------
+ALTER TABLE utilizadores
+  ADD COLUMN nome VARCHAR(200) DEFAULT NULL;
+
+ALTER TABLE atleta
+  ADD COLUMN foto_path VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE staff
+  ADD COLUMN foto_path VARCHAR(255) DEFAULT NULL;

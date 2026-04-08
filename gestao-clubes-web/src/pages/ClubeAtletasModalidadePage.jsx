@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getClubeById } from "../api";
+import { getClubeById, getUploadUrl, uploadAtletaFoto } from "../api";
 import {
     getAtletasByClubeModalidade,
     getEstadosAtleta,
@@ -167,7 +167,34 @@ export default function ClubeAtletasModalidadePage() {
         ativo: true,
     });
 
-    const menuItems = useMemo(
+    const fotoInputRef = useRef(null);
+    const [fotoTargetId, setFotoTargetId] = useState(null);
+
+    function handleAvatarClick(atletaId) {
+        setFotoTargetId(atletaId);
+        if (fotoInputRef.current) {
+            fotoInputRef.current.value = "";
+            fotoInputRef.current.click();
+        }
+    }
+
+    async function handleFotoChange(e) {
+        const file = e.target.files?.[0];
+        if (!file || !fotoTargetId) return;
+        try {
+            const res = await uploadAtletaFoto(fotoTargetId, file);
+            if (res?.fotoPath) {
+                setAtletas(prev =>
+                    prev.map(a => a.id === fotoTargetId ? { ...a, fotoPath: res.fotoPath } : a)
+                );
+            }
+        } catch (err) {
+            setErro("Erro ao fazer upload da foto: " + (err.message || ""));
+        }
+        setFotoTargetId(null);
+    }
+
+    const menuItems= useMemo(
         () => [
             { label: "Home", to: "/menu" },
             { label: "Clubes", to: "/clubes" },
@@ -306,6 +333,13 @@ export default function ClubeAtletasModalidadePage() {
 
     return (
         <>
+            <input
+                type="file"
+                accept="image/*"
+                ref={fotoInputRef}
+                style={{ display: "none" }}
+                onChange={handleFotoChange}
+            />
             <SideMenu
                 title="Gestão de Coletividades"
                 subtitle={clube?.nome || "Clube"}
@@ -386,7 +420,26 @@ export default function ClubeAtletasModalidadePage() {
                                             }
                                         >
                                             <td className="nowrap">
-                                                {pendingName ? <PendingNameCell /> : a.nome}
+                                                <span className="nome-com-avatar">
+                                                    <span
+                                                        className="avatar-upload-trigger"
+                                                        title="Clique para alterar foto"
+                                                        onClick={(e) => { e.stopPropagation(); handleAvatarClick(a.id); }}
+                                                    >
+                                                        {a.fotoPath ? (
+                                                            <img
+                                                                src={getUploadUrl(a.fotoPath)}
+                                                                alt={a.nome}
+                                                                className="avatar-circle-sm"
+                                                            />
+                                                        ) : (
+                                                            <span className="avatar-circle-sm avatar-initials-sm">
+                                                                {(a.nome || "?")[0].toUpperCase()}
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                    {pendingName ? <PendingNameCell /> : a.nome}
+                                                </span>
                                             </td>
                                             <td>{formatDateOnly(a.dataNascimento || a.data_nascimento) || "-"}</td>
                                             <td className="cell-muted">{a.email || "-"}</td>

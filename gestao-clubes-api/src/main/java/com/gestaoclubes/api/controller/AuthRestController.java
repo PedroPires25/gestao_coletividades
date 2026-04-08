@@ -57,6 +57,7 @@ public class AuthRestController {
         public Integer coletividadeId;
         public Integer atividadeId;
         public String logoPath;
+        public String nome;
 
         public UserDto(Utilizador u, String role) {
             this.id = u.getId();
@@ -71,6 +72,7 @@ public class AuthRestController {
             this.coletividadeId = u.getColetividadeId();
             this.atividadeId = u.getAtividadeId();
             this.logoPath = u.getLogoPath();
+            this.nome = u.getNome();
         }
     }
 
@@ -182,6 +184,49 @@ public class AuthRestController {
         return ResponseEntity.ok(
                 new GetRedirectUrlResponse(redirectUrl, "Redirecionamento calculado.", true)
         );
+    }
+
+    // ---- PERFIL DO UTILIZADOR AUTENTICADO ----
+
+    public static class UpdateProfileRequest {
+        public String nome;
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyProfile() {
+        JwtUtil.JwtUser jwtUser = getAuthenticatedUser();
+        if (jwtUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Não autenticado.");
+        }
+
+        Utilizador u = utilizadorDAO.buscarPorId(jwtUser.id());
+        if (u == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilizador não encontrado.");
+        }
+
+        String rolePlain = perfilDAO.obterDescricaoPerfil(u.getPerfilId());
+        return ResponseEntity.ok(new UserDto(u, rolePlain));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<?> updateMyProfile(@RequestBody UpdateProfileRequest req) {
+        JwtUtil.JwtUser jwtUser = getAuthenticatedUser();
+        if (jwtUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Não autenticado.");
+        }
+
+        Utilizador u = utilizadorDAO.buscarPorId(jwtUser.id());
+        if (u == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilizador não encontrado.");
+        }
+
+        if (req.nome != null) {
+            utilizadorDAO.atualizarNome(u.getId(), req.nome.trim());
+        }
+
+        Utilizador updated = utilizadorDAO.buscarPorId(jwtUser.id());
+        String rolePlain = perfilDAO.obterDescricaoPerfil(updated.getPerfilId());
+        return ResponseEntity.ok(new UserDto(updated, rolePlain));
     }
 
     @PostMapping("/register")
