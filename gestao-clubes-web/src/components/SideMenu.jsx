@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTheme } from "../theme/ThemeContext";
+import UserAvatar from "./UserAvatar";
 
 import homeIcon from "../assets/home.svg";
 import clubesIcon from "../assets/clubes.svg";
@@ -99,6 +100,8 @@ export default function SideMenu({
                         <img src={logoSrc} alt="Logo" />
                     </Link>
                 </div>
+
+                <UserAvatar />
             </header>
 
             {showBurger && (

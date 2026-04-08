@@ -172,6 +172,7 @@ public class StaffDAO {
                    s.morada,
                    s.num_registo,
                    s.remuneracao,
+                   s.foto_path,
                    sa.id AS afetacao_id,
                    sa.clube_id,
                    sa.clube_modalidade_id,
@@ -214,6 +215,7 @@ public class StaffDAO {
                    s.morada,
                    s.num_registo,
                    s.remuneracao,
+                   s.foto_path,
                    sa.id AS afetacao_id,
                    sa.clube_id,
                    sa.clube_modalidade_id,
@@ -282,6 +284,7 @@ public class StaffDAO {
                     row.put("ativo", rs.getBoolean("ativo"));
                     row.put("escaloesIds", parseCsvInts(rs.getString("escaloes_ids")));
                     row.put("escaloesNomes", rs.getString("escaloes_nomes"));
+                    try { row.put("fotoPath", rs.getString("foto_path")); } catch (SQLException ignored) {}
                     lista.add(row);
                 }
             }
@@ -294,7 +297,7 @@ public class StaffDAO {
 
     private Staff mapStaff(ResultSet rs) throws SQLException {
         BigDecimal remun = rs.getBigDecimal("remuneracao");
-        return new Staff(
+        Staff s = new Staff(
                 rs.getInt("id"),
                 rs.getString("nome"),
                 rs.getString("email"),
@@ -303,6 +306,8 @@ public class StaffDAO {
                 rs.getString("num_registo"),
                 remun == null ? 0.0 : remun.doubleValue()
         );
+        try { s.setFotoPath(rs.getString("foto_path")); } catch (SQLException ignored) {}
+        return s;
     }
 
     private static Integer getNullableInt(ResultSet rs, String column) throws SQLException {
@@ -324,5 +329,18 @@ public class StaffDAO {
             }
         }
         return ids;
+    }
+
+    public boolean atualizarFotoPath(int staffId, String fotoPath) {
+        String sql = "UPDATE staff SET foto_path=? WHERE id=?";
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, fotoPath);
+            ps.setInt(2, staffId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

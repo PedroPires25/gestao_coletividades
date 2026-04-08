@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getClubeById } from "../api";
+import { getClubeById, getUploadUrl, uploadStaffFoto } from "../api";
 import {
     getCargosStaff,
     getEscaloesStaff,
@@ -128,7 +128,34 @@ export default function ClubeStaffModalidadePage() {
         escaloesIds: [],
     });
 
-    const menuItems = useMemo(
+    const fotoInputRef = useRef(null);
+    const [fotoTargetId, setFotoTargetId] = useState(null);
+
+    function handleAvatarClick(staffId) {
+        setFotoTargetId(staffId);
+        if (fotoInputRef.current) {
+            fotoInputRef.current.value = "";
+            fotoInputRef.current.click();
+        }
+    }
+
+    async function handleFotoChange(e) {
+        const file = e.target.files?.[0];
+        if (!file || !fotoTargetId) return;
+        try {
+            const res = await uploadStaffFoto(fotoTargetId, file);
+            if (res?.fotoPath) {
+                setStaffRows(prev =>
+                    prev.map(s => s.id === fotoTargetId ? { ...s, fotoPath: res.fotoPath } : s)
+                );
+            }
+        } catch (err) {
+            setErro("Erro ao fazer upload da foto: " + (err.message || ""));
+        }
+        setFotoTargetId(null);
+    }
+
+    const menuItems= useMemo(
         () => [
             { label: "Home", to: "/menu" },
             { label: "Clubes", to: "/clubes" },
@@ -265,6 +292,13 @@ export default function ClubeStaffModalidadePage() {
 
     return (
         <>
+            <input
+                type="file"
+                accept="image/*"
+                ref={fotoInputRef}
+                style={{ display: "none" }}
+                onChange={handleFotoChange}
+            />
             <SideMenu
                 title="Gestão de Coletividades"
                 subtitle={clube?.nome || "Clube"}
@@ -341,7 +375,26 @@ export default function ClubeStaffModalidadePage() {
                                             }
                                         >
                                             <td className="nowrap">
-                                                {pendingName ? <PendingNameCell /> : row.nome}
+                                                <span className="nome-com-avatar">
+                                                    <span
+                                                        className="avatar-upload-trigger"
+                                                        title="Clique para alterar foto"
+                                                        onClick={(e) => { e.stopPropagation(); handleAvatarClick(row.id); }}
+                                                    >
+                                                        {row.fotoPath ? (
+                                                            <img
+                                                                src={getUploadUrl(row.fotoPath)}
+                                                                alt={row.nome}
+                                                                className="avatar-circle-sm"
+                                                            />
+                                                        ) : (
+                                                            <span className="avatar-circle-sm avatar-initials-sm">
+                                                                {(row.nome || "?")[0].toUpperCase()}
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                    {pendingName ? <PendingNameCell /> : row.nome}
+                                                </span>
                                             </td>
                                             <td className="cell-muted">{row.email || "-"}</td>
                                             <td className="cell-muted">{row.telefone || "-"}</td>

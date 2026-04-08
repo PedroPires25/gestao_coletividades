@@ -4,7 +4,7 @@ import SideMenu from "../components/SideMenu";
 import MapPicker from "../components/MapPicker";
 import MiniMap from "../components/MiniMap";
 import { useAuth } from "../auth/AuthContext";
-import { getClubeById } from "../api";
+import { getClubeById, getUploadUrl } from "../api";
 import { getEventosPorClube, listarAtletasEvento } from "../services/eventos";
 import eventosIcon from "../assets/eventos.svg";
 
@@ -231,13 +231,23 @@ export default function ClubeEventosPage() {
                                                                     border: "1px solid var(--border)",
                                                                     fontSize: "0.87rem",
                                                                     color: "var(--text)",
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    gap: "0.5rem",
                                                                 }}>
-                                                                    <span style={{ fontWeight: 600 }}>{c.nome}</span>
-                                                                    {c.escalao && (
-                                                                        <span className="subtle" style={{ display: "block", fontSize: "0.78rem" }}>
-                                                                            {c.escalao}
-                                                                        </span>
+                                                                    {c.fotoPath ? (
+                                                                        <img src={getUploadUrl(c.fotoPath)} alt={c.nome} className="avatar-circle-sm" />
+                                                                    ) : (
+                                                                        <span className="avatar-circle-sm avatar-initials-sm">{(c.nome || "?")[0].toUpperCase()}</span>
                                                                     )}
+                                                                    <div>
+                                                                        <span style={{ fontWeight: 600 }}>{c.nome}</span>
+                                                                        {c.escalao && (
+                                                                            <span className="subtle" style={{ display: "block", fontSize: "0.78rem" }}>
+                                                                                {c.escalao}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </li>
                                                             ))}
                                                         </ul>

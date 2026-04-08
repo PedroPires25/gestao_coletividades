@@ -277,7 +277,27 @@ export async function uploadUtilizadorAvatar(id, file) {
     return httpUpload(`/utilizadores/${id}/avatar`, file);
 }
 
+export async function uploadAtletaFoto(id, file) {
+    return httpUpload(`/atletas/${id}/foto`, file);
+}
+
+export async function uploadStaffFoto(id, file) {
+    return httpUpload(`/staff/${id}/foto`, file);
+}
+
 export function getUploadUrl(relativePath) {
     if (!relativePath) return null;
     return `${API_BASE}/uploads/${relativePath}`;
+}
+
+// PERFIL DO UTILIZADOR
+export async function getMyProfile() {
+    return http("/auth/me");
+}
+
+export async function updateMyProfile(payload) {
+    return http("/auth/me", {
+        method: "PUT",
+        body: JSON.stringify(payload),
+    });
 }

@@ -15,7 +15,7 @@ public class UtilizadorDAO {
 
     public Utilizador autenticar(String email, String palavraChave) {
         String sql = "SELECT id, utilizador, palavra_chave, perfil_id, ativo, privilegios_ativos, " +
-                "estado_registo, clube_id, modalidade_id, coletividade_id, atividade_id " +
+                "estado_registo, clube_id, modalidade_id, coletividade_id, atividade_id, logo_path, nome " +
                 "FROM utilizadores WHERE utilizador = ? AND ativo = 1";
 
         try (Connection conn = ConexoBD.getConnection();
@@ -132,7 +132,7 @@ public class UtilizadorDAO {
 
     public Utilizador buscarPorId(int id) {
         String sql = "SELECT id, utilizador, perfil_id, ativo, privilegios_ativos, estado_registo, " +
-                "clube_id, modalidade_id, coletividade_id, atividade_id " +
+                "clube_id, modalidade_id, coletividade_id, atividade_id, logo_path, nome " +
                 "FROM utilizadores WHERE id = ?";
 
         try (Connection conn = ConexoBD.getConnection();
@@ -155,7 +155,7 @@ public class UtilizadorDAO {
 
     public Utilizador buscarPorEmail(String email) {
         String sql = "SELECT id, utilizador, perfil_id, ativo, privilegios_ativos, estado_registo, " +
-                "clube_id, modalidade_id, coletividade_id, atividade_id " +
+                "clube_id, modalidade_id, coletividade_id, atividade_id, logo_path, nome " +
                 "FROM utilizadores WHERE utilizador = ?";
 
         try (Connection conn = ConexoBD.getConnection();
@@ -733,6 +733,7 @@ public class UtilizadorDAO {
         u.setAtividadeId((Integer) rs.getObject("atividade_id"));
         u.setPalavraChave(incluirPassword ? rs.getString("palavra_chave") : null);
         try { u.setLogoPath(rs.getString("logo_path")); } catch (SQLException ignored) {}
+        try { u.setNome(rs.getString("nome")); } catch (SQLException ignored) {}
         return u;
     }
 
@@ -777,6 +778,22 @@ public class UtilizadorDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, logoPath);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean atualizarNome(int userId, String nome) {
+        String sql = "UPDATE utilizadores SET nome=? WHERE id=?";
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, nome);
             ps.setInt(2, userId);
             return ps.executeUpdate() > 0;
 

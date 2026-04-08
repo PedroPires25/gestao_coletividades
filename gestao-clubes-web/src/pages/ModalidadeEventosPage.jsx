@@ -237,13 +237,23 @@ export default function ModalidadeEventosPage() {
                                                                     border: "1px solid var(--border)",
                                                                     fontSize: "0.87rem",
                                                                     color: "var(--text)",
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    gap: "0.5rem",
                                                                 }}>
-                                                                    <span style={{ fontWeight: 600 }}>{c.nome}</span>
-                                                                    {c.escalao && (
-                                                                        <span className="subtle" style={{ display: "block", fontSize: "0.78rem" }}>
-                                                                            {c.escalao}
-                                                                        </span>
+                                                                    {c.fotoPath ? (
+                                                                        <img src={getUploadUrl(c.fotoPath)} alt={c.nome} className="avatar-circle-sm" />
+                                                                    ) : (
+                                                                        <span className="avatar-circle-sm avatar-initials-sm">{(c.nome || "?")[0].toUpperCase()}</span>
                                                                     )}
+                                                                    <div>
+                                                                        <span style={{ fontWeight: 600 }}>{c.nome}</span>
+                                                                        {c.escalao && (
+                                                                            <span className="subtle" style={{ display: "block", fontSize: "0.78rem" }}>
+                                                                                {c.escalao}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </li>
                                                             ))}
                                                         </ul>

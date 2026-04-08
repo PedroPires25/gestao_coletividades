@@ -62,6 +62,7 @@ public class AtletaDAO {
                    a.morada,
                    a.remuneracao,
                    a.clube_atual_id,
+                   a.foto_path,
                    ea.id AS estado_id,
                    ea.descricao AS estado,
                    e.id AS escalao_id,
@@ -109,6 +110,7 @@ public class AtletaDAO {
                     row.put("dataInscricao", rs.getDate("data_inscricao"));
                     row.put("dataFim", rs.getDate("data_fim"));
                     row.put("ativo", rs.getBoolean("ativo"));
+                    row.put("fotoPath", rs.getString("foto_path"));
                     lista.add(row);
                 }
             }
@@ -131,6 +133,7 @@ public class AtletaDAO {
                    a.morada,
                    a.remuneracao,
                    a.clube_atual_id,
+                   a.foto_path,
                    ea.id AS estado_id,
                    ea.descricao AS estado,
                    e.id AS escalao_id,
@@ -176,6 +179,7 @@ public class AtletaDAO {
                     row.put("dataInscricao", rs.getDate("data_inscricao"));
                     row.put("dataFim", rs.getDate("data_fim"));
                     row.put("ativo", rs.getBoolean("ativo"));
+                    row.put("fotoPath", rs.getString("foto_path"));
                     lista.add(row);
                 }
             }
@@ -258,7 +262,7 @@ public class AtletaDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new Atleta(
+                    Atleta a = new Atleta(
                             rs.getInt("id"),
                             rs.getString("nome"),
                             rs.getDate("data_nascimento"),
@@ -270,6 +274,8 @@ public class AtletaDAO {
                             rs.getInt("escalao_id"),
                             rs.getBigDecimal("remuneracao").doubleValue()
                     );
+                    try { a.setFotoPath(rs.getString("foto_path")); } catch (SQLException ignored) {}
+                    return a;
                 }
             }
         } catch (SQLException e) {
@@ -294,7 +300,7 @@ public class AtletaDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new Atleta(
+                    Atleta a = new Atleta(
                             rs.getInt("id"),
                             rs.getString("nome"),
                             rs.getDate("data_nascimento"),
@@ -306,6 +312,8 @@ public class AtletaDAO {
                             rs.getInt("escalao_id"),
                             rs.getBigDecimal("remuneracao").doubleValue()
                     );
+                    try { a.setFotoPath(rs.getString("foto_path")); } catch (SQLException ignored) {}
+                    return a;
                 }
             }
         } catch (SQLException e) {
@@ -313,6 +321,19 @@ public class AtletaDAO {
         }
 
         return null;
+    }
+
+    public boolean atualizarFotoPath(int atletaId, String fotoPath) {
+        String sql = "UPDATE atleta SET foto_path=? WHERE id=?";
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, fotoPath);
+            ps.setInt(2, atletaId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean atualizarClubeAtual(int atletaId, int novoClubeId) {

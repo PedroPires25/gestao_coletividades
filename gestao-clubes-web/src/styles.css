@@ -2152,3 +2152,301 @@ body.theme-light .badge {
     text-transform: uppercase;
     opacity: 0.9;
 }
+
+/* ─── UserAvatar (header) ─── */
+.user-avatar-wrap {
+    position: relative;
+    margin-left: auto;
+    z-index: 120;
+}
+
+.user-avatar-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 24px;
+    transition: background 0.18s;
+    color: var(--text);
+}
+
+.user-avatar-btn:hover {
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.user-avatar-img {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+}
+
+.user-avatar-initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.user-avatar-name {
+    font-size: 13px;
+    font-weight: 600;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text);
+}
+
+@media (max-width: 600px) {
+    .user-avatar-name {
+        display: none;
+    }
+}
+
+.user-avatar-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    min-width: 170px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    padding: 6px 0;
+    z-index: 200;
+}
+
+.user-avatar-dropdown-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.user-avatar-dropdown-item:hover {
+    background: var(--bg-card-soft);
+}
+
+.user-avatar-dropdown-logout {
+    color: var(--danger, #e74c3c);
+}
+
+/* ─── Avatar circles in table listings ─── */
+.td-avatar {
+    width: 40px;
+    padding: 4px 6px !important;
+    text-align: center;
+}
+
+.nome-com-avatar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.avatar-upload-trigger {
+    cursor: pointer;
+    position: relative;
+    display: inline-flex;
+    border-radius: 50%;
+    transition: opacity 0.2s;
+}
+.avatar-upload-trigger:hover {
+    opacity: 0.7;
+}
+.avatar-upload-trigger:hover::after {
+    content: "📷";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    background: rgba(0, 0, 0, 0.45);
+    border-radius: 50%;
+}
+
+.avatar-circle-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+img.avatar-circle-sm {
+    display: inline-block;
+}
+
+.avatar-initials-sm {
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* ─── Perfil page ─── */
+.perfil-page {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 32px 18px;
+}
+
+.perfil-page h2 {
+    margin: 0 0 24px;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.perfil-msg {
+    padding: 10px 16px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.perfil-msg-success {
+    background: rgba(46, 204, 113, 0.14);
+    color: #27ae60;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.perfil-msg-error {
+    background: rgba(231, 76, 60, 0.12);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.25);
+}
+
+.perfil-avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+}
+
+.perfil-avatar-circle {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card-soft);
+    border: 3px solid var(--accent);
+}
+
+.perfil-avatar-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.perfil-avatar-initials {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.perfil-avatar-upload-btn {
+    display: inline-block;
+    padding: 8px 18px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.18s;
+}
+
+.perfil-avatar-upload-btn:hover {
+    opacity: 0.85;
+}
+
+.perfil-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.perfil-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.perfil-field label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.perfil-input {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.18s;
+}
+
+.perfil-input:focus {
+    border-color: var(--accent);
+}
+
+.perfil-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.perfil-save-btn {
+    align-self: flex-start;
+    padding: 10px 28px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.18s;
+}
+
+.perfil-save-btn:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+.perfil-save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

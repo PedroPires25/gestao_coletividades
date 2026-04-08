@@ -44,6 +44,9 @@ import ColetividadeStaffAtividadePage from "./pages/ColetividadeStaffAtividadePa
 import AreaAcessoClubePage from "./pages/AreaAcessoClubePage";
 import AreaAcessoColetividadePage from "./pages/AreaAcessoColetividadePage";
 
+// perfil
+import PerfilPage from "./pages/PerfilPage";
+
 function NotFoundPage() {
     return (
         <div style={{ padding: 24 }}>
@@ -90,6 +93,16 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <MenuPage />
+                        </RequireAuth>
+                    }
+                />
+
+                {/* PERFIL */}
+                <Route
+                    path="/perfil"
+                    element={
+                        <RequireAuth>
+                            <PerfilPage />
                         </RequireAuth>
                     }
                 />
