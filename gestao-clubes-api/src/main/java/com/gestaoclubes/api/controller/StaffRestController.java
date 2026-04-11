@@ -28,6 +28,7 @@ public class StaffRestController {
     private final ClubeModalidadeDAO clubeModalidadeDAO = new ClubeModalidadeDAO();
     private final CargoStaffDAO cargoStaffDAO = new CargoStaffDAO();
     private final EscalaoDAO escalaoDAO = new EscalaoDAO();
+    private final com.gestaoclubes.api.dao.UtilizadorDAO utilizadorDAO = new com.gestaoclubes.api.dao.UtilizadorDAO();
 
     @GetMapping("/staff/cargos")
     public List<CargoStaff> listarCargos() {
@@ -77,6 +78,12 @@ public class StaffRestController {
                 blankToNull(body.numRegisto),
                 body.remuneracao == null ? 0.0 : body.remuneracao
         );
+
+        // Ligar ao utilizador se o email corresponder
+        if (staff.getEmail() != null) {
+            var util = utilizadorDAO.buscarPorEmail(staff.getEmail());
+            if (util != null) staff.setUtilizadorId(util.getId());
+        }
 
         int staffId = staffDAO.inserirRetornarId(staff);
         if (staffId <= 0) {

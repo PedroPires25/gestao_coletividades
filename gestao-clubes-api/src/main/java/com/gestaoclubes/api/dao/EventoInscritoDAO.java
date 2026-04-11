@@ -13,12 +13,13 @@ public class EventoInscritoDAO {
     public List<Map<String, Object>> listarPorEvento(int eventoId) {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
-            SELECT i.id, i.nome, i.email, i.data_nascimento,
+            SELECT i.id, COALESCE(u.nome, i.nome) AS nome, i.email, i.data_nascimento,
                    ei.evento_id
             FROM evento_inscrito ei
             INNER JOIN inscrito i ON i.id = ei.inscrito_id
+            LEFT JOIN utilizadores u ON u.id = i.utilizador_id
             WHERE ei.evento_id = ?
-            ORDER BY i.nome
+            ORDER BY nome
         """;
 
         try (Connection conn = ConexoBD.getConnection();

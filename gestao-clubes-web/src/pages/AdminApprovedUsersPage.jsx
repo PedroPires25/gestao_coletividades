@@ -136,7 +136,8 @@ export default function AdminApprovedUsersPage() {
 
         return users.filter((u) =>
             (u.email || "").toLowerCase().includes(term) ||
-            (u.role || "").toLowerCase().includes(term)
+            (u.role || "").toLowerCase().includes(term) ||
+            (u.nome || "").toLowerCase().includes(term)
         );
     }, [users, q]);
 
@@ -260,7 +261,7 @@ export default function AdminApprovedUsersPage() {
                     <div className="searchbar">
                         <input
                             className="input"
-                            placeholder="Pesquisar por email ou perfil..."
+                            placeholder="Pesquisar por nome, email ou perfil..."
                             value={q}
                             onChange={(e) => setQ(e.target.value)}
                         />
@@ -276,6 +277,7 @@ export default function AdminApprovedUsersPage() {
                         <table>
                             <thead>
                             <tr>
+                                <th>Nome</th>
                                 <th>Email</th>
                                 <th>Perfil</th>
                                 <th>Privilégios</th>
@@ -286,11 +288,11 @@ export default function AdminApprovedUsersPage() {
                             <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} style={{ padding: 14 }}>A carregar...</td>
+                                    <td colSpan={6} style={{ padding: 14 }}>A carregar...</td>
                                 </tr>
                             ) : filtrados.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} style={{ padding: 14 }}>Sem utilizadores aprovados.</td>
+                                    <td colSpan={6} style={{ padding: 14 }}>Sem utilizadores aprovados.</td>
                                 </tr>
                             ) : filtrados.map((u) => {
                                 const saving = savingId === u.id;
@@ -300,6 +302,7 @@ export default function AdminApprovedUsersPage() {
 
                                 return (
                                     <tr key={u.id}>
+                                        <td>{u.nome || "—"}</td>
                                         <td>{u.email}</td>
 
                                         <td>

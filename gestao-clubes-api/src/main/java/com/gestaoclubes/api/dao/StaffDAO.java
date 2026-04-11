@@ -18,8 +18,8 @@ public class StaffDAO {
 
     public int inserirRetornarId(Staff s) {
         String sql = """
-            INSERT INTO staff (nome, email, telefone, morada, num_registo, remuneracao)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO staff (nome, email, telefone, morada, num_registo, remuneracao, utilizador_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = ConexoBD.getConnection();
@@ -31,6 +31,11 @@ public class StaffDAO {
             ps.setString(4, s.getMorada());
             ps.setString(5, s.getNumRegisto());
             ps.setBigDecimal(6, BigDecimal.valueOf(s.getRemuneracao()));
+            if (s.getUtilizadorId() != null) {
+                ps.setInt(7, s.getUtilizadorId());
+            } else {
+                ps.setNull(7, java.sql.Types.INTEGER);
+            }
 
             int rows = ps.executeUpdate();
             if (rows == 0) return 0;
@@ -47,14 +52,20 @@ public class StaffDAO {
 
     public List<Staff> listarTodos() {
         List<Staff> lista = new ArrayList<>();
-        String sql = "SELECT * FROM staff ORDER BY nome";
+        String sql = """
+            SELECT s.*, COALESCE(u.nome, s.nome) AS nome_efetivo,
+                   COALESCE(u.logo_path, s.foto_path) AS foto_efetiva
+            FROM staff s
+            LEFT JOIN utilizadores u ON u.id = s.utilizador_id
+            ORDER BY nome_efetivo
+        """;
 
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                lista.add(mapStaff(rs));
+                lista.add(mapStaffComJoin(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -63,7 +74,13 @@ public class StaffDAO {
     }
 
     public Staff buscarPorId(int id) {
-        String sql = "SELECT * FROM staff WHERE id=?";
+        String sql = """
+            SELECT s.*, COALESCE(u.nome, s.nome) AS nome_efetivo,
+                   COALESCE(u.logo_path, s.foto_path) AS foto_efetiva
+            FROM staff s
+            LEFT JOIN utilizadores u ON u.id = s.utilizador_id
+            WHERE s.id=?
+        """;
 
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -72,7 +89,7 @@ public class StaffDAO {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return mapStaff(rs);
+                return mapStaffComJoin(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -124,18 +141,19 @@ public class StaffDAO {
         List<Object[]> rows = new ArrayList<>();
 
         String sql = """
-            SELECT s.id, s.nome, s.email, s.telefone, s.morada, s.num_registo, s.remuneracao,
+            SELECT s.id, COALESCE(u.nome, s.nome) AS nome, s.email, s.telefone, s.morada, s.num_registo, s.remuneracao,
                    c.nome AS clube_nome,
                    cs.nome AS cargo_nome,
                    m.nome AS modalidade_nome
             FROM staff s
+            LEFT JOIN utilizadores u ON u.id = s.utilizador_id
             LEFT JOIN staff_afetacao sa
                    ON sa.staff_id = s.id AND (sa.data_fim IS NULL OR sa.data_fim >= CURDATE())
             LEFT JOIN clube c ON c.id = sa.clube_id
             LEFT JOIN cargo_staff cs ON cs.id = sa.cargo_id
             LEFT JOIN clube_modalidade cm ON cm.id = sa.clube_modalidade_id
             LEFT JOIN modalidade m ON m.id = cm.modalidade_id
-            ORDER BY s.nome
+            ORDER BY nome
         """;
 
         try (Connection conn = ConexoBD.getConnection();
@@ -166,13 +184,13 @@ public class StaffDAO {
     public List<Map<String, Object>> listarPorClube(int clubeId) {
         String sql = """
             SELECT s.id,
-                   s.nome,
+                   COALESCE(u.nome, s.nome) AS nome,
                    s.email,
                    s.telefone,
                    s.morada,
                    s.num_registo,
                    s.remuneracao,
-                   s.foto_path,
+                   COALESCE(u.logo_path, s.foto_path) AS foto_path,
                    sa.id AS afetacao_id,
                    sa.clube_id,
                    sa.clube_modalidade_id,
@@ -191,6 +209,7 @@ public class StaffDAO {
                    GROUP_CONCAT(DISTINCT e.id ORDER BY e.nome SEPARATOR ',') AS escaloes_ids,
                    GROUP_CONCAT(DISTINCT e.nome ORDER BY e.nome SEPARATOR ', ') AS escaloes_nomes
             FROM staff s
+            LEFT JOIN utilizadores u ON u.id = s.utilizador_id
             JOIN staff_afetacao sa ON sa.staff_id = s.id
             LEFT JOIN cargo_staff cs ON cs.id = sa.cargo_id
             LEFT JOIN clube_modalidade cm ON cm.id = sa.clube_modalidade_id
@@ -198,10 +217,10 @@ public class StaffDAO {
             LEFT JOIN staff_afetacao_escalao sae ON sae.staff_afetacao_id = sa.id
             LEFT JOIN escalao e ON e.id = sae.escalao_id
             WHERE sa.clube_id = ?
-            GROUP BY s.id, s.nome, s.email, s.telefone, s.morada, s.num_registo, s.remuneracao,
+            GROUP BY s.id, nome, s.email, s.telefone, s.morada, s.num_registo, s.remuneracao, foto_path,
                      sa.id, sa.clube_id, sa.clube_modalidade_id, sa.cargo_id, sa.data_inicio, sa.data_fim,
                      sa.observacoes, cs.nome, cm.epoca, m.id, m.nome
-            ORDER BY s.nome, sa.data_inicio DESC, sa.id DESC
+            ORDER BY nome, sa.data_inicio DESC, sa.id DESC
         """;
         return listarDetalhado(sql, clubeId);
     }
@@ -209,13 +228,13 @@ public class StaffDAO {
     public List<Map<String, Object>> listarPorClubeModalidade(int clubeId, int clubeModalidadeId) {
         String sql = """
             SELECT s.id,
-                   s.nome,
+                   COALESCE(u.nome, s.nome) AS nome,
                    s.email,
                    s.telefone,
                    s.morada,
                    s.num_registo,
                    s.remuneracao,
-                   s.foto_path,
+                   COALESCE(u.logo_path, s.foto_path) AS foto_path,
                    sa.id AS afetacao_id,
                    sa.clube_id,
                    sa.clube_modalidade_id,
@@ -234,6 +253,7 @@ public class StaffDAO {
                    GROUP_CONCAT(DISTINCT e.id ORDER BY e.nome SEPARATOR ',') AS escaloes_ids,
                    GROUP_CONCAT(DISTINCT e.nome ORDER BY e.nome SEPARATOR ', ') AS escaloes_nomes
             FROM staff s
+            LEFT JOIN utilizadores u ON u.id = s.utilizador_id
             JOIN staff_afetacao sa ON sa.staff_id = s.id
             LEFT JOIN cargo_staff cs ON cs.id = sa.cargo_id
             LEFT JOIN clube_modalidade cm ON cm.id = sa.clube_modalidade_id
@@ -242,10 +262,10 @@ public class StaffDAO {
             LEFT JOIN escalao e ON e.id = sae.escalao_id
             WHERE sa.clube_id = ?
               AND sa.clube_modalidade_id = ?
-            GROUP BY s.id, s.nome, s.email, s.telefone, s.morada, s.num_registo, s.remuneracao,
+            GROUP BY s.id, nome, s.email, s.telefone, s.morada, s.num_registo, s.remuneracao, foto_path,
                      sa.id, sa.clube_id, sa.clube_modalidade_id, sa.cargo_id, sa.data_inicio, sa.data_fim,
                      sa.observacoes, cs.nome, cm.epoca, m.id, m.nome
-            ORDER BY s.nome, sa.data_inicio DESC, sa.id DESC
+            ORDER BY nome, sa.data_inicio DESC, sa.id DESC
         """;
         return listarDetalhado(sql, clubeId, clubeModalidadeId);
     }
@@ -307,6 +327,23 @@ public class StaffDAO {
                 remun == null ? 0.0 : remun.doubleValue()
         );
         try { s.setFotoPath(rs.getString("foto_path")); } catch (SQLException ignored) {}
+        try { s.setUtilizadorId((Integer) rs.getObject("utilizador_id")); } catch (SQLException ignored) {}
+        return s;
+    }
+
+    private Staff mapStaffComJoin(ResultSet rs) throws SQLException {
+        BigDecimal remun = rs.getBigDecimal("remuneracao");
+        Staff s = new Staff(
+                rs.getInt("id"),
+                rs.getString("nome_efetivo"),
+                rs.getString("email"),
+                rs.getString("telefone"),
+                rs.getString("morada"),
+                rs.getString("num_registo"),
+                remun == null ? 0.0 : remun.doubleValue()
+        );
+        s.setFotoPath(rs.getString("foto_efetiva"));
+        try { s.setUtilizadorId((Integer) rs.getObject("utilizador_id")); } catch (SQLException ignored) {}
         return s;
     }
 

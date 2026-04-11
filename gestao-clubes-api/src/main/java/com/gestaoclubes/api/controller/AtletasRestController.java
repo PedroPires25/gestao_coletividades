@@ -29,6 +29,7 @@ public class AtletasRestController {
     private final EscalaoDAO escalaoDAO = new EscalaoDAO();
     private final EstadoAtletaDAO estadoAtletaDAO = new EstadoAtletaDAO();
     private final AuditLogDAO auditLogDAO = new AuditLogDAO();
+    private final com.gestaoclubes.api.dao.UtilizadorDAO utilizadorDAO = new com.gestaoclubes.api.dao.UtilizadorDAO();
     private final ObjectMapper mapper = new ObjectMapper();
 
     @GetMapping("/clubes/{clubeId}/modalidades/{modalidadeId}/atletas")
@@ -83,6 +84,12 @@ public class AtletasRestController {
                 body.escalaoId,
                 body.remuneracao == null ? 0.0 : body.remuneracao
         );
+
+        // Ligar ao utilizador se o email corresponder
+        if (atleta.getEmail() != null) {
+            var util = utilizadorDAO.buscarPorEmail(atleta.getEmail());
+            if (util != null) atleta.setUtilizadorId(util.getId());
+        }
 
         Integer atletaId = atletaDAO.inserirEDevolverId(atleta);
         if (atletaId == null || atletaId <= 0) {

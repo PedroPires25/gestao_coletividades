@@ -7,6 +7,7 @@ public class Evento {
     private String titulo;
     private String descricao;
     private Timestamp dataHora;
+    private Timestamp dataHoraFim;
     private String local;
     private String observacoes;
     private String tipo;
@@ -55,6 +56,8 @@ public class Evento {
     public void setDescricao(String descricao) { this.descricao = descricao; }
     public Timestamp getDataHora() { return dataHora; }
     public void setDataHora(Timestamp dataHora) { this.dataHora = dataHora; }
+    public Timestamp getDataHoraFim() { return dataHoraFim; }
+    public void setDataHoraFim(Timestamp dataHoraFim) { this.dataHoraFim = dataHoraFim; }
     public String getLocal() { return local; }
     public void setLocal(String local) { this.local = local; }
     public String getObservacoes() { return observacoes; }

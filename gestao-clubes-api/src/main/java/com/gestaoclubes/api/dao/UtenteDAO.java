@@ -15,19 +15,20 @@ public class UtenteDAO {
         List<Utente> lista = new ArrayList<>();
 
         String sql = """
-            SELECT i.id, i.nome, i.data_nascimento, i.email, i.telefone, i.morada,
+            SELECT i.id, COALESCE(ut.nome, i.nome) AS nome, i.data_nascimento, i.email, i.telefone, i.morada,
                    i.coletividade_atual_id, i.estado_id,
                    ei.descricao AS estado_descricao,
                    a.nome AS atividade_nome,
                    ica.data_inscricao, ica.data_fim, ica.ativo
             FROM inscrito_coletividade_atividade ica
             INNER JOIN inscrito i ON i.id = ica.inscrito_id
+            LEFT JOIN utilizadores ut ON ut.id = i.utilizador_id
             INNER JOIN estado_inscrito ei ON ei.id = i.estado_id
             INNER JOIN coletividade_atividade ca ON ca.id = ica.coletividade_atividade_id
             INNER JOIN atividade a ON a.id = ca.atividade_id
             WHERE ca.coletividade_id = ?
               AND ca.id = ?
-            ORDER BY i.nome
+            ORDER BY nome
         """;
 
         try (Connection conn = ConexoBD.getConnection();
@@ -69,8 +70,9 @@ public class UtenteDAO {
             conn.setAutoCommit(false);
 
             String sqlInscrito = """
-                INSERT INTO inscrito (nome, data_nascimento, email, telefone, morada, coletividade_atual_id, estado_id)
-                SELECT ?, ?, ?, ?, ?, ca.coletividade_id, ?
+                INSERT INTO inscrito (nome, data_nascimento, email, telefone, morada, coletividade_atual_id, estado_id, utilizador_id)
+                SELECT ?, ?, ?, ?, ?, ca.coletividade_id, ?,
+                       (SELECT id FROM utilizadores WHERE LOWER(utilizador) = LOWER(?) LIMIT 1)
                 FROM coletividade_atividade ca
                 WHERE ca.id = ?
             """;
@@ -84,7 +86,8 @@ public class UtenteDAO {
                 ps.setString(4, u.getTelefone());
                 ps.setString(5, u.getMorada());
                 ps.setInt(6, u.getEstadoId() == null ? 1 : u.getEstadoId());
-                ps.setInt(7, coletividadeAtividadeId);
+                ps.setString(7, u.getEmail());
+                ps.setInt(8, coletividadeAtividadeId);
                 ps.executeUpdate();
 
                 try (ResultSet rs = ps.getGeneratedKeys()) {

@@ -1,12 +1,51 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../auth/AuthContext";
 import SideMenu from "../components/SideMenu";
+import PasswordChecklist from "../components/PasswordChecklist";
+import ConfirmPasswordStatus from "../components/ConfirmPasswordStatus";
+import { evaluatePassword } from "../utils/passwordStrength";
 import {
     getMyProfile,
     updateMyProfile,
     uploadUtilizadorAvatar,
     getUploadUrl,
+    changeMyPassword,
 } from "../api";
+
+const EyeOpenIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+         fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2.062 12.349a12.24 12.24 0 0 1 19.876 0" />
+        <circle cx="12" cy="12" r="3" />
+    </svg>
+);
+
+const EyeClosedIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+         fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.527 12.234 12.234 0 0 1-1.604 2.887" />
+        <path d="M16.637 16.637A12.241 12.241 0 0 1 2.062 12.349a12.235 12.235 0 0 1 2.162-3.805" />
+        <path d="M1 1l22 22" />
+        <circle cx="12" cy="12" r="3" />
+    </svg>
+);
+
+const eyeButtonStyle = {
+    position: "absolute",
+    right: "12px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    color: "#333333",
+    opacity: 0.6,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "4px",
+    zIndex: 2,
+};
 
 export default function PerfilPage() {
     const { user, updateSession } = useAuth();
@@ -17,6 +56,18 @@ export default function PerfilPage() {
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState(null);
     const fileRef = useRef(null);
+
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmNewPassword, setConfirmNewPassword] = useState("");
+    const [savingPw, setSavingPw] = useState(false);
+    const [pwMsg, setPwMsg] = useState(null);
+    const [showCurrentPw, setShowCurrentPw] = useState(false);
+    const [showNewPw, setShowNewPw] = useState(false);
+    const [showConfirmPw, setShowConfirmPw] = useState(false);
+
+    const pwResult = evaluatePassword(newPassword);
+    const pwValid = pwResult.isValid && newPassword === confirmNewPassword && confirmNewPassword.length > 0;
 
     useEffect(() => {
         let cancelled = false;
@@ -63,6 +114,36 @@ export default function PerfilPage() {
         } finally {
             setSaving(false);
             if (fileRef.current) fileRef.current.value = "";
+        }
+    }
+
+    async function handleChangePassword(e) {
+        e.preventDefault();
+        setPwMsg(null);
+
+        if (!currentPassword || !newPassword || !confirmNewPassword) {
+            setPwMsg({ type: "error", text: "Todos os campos são obrigatórios." });
+            return;
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            setPwMsg({ type: "error", text: "As novas palavras-passe não coincidem." });
+            return;
+        }
+
+        setSavingPw(true);
+        try {
+            await changeMyPassword({ currentPassword, newPassword, confirmNewPassword });
+            setPwMsg({ type: "success", text: "Palavra-passe alterada com sucesso." });
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmNewPassword("");
+        } catch (err) {
+            const text = typeof err === "string" ? err
+                : err?.message || "Erro ao alterar a palavra-passe.";
+            setPwMsg({ type: "error", text });
+        } finally {
+            setSavingPw(false);
         }
     }
 
@@ -139,6 +220,100 @@ export default function PerfilPage() {
 
                         <button type="submit" className="perfil-save-btn" disabled={saving}>
                             {saving ? "A guardar..." : "Guardar"}
+                        </button>
+                    </form>
+
+                    <hr className="perfil-divider" />
+
+                    <h3>Alterar Palavra-passe</h3>
+
+                    {pwMsg && (
+                        <div className={`perfil-msg perfil-msg-${pwMsg.type}`}>
+                            {pwMsg.text}
+                        </div>
+                    )}
+
+                    <form className="perfil-form" onSubmit={handleChangePassword}>
+                        <div className="perfil-field">
+                            <label htmlFor="perfil-pw-current">Palavra-passe atual</label>
+                            <div style={{ position: "relative" }}>
+                                <input
+                                    id="perfil-pw-current"
+                                    type={showCurrentPw ? "text" : "password"}
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                    className="perfil-input"
+                                    autoComplete="current-password"
+                                    style={{ paddingRight: "45px" }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCurrentPw(!showCurrentPw)}
+                                    style={eyeButtonStyle}
+                                    aria-label={showCurrentPw ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                                >
+                                    {showCurrentPw ? <EyeOpenIcon /> : <EyeClosedIcon />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="perfil-field">
+                            <label htmlFor="perfil-pw-new">Nova palavra-passe</label>
+                            <div style={{ position: "relative" }}>
+                                <input
+                                    id="perfil-pw-new"
+                                    type={showNewPw ? "text" : "password"}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    className="perfil-input"
+                                    autoComplete="new-password"
+                                    style={{ paddingRight: "45px" }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewPw(!showNewPw)}
+                                    style={eyeButtonStyle}
+                                    aria-label={showNewPw ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                                >
+                                    {showNewPw ? <EyeOpenIcon /> : <EyeClosedIcon />}
+                                </button>
+                            </div>
+                            <PasswordChecklist password={newPassword} />
+                        </div>
+
+                        <div className="perfil-field">
+                            <label htmlFor="perfil-pw-confirm">Confirmar nova palavra-passe</label>
+                            <div style={{ position: "relative" }}>
+                                <input
+                                    id="perfil-pw-confirm"
+                                    type={showConfirmPw ? "text" : "password"}
+                                    value={confirmNewPassword}
+                                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                    className="perfil-input"
+                                    autoComplete="new-password"
+                                    style={{ paddingRight: "45px" }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPw(!showConfirmPw)}
+                                    style={eyeButtonStyle}
+                                    aria-label={showConfirmPw ? "Ocultar confirmação" : "Mostrar confirmação"}
+                                >
+                                    {showConfirmPw ? <EyeOpenIcon /> : <EyeClosedIcon />}
+                                </button>
+                            </div>
+                            <ConfirmPasswordStatus
+                                password={newPassword}
+                                confirmPassword={confirmNewPassword}
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="perfil-save-btn"
+                            disabled={savingPw || !pwValid || !currentPassword}
+                        >
+                            {savingPw ? "A alterar..." : "Alterar Palavra-passe"}
                         </button>
                     </form>
                 </div>

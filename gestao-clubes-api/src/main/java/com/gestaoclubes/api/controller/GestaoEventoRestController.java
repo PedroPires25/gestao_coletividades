@@ -107,6 +107,17 @@ public class GestaoEventoRestController {
         evento.setLatitude(latitude);
         evento.setLongitude(longitude);
 
+        // Data/hora fim (opcional)
+        String dataHoraFimStr = (String) body.get("dataHoraFim");
+        if (dataHoraFimStr != null && !dataHoraFimStr.isBlank()) {
+            try {
+                LocalDateTime ldtFim = LocalDateTime.parse(dataHoraFimStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                evento.setDataHoraFim(Timestamp.valueOf(ldtFim));
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("erro", "Formato de data/hora fim inválido."));
+            }
+        }
+
         Integer eventoId = eventoDAO.inserirEDevolverId(evento);
         if (eventoId == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -171,6 +182,17 @@ public class GestaoEventoRestController {
         Double longitude = body.get("longitude") != null ? ((Number) body.get("longitude")).doubleValue() : null;
         eventoAtualizado.setLatitude(latitude);
         eventoAtualizado.setLongitude(longitude);
+
+        // Data/hora fim (opcional)
+        String dataHoraFimStr = (String) body.get("dataHoraFim");
+        if (dataHoraFimStr != null && !dataHoraFimStr.isBlank()) {
+            try {
+                LocalDateTime ldtFim = LocalDateTime.parse(dataHoraFimStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                eventoAtualizado.setDataHoraFim(Timestamp.valueOf(ldtFim));
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("erro", "Formato de data/hora fim inválido."));
+            }
+        }
 
         boolean ok = eventoDAO.atualizar(id, eventoAtualizado);
         if (!ok) {

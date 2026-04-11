@@ -2450,3 +2450,16 @@ img.avatar-circle-sm {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.perfil-divider {
+    border: none;
+    border-top: 1px solid var(--bg-card-soft);
+    margin: 32px 0 24px;
+}
+
+.perfil-page h3 {
+    margin: 0 0 18px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}

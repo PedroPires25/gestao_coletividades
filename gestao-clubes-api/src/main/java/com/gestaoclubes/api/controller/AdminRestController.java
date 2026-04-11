@@ -48,6 +48,8 @@ public class AdminRestController {
         public Integer modalidadeId;
         public Integer coletividadeId;
         public Integer atividadeId;
+        public String nome;
+        public String logoPath;
 
         public UtilizadorAdminDto(Utilizador u, String role) {
             this.id = u.getId();
@@ -61,6 +63,8 @@ public class AdminRestController {
             this.modalidadeId = u.getModalidadeId();
             this.coletividadeId = u.getColetividadeId();
             this.atividadeId = u.getAtividadeId();
+            this.nome = u.getNome();
+            this.logoPath = u.getLogoPath();
         }
     }
 
@@ -331,6 +335,7 @@ public class AdminRestController {
                     1,
                     0.0
             );
+            novo.setUtilizadorId(u.getId());
 
             atletaId = atletaDAO.inserirEDevolverId(novo);
             if (atletaId == null || atletaId <= 0) {
@@ -478,6 +483,7 @@ public class AdminRestController {
                 null,
                 0.0
         );
+        staff.setUtilizadorId(u.getId());
 
         int staffId = staffDAO.inserirRetornarId(staff);
         if (staffId <= 0) {
