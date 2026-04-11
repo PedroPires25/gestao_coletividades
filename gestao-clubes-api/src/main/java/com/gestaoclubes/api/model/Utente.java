@@ -14,6 +14,7 @@ public class Utente {
     private String dataInscricao;
     private String dataFim;
     private Boolean ativo;
+    private Integer utilizadorId;
 
     public Integer getId() {
         return id;
@@ -117,5 +118,13 @@ public class Utente {
 
     public void setAtivo(Boolean ativo) {
         this.ativo = ativo;
+    }
+
+    public Integer getUtilizadorId() {
+        return utilizadorId;
+    }
+
+    public void setUtilizadorId(Integer utilizadorId) {
+        this.utilizadorId = utilizadorId;
     }
 }

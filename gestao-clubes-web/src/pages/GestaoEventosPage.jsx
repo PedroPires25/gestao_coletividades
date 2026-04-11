@@ -52,6 +52,7 @@ const FORM_EMPTY = {
     titulo: "",
     descricao: "",
     dataHora: "",
+    dataHoraFim: "",
     local: "",
     observacoes: "",
     tipo: "MODALIDADE",
@@ -191,6 +192,7 @@ export default function GestaoEventosPage() {
             titulo: evento.titulo || "",
             descricao: evento.descricao || "",
             dataHora: toInputDateTime(evento.dataHora),
+            dataHoraFim: toInputDateTime(evento.dataHoraFim),
             local: evento.local || "",
             observacoes: evento.observacoes || "",
             tipo: evento.tipo || "MODALIDADE",
@@ -216,6 +218,7 @@ export default function GestaoEventosPage() {
                 titulo: form.titulo.trim(),
                 descricao: form.descricao.trim() || null,
                 dataHora: form.dataHora,
+                dataHoraFim: form.dataHoraFim || null,
                 local: form.local.trim(),
                 observacoes: form.observacoes.trim() || null,
                 tipo: form.tipo,
@@ -343,6 +346,17 @@ export default function GestaoEventosPage() {
                                         value={form.dataHora}
                                         onChange={e => setForm(p => ({ ...p, dataHora: e.target.value }))}
                                         required
+                                    />
+                                </div>
+
+                                {/* Data e Hora Fim */}
+                                <div className="form-group">
+                                    <label>Data e Hora Fim</label>
+                                    <input
+                                        type="datetime-local"
+                                        className="input"
+                                        value={form.dataHoraFim}
+                                        onChange={e => setForm(p => ({ ...p, dataHoraFim: e.target.value }))}
                                     />
                                 </div>
 
@@ -576,6 +590,7 @@ export default function GestaoEventosPage() {
                                     <th>Tipo</th>
                                     <th>Associação</th>
                                     <th>Data/Hora</th>
+                                    <th>Data/Hora Fim</th>
                                     <th>Local</th>
                                     <th>Convocados</th>
                                     {canManage && <th>Ações</th>}
@@ -596,6 +611,7 @@ export default function GestaoEventosPage() {
                                                 : `${ev.coletividadeNome || ""} — ${ev.atividadeNome || ""}`}
                                         </td>
                                         <td>{formatDataHora(ev.dataHora)}</td>
+                                        <td>{ev.dataHoraFim ? formatDataHora(ev.dataHoraFim) : "—"}</td>
                                         <td>
                                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                                 <span style={{ flex: 1, minWidth: 0 }}>{ev.local}</span>

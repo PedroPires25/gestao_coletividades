@@ -202,6 +202,7 @@ export default function ModalidadeEventosPage() {
 
                                                     <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: "0.875rem", color: "var(--muted)" }}>
                                                         <span>📅 {formatDataHora(evento.dataHora)}</span>
+                                                        {evento.dataHoraFim && <span>🏁 {formatDataHora(evento.dataHoraFim)}</span>}
                                                         {evento.local && <span>📍 {evento.local}</span>}
                                                     </div>
 

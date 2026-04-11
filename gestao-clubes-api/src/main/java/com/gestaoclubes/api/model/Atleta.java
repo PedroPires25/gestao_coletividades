@@ -16,6 +16,7 @@ public class Atleta {
     private int escalaoId;
     private double remuneracao;
     private String fotoPath;
+    private Integer utilizadorId;
 
     public Atleta(int id, String nome, Date dataNascimento, String email, String telefone, String morada,
                   int clubeAtualId, int estadoId, int escalaoId, double remuneracao) {
@@ -66,4 +67,6 @@ public class Atleta {
     public double getRemuneracao() { return remuneracao; }
     public String getFotoPath() { return fotoPath; }
     public void setFotoPath(String fotoPath) { this.fotoPath = fotoPath; }
+    public Integer getUtilizadorId() { return utilizadorId; }
+    public void setUtilizadorId(Integer utilizadorId) { this.utilizadorId = utilizadorId; }
 }

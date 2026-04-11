@@ -301,3 +301,10 @@ export async function updateMyProfile(payload) {
         body: JSON.stringify(payload),
     });
 }
+
+export async function changeMyPassword(payload) {
+    return http("/auth/me/password", {
+        method: "PUT",
+        body: JSON.stringify(payload),
+    });
+}

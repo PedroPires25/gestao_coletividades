@@ -192,6 +192,12 @@ public class AuthRestController {
         public String nome;
     }
 
+    public static class ChangePasswordRequest {
+        public String currentPassword;
+        public String newPassword;
+        public String confirmNewPassword;
+    }
+
     @GetMapping("/me")
     public ResponseEntity<?> getMyProfile() {
         JwtUtil.JwtUser jwtUser = getAuthenticatedUser();
@@ -227,6 +233,41 @@ public class AuthRestController {
         Utilizador updated = utilizadorDAO.buscarPorId(jwtUser.id());
         String rolePlain = perfilDAO.obterDescricaoPerfil(updated.getPerfilId());
         return ResponseEntity.ok(new UserDto(updated, rolePlain));
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<?> changeMyPassword(@RequestBody ChangePasswordRequest req) {
+        JwtUtil.JwtUser jwtUser = getAuthenticatedUser();
+        if (jwtUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Não autenticado.");
+        }
+
+        if (req == null || req.currentPassword == null || req.newPassword == null || req.confirmNewPassword == null) {
+            return ResponseEntity.badRequest().body("Todos os campos são obrigatórios.");
+        }
+
+        Utilizador u = utilizadorDAO.autenticar(jwtUser.email(), req.currentPassword);
+        if (u == null) {
+            return ResponseEntity.badRequest().body("A palavra-passe atual está incorreta.");
+        }
+
+        if (!req.newPassword.equals(req.confirmNewPassword)) {
+            return ResponseEntity.badRequest().body("As novas palavras-passe não coincidem.");
+        }
+
+        if (!PasswordPolicyUtil.isValid(req.newPassword)) {
+            return ResponseEntity.badRequest().body(
+                    String.join(" ", PasswordPolicyUtil.getValidationErrors(req.newPassword))
+            );
+        }
+
+        try {
+            utilizadorDAO.atualizarPassword(u.getId(), req.newPassword);
+            return ResponseEntity.ok("Palavra-passe alterada com sucesso.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao alterar a palavra-passe.");
+        }
     }
 
     @PostMapping("/register")

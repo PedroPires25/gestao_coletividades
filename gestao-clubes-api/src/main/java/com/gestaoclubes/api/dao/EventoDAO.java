@@ -14,7 +14,7 @@ public class EventoDAO {
     public List<Map<String, Object>> listarTodos() {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
-            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.local, e.observacoes,
+            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
                    e.latitude, e.longitude,
                    cm.clube_id,
@@ -26,15 +26,18 @@ public class EventoDAO {
             LEFT JOIN clube_modalidade cm ON cm.id = e.clube_modalidade_id
             LEFT JOIN clube c ON c.id = cm.clube_id
             LEFT JOIN modalidade m ON m.id = cm.modalidade_id
-            ORDER BY e.data_hora DESC
+            WHERE COALESCE(e.data_hora_fim, e.data_hora) >= ?
+            ORDER BY e.data_hora ASC
         """;
 
         try (Connection conn = ConexoBD.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            while (rs.next()) {
-                lista.add(mapRow(rs));
+            ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
             }
 
         } catch (Exception e) {
@@ -46,7 +49,7 @@ public class EventoDAO {
 
     public Map<String, Object> buscarPorId(int id) {
         String sql = """
-            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.local, e.observacoes,
+            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
                    e.latitude, e.longitude,
                    cm.clube_id,
@@ -80,7 +83,7 @@ public class EventoDAO {
     public List<Map<String, Object>> listarPorClube(int clubeId) {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
-            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.local, e.observacoes,
+            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
                    e.latitude, e.longitude,
                    cm.clube_id,
@@ -89,13 +92,15 @@ public class EventoDAO {
             JOIN clube_modalidade cm ON cm.id = e.clube_modalidade_id
             LEFT JOIN modalidade m ON m.id = cm.modalidade_id
             WHERE cm.clube_id = ?
-            ORDER BY e.data_hora DESC
+              AND COALESCE(e.data_hora_fim, e.data_hora) >= ?
+            ORDER BY e.data_hora ASC
         """;
 
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, clubeId);
+            ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -113,7 +118,7 @@ public class EventoDAO {
     public List<Map<String, Object>> listarPorClubeModalidade(int clubeModalidadeId) {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
-            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.local, e.observacoes,
+            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
                    e.latitude, e.longitude,
                    cm.clube_id,
@@ -122,13 +127,15 @@ public class EventoDAO {
             LEFT JOIN clube_modalidade cm ON cm.id = e.clube_modalidade_id
             LEFT JOIN modalidade m ON m.id = cm.modalidade_id
             WHERE e.clube_modalidade_id = ?
-            ORDER BY e.data_hora DESC
+              AND COALESCE(e.data_hora_fim, e.data_hora) >= ?
+            ORDER BY e.data_hora ASC
         """;
 
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, clubeModalidadeId);
+            ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -146,18 +153,20 @@ public class EventoDAO {
     public List<Map<String, Object>> listarPorColetividadeAtividade(int coletividadeAtividadeId) {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
-            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.local, e.observacoes,
+            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
                    e.latitude, e.longitude
             FROM evento e
             WHERE e.coletividade_atividade_id = ?
-            ORDER BY e.data_hora DESC
+              AND COALESCE(e.data_hora_fim, e.data_hora) >= ?
+            ORDER BY e.data_hora ASC
         """;
 
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, coletividadeAtividadeId);
+            ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -174,10 +183,10 @@ public class EventoDAO {
 
     public Integer inserirEDevolverId(Evento evento) {
         String sql = """
-            INSERT INTO evento (titulo, descricao, data_hora, local, observacoes, tipo,
+            INSERT INTO evento (titulo, descricao, data_hora, data_hora_fim, local, observacoes, tipo,
                                 clube_modalidade_id, coletividade_atividade_id, criado_por,
                                 latitude, longitude)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = ConexoBD.getConnection();
@@ -186,18 +195,20 @@ public class EventoDAO {
             ps.setString(1, evento.getTitulo());
             ps.setString(2, evento.getDescricao());
             ps.setTimestamp(3, evento.getDataHora());
-            ps.setString(4, evento.getLocal());
-            ps.setString(5, evento.getObservacoes());
-            ps.setString(6, evento.getTipo());
-            if (evento.getClubeModalidadeId() != null) ps.setInt(7, evento.getClubeModalidadeId());
-            else ps.setNull(7, Types.INTEGER);
-            if (evento.getColetividadeAtividadeId() != null) ps.setInt(8, evento.getColetividadeAtividadeId());
+            if (evento.getDataHoraFim() != null) ps.setTimestamp(4, evento.getDataHoraFim());
+            else ps.setNull(4, Types.TIMESTAMP);
+            ps.setString(5, evento.getLocal());
+            ps.setString(6, evento.getObservacoes());
+            ps.setString(7, evento.getTipo());
+            if (evento.getClubeModalidadeId() != null) ps.setInt(8, evento.getClubeModalidadeId());
             else ps.setNull(8, Types.INTEGER);
-            ps.setInt(9, evento.getCriadoPor());
-            if (evento.getLatitude() != null) ps.setDouble(10, evento.getLatitude());
-            else ps.setNull(10, Types.DOUBLE);
-            if (evento.getLongitude() != null) ps.setDouble(11, evento.getLongitude());
+            if (evento.getColetividadeAtividadeId() != null) ps.setInt(9, evento.getColetividadeAtividadeId());
+            else ps.setNull(9, Types.INTEGER);
+            ps.setInt(10, evento.getCriadoPor());
+            if (evento.getLatitude() != null) ps.setDouble(11, evento.getLatitude());
             else ps.setNull(11, Types.DOUBLE);
+            if (evento.getLongitude() != null) ps.setDouble(12, evento.getLongitude());
+            else ps.setNull(12, Types.DOUBLE);
 
             ps.executeUpdate();
 
@@ -215,7 +226,7 @@ public class EventoDAO {
     public boolean atualizar(int id, Evento evento) {
         String sql = """
             UPDATE evento
-            SET titulo = ?, descricao = ?, data_hora = ?, local = ?, observacoes = ?,
+            SET titulo = ?, descricao = ?, data_hora = ?, data_hora_fim = ?, local = ?, observacoes = ?,
                 latitude = ?, longitude = ?
             WHERE id = ?
         """;
@@ -226,13 +237,15 @@ public class EventoDAO {
             ps.setString(1, evento.getTitulo());
             ps.setString(2, evento.getDescricao());
             ps.setTimestamp(3, evento.getDataHora());
-            ps.setString(4, evento.getLocal());
-            ps.setString(5, evento.getObservacoes());
-            if (evento.getLatitude() != null) ps.setDouble(6, evento.getLatitude());
-            else ps.setNull(6, Types.DOUBLE);
-            if (evento.getLongitude() != null) ps.setDouble(7, evento.getLongitude());
+            if (evento.getDataHoraFim() != null) ps.setTimestamp(4, evento.getDataHoraFim());
+            else ps.setNull(4, Types.TIMESTAMP);
+            ps.setString(5, evento.getLocal());
+            ps.setString(6, evento.getObservacoes());
+            if (evento.getLatitude() != null) ps.setDouble(7, evento.getLatitude());
             else ps.setNull(7, Types.DOUBLE);
-            ps.setInt(8, id);
+            if (evento.getLongitude() != null) ps.setDouble(8, evento.getLongitude());
+            else ps.setNull(8, Types.DOUBLE);
+            ps.setInt(9, id);
 
             return ps.executeUpdate() > 0;
 
@@ -260,6 +273,7 @@ public class EventoDAO {
         row.put("titulo", rs.getString("titulo"));
         row.put("descricao", rs.getString("descricao"));
         row.put("dataHora", rs.getTimestamp("data_hora"));
+        row.put("dataHoraFim", rs.getTimestamp("data_hora_fim"));
         row.put("local", rs.getString("local"));
         row.put("observacoes", rs.getString("observacoes"));
         row.put("tipo", rs.getString("tipo"));

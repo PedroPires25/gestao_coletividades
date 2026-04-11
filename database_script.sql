@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS atleta (
   clube_atual_id INT NOT NULL,
   estado_id INT NOT NULL DEFAULT 1,
   foto_path VARCHAR(255) DEFAULT NULL,
+  utilizador_id INT NULL,
 
   CONSTRAINT fk_atleta_clube
     FOREIGN KEY (clube_atual_id) REFERENCES clube(id)
@@ -115,8 +116,13 @@ CREATE TABLE IF NOT EXISTS atleta (
     FOREIGN KEY (estado_id) REFERENCES estado_atleta(id)
     ON DELETE RESTRICT ON UPDATE CASCADE,
 
+  CONSTRAINT fk_atleta_utilizador
+    FOREIGN KEY (utilizador_id) REFERENCES utilizadores(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
   KEY idx_atleta_clube (clube_atual_id),
-  KEY idx_atleta_estado (estado_id)
+  KEY idx_atleta_estado (estado_id),
+  KEY idx_atleta_utilizador (utilizador_id)
 ) ENGINE=InnoDB;
 
 -- -------------------------
@@ -170,7 +176,14 @@ CREATE TABLE IF NOT EXISTS staff (
   telefone VARCHAR(30),
   morada VARCHAR(255),
   num_registo VARCHAR(60),
-  foto_path VARCHAR(255) DEFAULT NULL
+  foto_path VARCHAR(255) DEFAULT NULL,
+  utilizador_id INT NULL,
+
+  CONSTRAINT fk_staff_utilizador
+    FOREIGN KEY (utilizador_id) REFERENCES utilizadores(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
+  KEY idx_staff_utilizador (utilizador_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS staff_afetacao (
@@ -454,6 +467,7 @@ CREATE TABLE IF NOT EXISTS inscrito (
   morada VARCHAR(255),
   coletividade_atual_id INT NOT NULL,
   estado_id INT NOT NULL DEFAULT 1,
+  utilizador_id INT NULL,
 
   CONSTRAINT fk_inscrito_coletividade
     FOREIGN KEY (coletividade_atual_id) REFERENCES coletividade(id)
@@ -463,8 +477,13 @@ CREATE TABLE IF NOT EXISTS inscrito (
     FOREIGN KEY (estado_id) REFERENCES estado_inscrito(id)
     ON DELETE RESTRICT ON UPDATE CASCADE,
 
+  CONSTRAINT fk_inscrito_utilizador
+    FOREIGN KEY (utilizador_id) REFERENCES utilizadores(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
   KEY idx_inscrito_coletividade (coletividade_atual_id),
-  KEY idx_inscrito_estado (estado_id)
+  KEY idx_inscrito_estado (estado_id),
+  KEY idx_inscrito_utilizador (utilizador_id)
 ) ENGINE=InnoDB;
 
 -- -------------------------
@@ -734,6 +753,7 @@ CREATE TABLE IF NOT EXISTS evento (
   titulo VARCHAR(120) NOT NULL,
   descricao TEXT NULL,
   data_hora DATETIME NOT NULL,
+  data_hora_fim DATETIME NULL,
   local VARCHAR(255),
   observacoes TEXT NULL,
   tipo ENUM('MODALIDADE','ATIVIDADE') NOT NULL DEFAULT 'MODALIDADE',

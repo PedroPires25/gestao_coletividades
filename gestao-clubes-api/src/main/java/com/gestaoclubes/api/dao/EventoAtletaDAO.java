@@ -14,15 +14,16 @@ public class EventoAtletaDAO {
     public List<Map<String, Object>> listarPorEvento(int eventoId) {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
-            SELECT a.id, a.nome, a.data_nascimento, a.email, a.telefone, a.morada, a.remuneracao,
-                   a.clube_atual_id, a.foto_path, ea.id AS estado_id, ea.descricao AS estado,
+            SELECT a.id, COALESCE(u.nome, a.nome) AS nome, a.data_nascimento, a.email, a.telefone, a.morada, a.remuneracao,
+                   a.clube_atual_id, COALESCE(u.logo_path, a.foto_path) AS foto_path, ea.id AS estado_id, ea.descricao AS estado,
                    e.id AS escalao_id, e.nome AS escalao
             FROM evento_atleta evt_a
             JOIN atleta a ON a.id = evt_a.atleta_id
+            LEFT JOIN utilizadores u ON u.id = a.utilizador_id
             JOIN estado_atleta ea ON ea.id = a.estado_id
             JOIN escalao e ON e.id = a.escalao_id
             WHERE evt_a.evento_id = ?
-            ORDER BY a.nome
+            ORDER BY nome
         """;
 
         try (Connection conn = ConexoBD.getConnection();

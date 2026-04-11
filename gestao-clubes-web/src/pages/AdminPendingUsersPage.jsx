@@ -13,7 +13,7 @@ import {
 } from "../api";
 
 export default function AdminPendingUsersPage() {
-    const { logout, canManageUsers } = useAuth();
+    const { logout } = useAuth();
     const navigate = useNavigate();
 
     const [users, setUsers] = useState([]);
@@ -89,7 +89,8 @@ export default function AdminPendingUsersPage() {
         if (!term) return users;
         return users.filter((u) =>
             (u.email || "").toLowerCase().includes(term) ||
-            (u.role || "").toLowerCase().includes(term)
+            (u.role || "").toLowerCase().includes(term) ||
+            (u.nome || "").toLowerCase().includes(term)
         );
     }, [users, q]);
 
@@ -194,7 +195,7 @@ export default function AdminPendingUsersPage() {
                     <div className="searchbar">
                         <input
                             className="input"
-                            placeholder="Pesquisar por email ou perfil..."
+                            placeholder="Pesquisar por nome, email ou perfil..."
                             value={q}
                             onChange={(e) => setQ(e.target.value)}
                         />
@@ -210,6 +211,7 @@ export default function AdminPendingUsersPage() {
                         <table>
                             <thead>
                             <tr>
+                                <th>Nome</th>
                                 <th>Email</th>
                                 <th>Perfil</th>
                                 <th>Clube</th>
@@ -222,11 +224,11 @@ export default function AdminPendingUsersPage() {
                             <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={7} style={{ padding: 14 }}>A carregar...</td>
+                                    <td colSpan={8} style={{ padding: 14 }}>A carregar...</td>
                                 </tr>
                             ) : filtrados.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} style={{ padding: 14 }}>Sem registos pendentes.</td>
+                                    <td colSpan={8} style={{ padding: 14 }}>Sem registos pendentes.</td>
                                 </tr>
                             ) : filtrados.map((u) => {
                                 const saving = savingId === u.id;
@@ -234,6 +236,7 @@ export default function AdminPendingUsersPage() {
 
                                 return (
                                     <tr key={u.id}>
+                                        <td>{u.nome || "—"}</td>
                                         <td>{u.email}</td>
                                         <td>{u.role}</td>
 

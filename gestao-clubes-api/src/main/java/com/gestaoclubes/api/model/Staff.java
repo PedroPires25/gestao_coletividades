@@ -11,6 +11,7 @@ public class Staff {
 
     private double remuneracao;
     private String fotoPath;
+    private Integer utilizadorId;
 
     public Staff(int id, String nome, String email, String telefone, String morada, String numRegisto, double remuneracao) {
         this(id, nome, email, telefone, morada, numRegisto, remuneracao, null);
@@ -50,4 +51,6 @@ public class Staff {
     public double getRemuneracao() { return remuneracao; }
     public String getFotoPath() { return fotoPath; }
     public void setFotoPath(String fotoPath) { this.fotoPath = fotoPath; }
+    public Integer getUtilizadorId() { return utilizadorId; }
+    public void setUtilizadorId(Integer utilizadorId) { this.utilizadorId = utilizadorId; }
 }

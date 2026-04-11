@@ -18,14 +18,15 @@ public class AtletaDAO {
     public List<Object[]> listarCompleto() {
         List<Object[]> rows = new ArrayList<>();
         String sql = """
-            SELECT a.id, a.nome, a.data_nascimento, a.email, a.telefone,
+            SELECT a.id, COALESCE(u.nome, a.nome) AS nome, a.data_nascimento, a.email, a.telefone,
                    c.nome AS clube_atual, ea.descricao AS estado,
                    e.nome AS escalao, a.remuneracao
             FROM atleta a
+            LEFT JOIN utilizadores u ON u.id = a.utilizador_id
             JOIN clube c ON c.id = a.clube_atual_id
             JOIN estado_atleta ea ON ea.id = a.estado_id
             JOIN escalao e ON e.id = a.escalao_id
-            ORDER BY a.nome
+            ORDER BY nome
         """;
 
         try (Connection conn = ConexoBD.getConnection();
@@ -55,14 +56,14 @@ public class AtletaDAO {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
             SELECT a.id,
-                   a.nome,
+                   COALESCE(u.nome, a.nome) AS nome,
                    a.data_nascimento,
                    a.email,
                    a.telefone,
                    a.morada,
                    a.remuneracao,
                    a.clube_atual_id,
-                   a.foto_path,
+                   COALESCE(u.logo_path, a.foto_path) AS foto_path,
                    ea.id AS estado_id,
                    ea.descricao AS estado,
                    e.id AS escalao_id,
@@ -73,6 +74,7 @@ public class AtletaDAO {
                    acm.data_fim,
                    acm.ativo
             FROM atleta a
+            LEFT JOIN utilizadores u ON u.id = a.utilizador_id
             JOIN atleta_clube_modalidade acm ON acm.atleta_id = a.id
             JOIN clube_modalidade cm ON cm.id = acm.clube_modalidade_id
             JOIN estado_atleta ea ON ea.id = a.estado_id
@@ -81,7 +83,7 @@ public class AtletaDAO {
               AND cm.modalidade_id = ?
               AND cm.ativo = 1
               AND acm.ativo = 1
-            ORDER BY a.nome
+            ORDER BY nome
         """;
 
         try (Connection conn = ConexoBD.getConnection();
@@ -126,14 +128,14 @@ public class AtletaDAO {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
             SELECT a.id,
-                   a.nome,
+                   COALESCE(u.nome, a.nome) AS nome,
                    a.data_nascimento,
                    a.email,
                    a.telefone,
                    a.morada,
                    a.remuneracao,
                    a.clube_atual_id,
-                   a.foto_path,
+                   COALESCE(u.logo_path, a.foto_path) AS foto_path,
                    ea.id AS estado_id,
                    ea.descricao AS estado,
                    e.id AS escalao_id,
@@ -144,13 +146,14 @@ public class AtletaDAO {
                    acm.data_fim,
                    acm.ativo
             FROM atleta a
+            LEFT JOIN utilizadores u ON u.id = a.utilizador_id
             JOIN atleta_clube_modalidade acm ON acm.atleta_id = a.id
             JOIN clube_modalidade cm ON cm.id = acm.clube_modalidade_id
             JOIN estado_atleta ea ON ea.id = a.estado_id
             JOIN escalao e ON e.id = a.escalao_id
             WHERE cm.clube_id = ?
               AND cm.id = ?
-            ORDER BY a.nome
+            ORDER BY nome
         """;
 
         try (Connection conn = ConexoBD.getConnection();
@@ -194,8 +197,8 @@ public class AtletaDAO {
     public Integer inserirEDevolverId(Atleta a) {
         String sql = """
             INSERT INTO atleta (nome, data_nascimento, email, telefone, morada,
-                               clube_atual_id, estado_id, escalao_id, remuneracao)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                               clube_atual_id, estado_id, escalao_id, remuneracao, utilizador_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = ConexoBD.getConnection();
@@ -210,6 +213,11 @@ public class AtletaDAO {
             ps.setInt(7, a.getEstadoId());
             ps.setInt(8, a.getEscalaoId());
             ps.setBigDecimal(9, java.math.BigDecimal.valueOf(a.getRemuneracao()));
+            if (a.getUtilizadorId() != null) {
+                ps.setInt(10, a.getUtilizadorId());
+            } else {
+                ps.setNull(10, Types.INTEGER);
+            }
 
             int updated = ps.executeUpdate();
             if (updated <= 0) return null;
@@ -254,7 +262,13 @@ public class AtletaDAO {
     }
 
     public Atleta buscarPorId(int id) {
-        String sql = "SELECT * FROM atleta WHERE id=?";
+        String sql = """
+            SELECT a.*, COALESCE(u.nome, a.nome) AS nome_efetivo,
+                   COALESCE(u.logo_path, a.foto_path) AS foto_efetiva
+            FROM atleta a
+            LEFT JOIN utilizadores u ON u.id = a.utilizador_id
+            WHERE a.id=?
+        """;
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -264,7 +278,7 @@ public class AtletaDAO {
                 if (rs.next()) {
                     Atleta a = new Atleta(
                             rs.getInt("id"),
-                            rs.getString("nome"),
+                            rs.getString("nome_efetivo"),
                             rs.getDate("data_nascimento"),
                             rs.getString("email"),
                             rs.getString("telefone"),
@@ -274,7 +288,8 @@ public class AtletaDAO {
                             rs.getInt("escalao_id"),
                             rs.getBigDecimal("remuneracao").doubleValue()
                     );
-                    try { a.setFotoPath(rs.getString("foto_path")); } catch (SQLException ignored) {}
+                    a.setFotoPath(rs.getString("foto_efetiva"));
+                    try { a.setUtilizadorId((Integer) rs.getObject("utilizador_id")); } catch (SQLException ignored) {}
                     return a;
                 }
             }
@@ -288,8 +303,11 @@ public class AtletaDAO {
         if (email == null || email.isBlank()) return null;
 
         String sql = """
-            SELECT * FROM atleta
-            WHERE LOWER(email) = LOWER(?)
+            SELECT a.*, COALESCE(u.nome, a.nome) AS nome_efetivo,
+                   COALESCE(u.logo_path, a.foto_path) AS foto_efetiva
+            FROM atleta a
+            LEFT JOIN utilizadores u ON u.id = a.utilizador_id
+            WHERE LOWER(a.email) = LOWER(?)
             LIMIT 1
         """;
 
@@ -302,7 +320,7 @@ public class AtletaDAO {
                 if (rs.next()) {
                     Atleta a = new Atleta(
                             rs.getInt("id"),
-                            rs.getString("nome"),
+                            rs.getString("nome_efetivo"),
                             rs.getDate("data_nascimento"),
                             rs.getString("email"),
                             rs.getString("telefone"),
@@ -312,7 +330,8 @@ public class AtletaDAO {
                             rs.getInt("escalao_id"),
                             rs.getBigDecimal("remuneracao").doubleValue()
                     );
-                    try { a.setFotoPath(rs.getString("foto_path")); } catch (SQLException ignored) {}
+                    a.setFotoPath(rs.getString("foto_efetiva"));
+                    try { a.setUtilizadorId((Integer) rs.getObject("utilizador_id")); } catch (SQLException ignored) {}
                     return a;
                 }
             }

@@ -112,7 +112,7 @@ public class UtilizadorDAO {
     public List<Utilizador> listarTodos() {
         List<Utilizador> lista = new ArrayList<>();
         String sql = "SELECT id, utilizador, perfil_id, ativo, privilegios_ativos, estado_registo, " +
-                "clube_id, modalidade_id, coletividade_id, atividade_id " +
+                "clube_id, modalidade_id, coletividade_id, atividade_id, logo_path, nome " +
                 "FROM utilizadores ORDER BY utilizador";
 
         try (Connection conn = ConexoBD.getConnection();
@@ -750,7 +750,7 @@ public class UtilizadorDAO {
         List<Utilizador> lista = new ArrayList<>();
 
         String sql = "SELECT id, utilizador, perfil_id, ativo, privilegios_ativos, estado_registo, " +
-                "clube_id, modalidade_id, coletividade_id, atividade_id " +
+                "clube_id, modalidade_id, coletividade_id, atividade_id, logo_path, nome " +
                 "FROM utilizadores WHERE UPPER(estado_registo) = UPPER(?) ORDER BY utilizador";
 
         try (Connection conn = ConexoBD.getConnection();
