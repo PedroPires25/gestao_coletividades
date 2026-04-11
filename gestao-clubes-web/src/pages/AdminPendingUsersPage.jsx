@@ -245,7 +245,7 @@ export default function AdminPendingUsersPage() {
                                                 className="input"
                                                 value={draft.clubeId ?? ""}
                                                 onChange={(e) => updateAfetacaoField(u.id, "clubeId", e.target.value)}
-                                                disabled={saving || u.role === "ADMIN"}
+                                                disabled={saving || u.role === "SUPER_ADMIN"}
                                             >
                                                 <option value="">Sem clube</option>
                                                 {clubes.map((c) => (
@@ -259,7 +259,7 @@ export default function AdminPendingUsersPage() {
                                                 className="input"
                                                 value={draft.modalidadeId ?? ""}
                                                 onChange={(e) => updateAfetacaoField(u.id, "modalidadeId", e.target.value)}
-                                                disabled={saving || u.role === "ADMIN"}
+                                                disabled={saving || u.role === "SUPER_ADMIN"}
                                             >
                                                 <option value="">Sem modalidade</option>
                                                 {modalidades.map((m) => (
@@ -273,7 +273,7 @@ export default function AdminPendingUsersPage() {
                                                 className="input"
                                                 value={draft.coletividadeId ?? ""}
                                                 onChange={(e) => updateAfetacaoField(u.id, "coletividadeId", e.target.value)}
-                                                disabled={saving || u.role === "ADMIN"}
+                                                disabled={saving || u.role === "SUPER_ADMIN"}
                                             >
                                                 <option value="">Sem coletividade</option>
                                                 {coletividades.map((c) => (
@@ -287,7 +287,7 @@ export default function AdminPendingUsersPage() {
                                                 className="input"
                                                 value={draft.atividadeId ?? ""}
                                                 onChange={(e) => updateAfetacaoField(u.id, "atividadeId", e.target.value)}
-                                                disabled={saving || u.role === "ADMIN"}
+                                                disabled={saving || u.role === "SUPER_ADMIN"}
                                             >
                                                 <option value="">Sem atividade</option>
                                                 {atividades.map((a) => (
@@ -298,7 +298,7 @@ export default function AdminPendingUsersPage() {
 
                                         <td>
                                             <div className="table-actions">
-                                                <button className="btn" type="button" onClick={() => guardarAfetacao(u)} disabled={saving || u.role === "ADMIN"}>
+                                                <button className="btn" type="button" onClick={() => guardarAfetacao(u)} disabled={saving || u.role === "SUPER_ADMIN"}>
                                                     Guardar afetação
                                                 </button>
                                                 <button className="btn btn-primary" type="button" onClick={() => aprovar(u)} disabled={saving}>

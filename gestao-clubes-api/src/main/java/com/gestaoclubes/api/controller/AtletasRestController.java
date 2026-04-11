@@ -13,6 +13,8 @@ import com.gestaoclubes.api.model.ClubeModalidade;
 import com.gestaoclubes.api.model.Escalao;
 import com.gestaoclubes.api.model.EstadoAtleta;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.Date;
 import java.util.LinkedHashMap;
@@ -58,6 +60,7 @@ public class AtletasRestController {
             @PathVariable int modalidadeId,
             @RequestBody CriarAtletaRequest body
     ) {
+        exigirGestaoClube(clubeId);
         if (body == null || body.nome == null || body.nome.isBlank()) {
             throw new IllegalArgumentException("O nome do atleta é obrigatório.");
         }
@@ -136,6 +139,7 @@ public class AtletasRestController {
             @PathVariable int atletaId,
             @RequestBody AtualizarAtletaRequest body
     ) {
+        exigirGestaoClube(clubeId);
         if (body == null || body.nome == null || body.nome.isBlank()) {
             throw new IllegalArgumentException("O nome do atleta é obrigatório.");
         }
@@ -249,5 +253,11 @@ public class AtletasRestController {
         public String dataInscricao;
         public String dataFim;
         public Boolean ativo;
+    }
+
+    private void exigirGestaoClube(int clubeId) {
+        if (!SecurityUtils.canManageClube(clubeId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para gerir atletas deste clube.");
+        }
     }
 }

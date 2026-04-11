@@ -97,7 +97,7 @@ function PendingNameCell() {
 export default function ClubeStaffModalidadePage() {
     const { clubeId, clubeModalidadeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [modalidadeAtiva, setModalidadeAtiva] = useState(null);
@@ -160,7 +160,7 @@ export default function ClubeStaffModalidadePage() {
             { label: "Home", to: "/menu" },
             { label: "Clubes", to: "/clubes" },
             { label: "Coletividades", to: "/coletividades" },
-            ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+            ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
             { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
             { label: "Staff", to: `/clubes/${clubeId}/staff` },
@@ -174,7 +174,7 @@ export default function ClubeStaffModalidadePage() {
                 },
             },
         ],
-        [clubeId, isAdmin, logout, navigate]
+        [clubeId, isSuperAdmin, logout, navigate]
     );
 
     useEffect(() => {

@@ -2,8 +2,11 @@ package com.gestaoclubes.api.controller;
 
 import com.gestaoclubes.api.dao.StaffColetividadeDAO;
 import com.gestaoclubes.api.model.StaffColetividadeRow;
+import com.gestaoclubes.api.security.SecurityUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -47,6 +50,7 @@ public class StaffColetividadeRestController {
             @PathVariable int coletividadeId,
             @RequestBody CriarStaffRequest body
     ) {
+        exigirGestaoColetividade(coletividadeId);
         if (body == null || body.nome == null || body.nome.isBlank()) {
             return ResponseEntity.badRequest().body("Nome é obrigatório.");
         }
@@ -71,5 +75,11 @@ public class StaffColetividadeRestController {
 
         if (id == null) return ResponseEntity.badRequest().body("Não foi possível criar staff.");
         return ResponseEntity.ok(id);
+    }
+
+    private void exigirGestaoColetividade(int coletividadeId) {
+        if (!SecurityUtils.canManageColetividade(coletividadeId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para gerir staff desta coletividade.");
+        }
     }
 }

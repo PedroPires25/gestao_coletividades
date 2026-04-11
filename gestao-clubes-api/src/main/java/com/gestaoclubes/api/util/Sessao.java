@@ -30,8 +30,9 @@ public class Sessao {
 
     public static boolean isAdmin() {
         if (!isAutenticado() || perfilDescricao == null) return false;
-        return perfilDescricao.equalsIgnoreCase("ADMIN")
-                || perfilDescricao.equalsIgnoreCase("Administrador");
+        return perfilDescricao.equalsIgnoreCase("SUPER_ADMIN")
+                || perfilDescricao.equalsIgnoreCase("ADMIN")
+                || perfilDescricao.equalsIgnoreCase("ADMINISTRADOR");
     }
 
     public static void terminarSessao() {

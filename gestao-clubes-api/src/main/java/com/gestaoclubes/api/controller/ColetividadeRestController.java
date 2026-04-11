@@ -8,6 +8,7 @@ import com.gestaoclubes.api.model.Coletividade;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -35,6 +36,7 @@ public class ColetividadeRestController {
 
     @PostMapping
     public ResponseEntity<String> inserir(@RequestBody Coletividade coletividade) {
+        exigirSuperAdmin();
         boolean ok = coletividadeDAO.inserir(coletividade);
         if (!ok) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -54,6 +56,7 @@ public class ColetividadeRestController {
 
     @PutMapping("/{id}")
     public ResponseEntity<String> atualizar(@PathVariable int id, @RequestBody Coletividade coletividade) {
+        exigirGestaoColetividade(id);
         Coletividade antesObj = coletividadeDAO.buscarPorId(id);
 
         boolean ok = coletividadeDAO.atualizar(id, coletividade);
@@ -78,6 +81,7 @@ public class ColetividadeRestController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> remover(@PathVariable int id) {
+        exigirSuperAdmin();
         Coletividade antesObj = coletividadeDAO.buscarPorId(id);
 
         boolean ok = coletividadeDAO.remover(id);
@@ -95,5 +99,17 @@ public class ColetividadeRestController {
         }
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Coletividade removida com sucesso.");
+    }
+
+    private void exigirSuperAdmin() {
+        if (!SecurityUtils.isSuperAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas o super administrador pode criar ou remover coletividades.");
+        }
+    }
+
+    private void exigirGestaoColetividade(int coletividadeId) {
+        if (!SecurityUtils.canManageColetividade(coletividadeId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para gerir esta coletividade.");
+        }
     }
 }

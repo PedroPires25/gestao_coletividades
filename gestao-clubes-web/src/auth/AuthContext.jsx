@@ -15,7 +15,16 @@ function calcularRedirectUrl(user) {
     }
 
     switch (role) {
-        case "ADMIN":
+        case "SUPER_ADMIN":
+            return "/admin/users";
+
+        case "ADMINISTRADOR":
+            if (clubeId) {
+                return `/clubes/${clubeId}`;
+            }
+            if (coletividadeId) {
+                return `/coletividades/${coletividadeId}`;
+            }
             return "/menu";
 
         case "ATLETA":
@@ -50,6 +59,8 @@ function calcularRedirectUrl(user) {
             return null;
 
         case "SECRETARIO":
+            if (clubeId) return `/clubes/${clubeId}`;
+            if (coletividadeId) return `/coletividades/${coletividadeId}`;
             return "/menu";
 
         case "UTENTE":
@@ -110,6 +121,11 @@ export function AuthProvider({ children }) {
 
     const role = session?.user?.role ?? null;
     const redirectUrl = session?.redirectUrl ?? calcularRedirectUrl(session?.user) ?? "/menu";
+    const isSuperAdmin = role === "SUPER_ADMIN";
+    const isScopedAdmin = role === "ADMINISTRADOR";
+    const isAdmin = isSuperAdmin || isScopedAdmin;
+    const canManageClube = (targetClubeId) => isSuperAdmin || (isScopedAdmin && Number(targetClubeId) === (session?.user?.clubeId ?? null));
+    const canManageColetividade = (targetColetividadeId) => isSuperAdmin || (isScopedAdmin && Number(targetColetividadeId) === (session?.user?.coletividadeId ?? null));
 
     const value = useMemo(() => ({
         session,
@@ -119,7 +135,9 @@ export function AuthProvider({ children }) {
         redirectPath: redirectUrl,
         isAuthenticated: !!session?.token,
         role,
-        isAdmin: role === "ADMIN",
+        isAdmin,
+        isSuperAdmin,
+        isScopedAdmin,
         privilegiosAtivos: session?.user?.privilegiosAtivos ?? false,
         estadoRegisto: session?.user?.estadoRegisto ?? null,
         clubeId: session?.user?.clubeId ?? null,
@@ -128,10 +146,12 @@ export function AuthProvider({ children }) {
         atividadeId: session?.user?.atividadeId ?? null,
         nome: session?.user?.nome ?? null,
         logoPath: session?.user?.logoPath ?? null,
+        canManageClube,
+        canManageColetividade,
         login,
         logout,
         updateSession,
-    }), [session, role, redirectUrl]);
+    }), [session, role, redirectUrl, isAdmin, isSuperAdmin, isScopedAdmin]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -8,6 +8,7 @@ import com.gestaoclubes.api.model.Clube;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -35,6 +36,7 @@ public class ClubeRestController {
 
     @PostMapping
     public ResponseEntity<String> inserir(@RequestBody Clube clube) {
+        exigirSuperAdmin();
         boolean ok = clubeDAO.inserir(clube);
         if (!ok) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -57,6 +59,7 @@ public class ClubeRestController {
 
     @PutMapping("/{id}")
     public ResponseEntity<String> atualizar(@PathVariable int id, @RequestBody Clube clube) {
+        exigirGestaoClube(id);
         Clube antesObj = clubeDAO.buscarPorId(id);
 
         boolean ok = clubeDAO.atualizar(id, clube);
@@ -81,6 +84,7 @@ public class ClubeRestController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> remover(@PathVariable int id) {
+        exigirSuperAdmin();
         Clube antesObj = clubeDAO.buscarPorId(id);
 
         boolean ok = clubeDAO.remover(id);
@@ -98,5 +102,17 @@ public class ClubeRestController {
         }
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Clube removido com sucesso.");
+    }
+
+    private void exigirSuperAdmin() {
+        if (!SecurityUtils.isSuperAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas o super administrador pode criar ou remover clubes.");
+        }
+    }
+
+    private void exigirGestaoClube(int clubeId) {
+        if (!SecurityUtils.canManageClube(clubeId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para gerir este clube.");
+        }
     }
 }

@@ -49,7 +49,7 @@ const eyeButtonStyle = {
 
 const PERFIS_CLUBE = ["ATLETA", "TREINADOR_PRINCIPAL", "DEPARTAMENTO_MEDICO"];
 const PERFIS_COLETIVIDADE = ["UTENTE"];
-const PERFIS_MISTOS = ["STAFF", "SECRETARIO", "PROFESSOR", "USER"];
+const PERFIS_MISTOS = ["ADMINISTRADOR", "STAFF", "SECRETARIO", "PROFESSOR", "USER"];
 
 export default function LoginPage() {
     const { login } = useAuth();
@@ -73,6 +73,7 @@ export default function LoginPage() {
     const [rColetividadeId, setRColetividadeId] = useState("");
     const [rAtividadeId, setRAtividadeId] = useState("");
     const [profiles, setProfiles] = useState([
+        "ADMINISTRADOR",
         "USER",
         "ATLETA",
         "UTENTE",
@@ -110,7 +111,7 @@ export default function LoginPage() {
                 if (ignore) return;
 
                 if (Array.isArray(profilesData) && profilesData.length > 0) {
-                    setProfiles(profilesData.filter((p) => p !== "ADMIN"));
+                    setProfiles(profilesData.filter((p) => p !== "SUPER_ADMIN"));
                 }
 
                 setClubes(Array.isArray(clubesData) ? clubesData : []);
@@ -533,7 +534,7 @@ export default function LoginPage() {
 
                             {perfilPrecisaAprovacao && (
                                 <div className="hint">
-                                    Este perfil fica pendente até aprovação de um administrador.
+                                    Este perfil fica pendente até aprovação de um super administrador.
                                 </div>
                             )}
 

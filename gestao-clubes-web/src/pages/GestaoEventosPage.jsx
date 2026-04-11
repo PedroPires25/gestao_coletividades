@@ -66,7 +66,7 @@ const FORM_EMPTY = {
 };
 
 export default function GestaoEventosPage() {
-    const { logout, isAdmin, role } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, role } = useAuth();
     const navigate = useNavigate();
 
     const [eventos, setEventos] = useState([]);
@@ -97,7 +97,7 @@ export default function GestaoEventosPage() {
     const [viewingMap, setViewingMap] = useState(null);
     const [convocadosList, setConvocadosList] = useState([]);
 
-    const canManage = role === "ADMIN" || role === "SECRETARIO";
+    const canManage = role === "SUPER_ADMIN" || role === "ADMINISTRADOR" || role === "SECRETARIO";
 
     const carregarEventos = useCallback(async () => {
         setLoading(true);
@@ -282,7 +282,7 @@ export default function GestaoEventosPage() {
         { label: "Home", to: "/menu" },
         { label: "Clubes", to: "/clubes" },
         { label: "Coletividades", to: "/coletividades" },
-        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+        ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         { label: "Eventos", to: "/gestao/eventos" },
         {
             label: "Logout",

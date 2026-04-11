@@ -20,7 +20,7 @@ function isoToInputDate(dateISO) {
 }
 
 export default function ClubesPage() {
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, canManageClube } = useAuth();
     const navigate = useNavigate();
 
     const [clubes, setClubes] = useState([]);
@@ -103,7 +103,7 @@ export default function ClubesPage() {
 
     async function onSubmit(e) {
         e.preventDefault();
-        if (!isAdmin) return;
+        if (!isSuperAdmin) return;
 
         setErro("");
         setMsg("");
@@ -147,7 +147,7 @@ export default function ClubesPage() {
     }
 
     async function onDelete(id) {
-        if (!isAdmin) return;
+        if (!isSuperAdmin) return;
 
         setErro("");
         setMsg("");
@@ -164,7 +164,7 @@ export default function ClubesPage() {
     }
 
     function openEditModal(clube) {
-        if (!isAdmin) return;
+        if (!canManageClube(clube.id)) return;
 
         setEditErro("");
         setEdit({
@@ -192,7 +192,7 @@ export default function ClubesPage() {
     }
 
     async function onSaveEdit() {
-        if (!isAdmin) return;
+        if (!canManageClube(edit.id)) return;
 
         setEditErro("");
         try {
@@ -250,7 +250,7 @@ export default function ClubesPage() {
     const menuItems = [
         { label: "Home", to: "/menu" },
         { label: "Coletividades", to: "/coletividades" },
-        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+        ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         {
             label: "Logout",
             onClick: () => {
@@ -348,12 +348,16 @@ export default function ClubesPage() {
                                         {isAdmin && (
                                             <td>
                                                 <div className="table-actions">
-                                                    <button className="btn" onClick={() => openEditModal(c)}>
-                                                        Editar
-                                                    </button>
-                                                    <button className="btn btn-danger" onClick={() => onDelete(c.id)}>
-                                                        Apagar
-                                                    </button>
+                                                    {canManageClube(c.id) && (
+                                                        <button className="btn" onClick={() => openEditModal(c)}>
+                                                            Editar
+                                                        </button>
+                                                    )}
+                                                    {isSuperAdmin && (
+                                                        <button className="btn btn-danger" onClick={() => onDelete(c.id)}>
+                                                            Apagar
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         )}
@@ -372,7 +376,7 @@ export default function ClubesPage() {
                         </div>
                     </section>
 
-                    {isAdmin && (
+                    {isSuperAdmin && (
                         <section className="card">
                             <h2>Criar clube</h2>
                             <p className="subtle">Preenche os campos e guarda na base de dados via API.</p>

@@ -23,7 +23,7 @@ const QUICK_ICONS = {
 export default function ClubeHomePage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [erro, setErro] = useState("");
@@ -68,7 +68,7 @@ export default function ClubeHomePage() {
             { label: "Home", to: "/menu" },
             { label: "Clubes", to: "/clubes" },
             { label: "Coletividades", to: "/coletividades" },
-            ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+            ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
             {
                 label: "Logout",
@@ -78,7 +78,7 @@ export default function ClubeHomePage() {
                 },
             },
         ],
-        [clubeId, isAdmin, logout, navigate]
+        [clubeId, isSuperAdmin, logout, navigate]
     );
 
     const quickLinks = [
