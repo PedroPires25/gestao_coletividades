@@ -119,39 +119,40 @@ export function AuthProvider({ children }) {
         });
     }
 
-    const role = session?.user?.role ?? null;
-    const redirectUrl = session?.redirectUrl ?? calcularRedirectUrl(session?.user) ?? "/menu";
-    const isSuperAdmin = role === "SUPER_ADMIN";
-    const isScopedAdmin = role === "ADMINISTRADOR";
-    const isAdmin = isSuperAdmin || isScopedAdmin;
-    const canManageClube = (targetClubeId) => isSuperAdmin || (isScopedAdmin && Number(targetClubeId) === (session?.user?.clubeId ?? null));
-    const canManageColetividade = (targetColetividadeId) => isSuperAdmin || (isScopedAdmin && Number(targetColetividadeId) === (session?.user?.coletividadeId ?? null));
+    const value = useMemo(() => {
+        const role = session?.user?.role ?? null;
+        const redirectUrl = session?.redirectUrl ?? calcularRedirectUrl(session?.user) ?? "/menu";
+        const isSuperAdmin = role === "SUPER_ADMIN";
+        const isScopedAdmin = role === "ADMINISTRADOR";
+        const scopedAdminActive = isScopedAdmin && (session?.user?.privilegiosAtivos ?? false);
+        const isAdmin = isSuperAdmin || scopedAdminActive;
 
-    const value = useMemo(() => ({
-        session,
-        token: session?.token ?? null,
-        user: session?.user ?? null,
-        redirectUrl,
-        redirectPath: redirectUrl,
-        isAuthenticated: !!session?.token,
-        role,
-        isAdmin,
-        isSuperAdmin,
-        isScopedAdmin,
-        privilegiosAtivos: session?.user?.privilegiosAtivos ?? false,
-        estadoRegisto: session?.user?.estadoRegisto ?? null,
-        clubeId: session?.user?.clubeId ?? null,
-        modalidadeId: session?.user?.modalidadeId ?? null,
-        coletividadeId: session?.user?.coletividadeId ?? null,
-        atividadeId: session?.user?.atividadeId ?? null,
-        nome: session?.user?.nome ?? null,
-        logoPath: session?.user?.logoPath ?? null,
-        canManageClube,
-        canManageColetividade,
-        login,
-        logout,
-        updateSession,
-    }), [session, role, redirectUrl, isAdmin, isSuperAdmin, isScopedAdmin]);
+        return {
+            session,
+            token: session?.token ?? null,
+            user: session?.user ?? null,
+            redirectUrl,
+            redirectPath: redirectUrl,
+            isAuthenticated: !!session?.token,
+            role,
+            isAdmin,
+            isSuperAdmin,
+            isScopedAdmin,
+            privilegiosAtivos: session?.user?.privilegiosAtivos ?? false,
+            estadoRegisto: session?.user?.estadoRegisto ?? null,
+            clubeId: session?.user?.clubeId ?? null,
+            modalidadeId: session?.user?.modalidadeId ?? null,
+            coletividadeId: session?.user?.coletividadeId ?? null,
+            atividadeId: session?.user?.atividadeId ?? null,
+            nome: session?.user?.nome ?? null,
+            logoPath: session?.user?.logoPath ?? null,
+            canManageClube: (targetClubeId) => isSuperAdmin || (scopedAdminActive && Number(targetClubeId) === (session?.user?.clubeId ?? null)),
+            canManageColetividade: (targetColetividadeId) => isSuperAdmin || (scopedAdminActive && Number(targetColetividadeId) === (session?.user?.coletividadeId ?? null)),
+            login,
+            logout,
+            updateSession,
+        };
+    }, [session]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

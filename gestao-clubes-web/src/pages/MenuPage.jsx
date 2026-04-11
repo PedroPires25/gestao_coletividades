@@ -18,7 +18,7 @@ const MENU_ACTIONS = {
 };
 
 export default function MenuPage() {
-    const { logout, isAdmin, isSuperAdmin, role, clubeId } = useAuth();
+    const { logout, isAdmin, role, clubeId } = useAuth();
     const navigate = useNavigate();
     const [meusEventos, setMeusEventos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -57,7 +57,7 @@ export default function MenuPage() {
         { label: "Home", to: "/menu" },
         { label: "Clubes", to: "/clubes" },
         { label: "Coletividades", to: "/coletividades" },
-        ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+                        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         ...((isAdmin || role === "SECRETARIO") ? [{ label: "Eventos", to: "/gestao/eventos" }] : []),
         {
             label: "Logout",
@@ -100,7 +100,7 @@ export default function MenuPage() {
                         <span className="quick-action-label">Coletividades</span>
                     </Link>
 
-                    {isSuperAdmin && (
+                    {isAdmin && (
                         <Link to="/admin/users" className="quick-action quick-action-red">
                             <span className="quick-action-circle">
                                 <span className="quick-action-icon">
