@@ -2,8 +2,11 @@ package com.gestaoclubes.api.controller;
 
 import com.gestaoclubes.api.dao.UtenteDAO;
 import com.gestaoclubes.api.model.Utente;
+import com.gestaoclubes.api.security.SecurityUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -46,6 +49,7 @@ public class UtenteColetividadeRestController {
             @RequestParam int coletividadeAtividadeId,
             @RequestBody CriarUtenteRequest body
     ) {
+        exigirGestaoColetividade(coletividadeId);
         if (body == null || body.nome == null || body.nome.isBlank()) {
             return ResponseEntity.badRequest().body("Nome é obrigatório.");
         }
@@ -65,5 +69,11 @@ public class UtenteColetividadeRestController {
         if (id == null) return ResponseEntity.badRequest().body("Não foi possível criar utente.");
 
         return ResponseEntity.ok(id);
+    }
+
+    private void exigirGestaoColetividade(int coletividadeId) {
+        if (!SecurityUtils.canManageColetividade(coletividadeId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para gerir utentes desta coletividade.");
+        }
     }
 }

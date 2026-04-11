@@ -50,7 +50,7 @@ function buildEpocas({ past = 15, future = 15 } = {}) {
 
 export default function ClubeModalidadesPage() {
     const { clubeId } = useParams();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
     const navigate = useNavigate();
 
     const [clube, setClube] = useState(null);
@@ -83,7 +83,7 @@ export default function ClubeModalidadesPage() {
             { label: "Home", to: "/menu" },
             { label: "Clubes", to: "/clubes" },
             { label: "Coletividades", to: "/coletividades" },
-            ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+            ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
             { label: "Staff", to: `/clubes/${clubeId}/staff` },
             { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
@@ -95,7 +95,7 @@ export default function ClubeModalidadesPage() {
                 },
             },
         ],
-        [clubeId, isAdmin, logout, navigate]
+        [clubeId, isSuperAdmin, logout, navigate]
     );
 
     const epocasGeradas = useMemo(() => buildEpocas(), []);

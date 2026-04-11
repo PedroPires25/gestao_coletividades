@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/clubes")
@@ -46,6 +48,7 @@ public class ClubeModalidadeRestController {
             @PathVariable int clubeId,
             @RequestBody AnexarModalidadeRequest body
     ) {
+        exigirGestaoClube(clubeId);
         if (body == null || body.modalidadeId <= 0 || body.epoca == null || body.epoca.isBlank()) {
             throw new IllegalArgumentException("modalidadeId e epoca são obrigatórios.");
         }
@@ -75,6 +78,10 @@ public class ClubeModalidadeRestController {
     @DeleteMapping("/clube-modalidade/{id}")
     public void removerModalidadeDoClube(@PathVariable int id) {
         ClubeModalidade antesObj = clubeModalidadeDAO.buscarPorId(id);
+        if (antesObj == null || antesObj.getClube() == null) {
+            throw new IllegalArgumentException("Registo não encontrado.");
+        }
+        exigirGestaoClube(antesObj.getClube().getId());
 
         boolean apagado = clubeModalidadeDAO.removerPorId(id);
         if (!apagado) {
@@ -93,5 +100,11 @@ public class ClubeModalidadeRestController {
     public static class AnexarModalidadeRequest {
         public int modalidadeId;
         public String epoca;
+    }
+
+    private void exigirGestaoClube(int clubeId) {
+        if (!SecurityUtils.canManageClube(clubeId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para gerir modalidades deste clube.");
+        }
     }
 }

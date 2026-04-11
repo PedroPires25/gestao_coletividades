@@ -102,7 +102,7 @@ public class AuthRestController {
     public ResponseEntity<?> listarPerfisRegistaveis() {
         return ResponseEntity.ok(
                 perfilDAO.listarPerfisDisponiveis().stream()
-                        .filter(p -> !PerfilDAO.ADMIN.equals(p))
+                        .filter(p -> !PerfilDAO.SUPER_ADMIN.equals(p))
                         .toList()
         );
     }
@@ -302,8 +302,8 @@ public class AuthRestController {
             return ResponseEntity.badRequest().body("Perfil inválido para registo público.");
         }
 
-        if (PerfilDAO.ADMIN.equals(perfil)) {
-            return ResponseEntity.badRequest().body("Não é permitido registar administradores publicamente.");
+        if (PerfilDAO.SUPER_ADMIN.equals(perfil)) {
+            return ResponseEntity.badRequest().body("Não é permitido registar super administradores publicamente.");
         }
 
         int perfilId = perfilDAO.obterPerfilPorDescricao(perfil);
@@ -357,7 +357,7 @@ public class AuthRestController {
 
         if ("PENDENTE".equals(estadoRegisto)) {
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("Utilizador registado com sucesso. Aguarda aprovação de um administrador.");
+                    .body("Utilizador registado com sucesso. Aguarda aprovação de um super administrador.");
         }
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -366,7 +366,8 @@ public class AuthRestController {
 
     private boolean validarAcessoInterno(String rolePlain, Utilizador u) {
         return switch (rolePlain) {
-            case PerfilDAO.ADMIN -> true;
+            case PerfilDAO.SUPER_ADMIN -> true;
+            case PerfilDAO.ADMINISTRADOR -> u.getClubeId() != null || u.getColetividadeId() != null;
             case PerfilDAO.USER -> true;
 
             case PerfilDAO.ATLETA ->
@@ -498,6 +499,18 @@ public class AuthRestController {
                 }
                 return null;
 
+            case PerfilDAO.ADMINISTRADOR:
+                if (!"CLUBE".equals(estruturaTipo) && !"COLETIVIDADE".equals(estruturaTipo)) {
+                    return "Administrador tem de escolher CLUBE ou COLETIVIDADE.";
+                }
+                if ("CLUBE".equals(estruturaTipo) && req.clubeId == null) {
+                    return "Administrador tem de escolher um clube.";
+                }
+                if ("COLETIVIDADE".equals(estruturaTipo) && req.coletividadeId == null) {
+                    return "Administrador tem de escolher uma coletividade.";
+                }
+                return null;
+
             default:
                 return "Perfil inválido.";
         }
@@ -521,7 +534,17 @@ public class AuthRestController {
         }
 
         return switch (rolePlain) {
-            case PerfilDAO.ADMIN -> "/admin/users";
+            case PerfilDAO.SUPER_ADMIN -> "/admin/users";
+
+            case PerfilDAO.ADMINISTRADOR -> {
+                if (u.getClubeId() != null) {
+                    yield String.format("/clubes/%d", u.getClubeId());
+                }
+                if (u.getColetividadeId() != null) {
+                    yield String.format("/coletividades/%d", u.getColetividadeId());
+                }
+                yield "/menu";
+            }
 
             case PerfilDAO.ATLETA -> {
                 if (u.getClubeId() != null && u.getModalidadeId() != null) {

@@ -44,7 +44,7 @@ function PendingNameCell() {
 export default function ColetividadeUtentesAtividadePage() {
     const { coletividadeId, coletividadeAtividadeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
 
     const [coletividade, setColetividade] = useState(null);
     const [atividadeAtiva, setAtividadeAtiva] = useState(null);
@@ -71,7 +71,7 @@ export default function ColetividadeUtentesAtividadePage() {
         { label: "Home", to: "/menu" },
         { label: "Clubes", to: "/clubes" },
         { label: "Coletividades", to: "/coletividades" },
-        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+        ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         { label: "Atividades", to: `/coletividades/${coletividadeId}/atividades` },
         { label: "Utentes", to: `/coletividades/${coletividadeId}/utentes` },
         { label: "Staff", to: `/coletividades/${coletividadeId}/staff` },
@@ -82,7 +82,7 @@ export default function ColetividadeUtentesAtividadePage() {
                 navigate("/login", { replace: true });
             },
         },
-    ], [coletividadeId, isAdmin, logout, navigate]);
+    ], [coletividadeId, isSuperAdmin, logout, navigate]);
 
     const carregar = useCallback(async () => {
         setErro("");

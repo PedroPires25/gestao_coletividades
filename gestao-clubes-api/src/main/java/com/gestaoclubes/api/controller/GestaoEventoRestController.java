@@ -1,6 +1,8 @@
 package com.gestaoclubes.api.controller;
 
 import com.gestaoclubes.api.dao.*;
+import com.gestaoclubes.api.model.ClubeModalidade;
+import com.gestaoclubes.api.model.ColetividadeAtividade;
 import com.gestaoclubes.api.model.Evento;
 import com.gestaoclubes.api.security.SecurityUtils;
 import org.springframework.http.HttpStatus;
@@ -19,41 +21,60 @@ public class GestaoEventoRestController {
     private final EventoDAO eventoDAO = new EventoDAO();
     private final EventoAtletaDAO eventoAtletaDAO = new EventoAtletaDAO();
     private final EventoInscritoDAO eventoInscritoDAO = new EventoInscritoDAO();
+    private final ClubeModalidadeDAO clubeModalidadeDAO = new ClubeModalidadeDAO();
+    private final ColetividadeAtividadeDAO coletividadeAtividadeDAO = new ColetividadeAtividadeDAO();
 
-    private boolean isAdminOrSecretario() {
+    private boolean canManageEventos() {
         String role = SecurityUtils.currentRole();
-        return "ROLE_ADMIN".equals(role) || "ROLE_SECRETARIO".equals(role);
+        return SecurityUtils.isSuperAdmin()
+                || SecurityUtils.isAdministradorEstrutura()
+                || "ROLE_SECRETARIO".equals(role);
     }
 
     private ResponseEntity<?> forbidden() {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("erro", "Acesso negado. Apenas Administrador ou Secretário podem gerir eventos."));
+                .body(Map.of("erro", "Acesso negado. Apenas super administrador, administrador da estrutura ou secretário podem gerir eventos."));
     }
 
     /** GET /api/gestao/eventos — list all events */
     @GetMapping
     public ResponseEntity<?> listarTodos() {
-        if (!isAdminOrSecretario()) return forbidden();
+        if (!canManageEventos()) return forbidden();
+
+        if (SecurityUtils.isAdministradorEstrutura()) {
+            Integer clubeId = SecurityUtils.currentClubeId();
+            if (clubeId != null) {
+                return ResponseEntity.ok(eventoDAO.listarPorClube(clubeId));
+            }
+
+            return ResponseEntity.ok(
+                    eventoDAO.listarTodos().stream()
+                            .filter(this::eventoPertenceAoAdminDaEstrutura)
+                            .toList()
+            );
+        }
+
         return ResponseEntity.ok(eventoDAO.listarTodos());
     }
 
     /** GET /api/gestao/eventos/{id} — get single event */
     @GetMapping("/{id}")
     public ResponseEntity<?> obter(@PathVariable int id) {
-        if (!isAdminOrSecretario()) return forbidden();
+        if (!canManageEventos()) return forbidden();
 
         Map<String, Object> evento = eventoDAO.buscarPorId(id);
         if (evento == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("erro", "Evento não encontrado."));
         }
+        if (!canManageEvento(evento)) return forbidden();
         return ResponseEntity.ok(evento);
     }
 
     /** POST /api/gestao/eventos — create event */
     @PostMapping
     public ResponseEntity<?> criar(@RequestBody Map<String, Object> body) {
-        if (!isAdminOrSecretario()) return forbidden();
+        if (!canManageEventos()) return forbidden();
 
         String titulo = (String) body.get("titulo");
         String descricao = (String) body.get("descricao");
@@ -89,12 +110,14 @@ public class GestaoEventoRestController {
                 return ResponseEntity.badRequest().body(Map.of("erro", "clubeModalidadeId é obrigatório para tipo MODALIDADE."));
             }
             clubeModalidadeId = ((Number) cmIdObj).intValue();
+            if (!canManageClubeModalidade(clubeModalidadeId)) return forbidden();
         } else {
             Object caIdObj = body.get("coletividadeAtividadeId");
             if (caIdObj == null) {
                 return ResponseEntity.badRequest().body(Map.of("erro", "coletividadeAtividadeId é obrigatório para tipo ATIVIDADE."));
             }
             coletividadeAtividadeId = ((Number) caIdObj).intValue();
+            if (!canManageColetividadeAtividade(coletividadeAtividadeId)) return forbidden();
         }
 
         int criadoPor = SecurityUtils.currentUserId();
@@ -141,13 +164,14 @@ public class GestaoEventoRestController {
     /** PUT /api/gestao/eventos/{id} — update event */
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizar(@PathVariable int id, @RequestBody Map<String, Object> body) {
-        if (!isAdminOrSecretario()) return forbidden();
+        if (!canManageEventos()) return forbidden();
 
         Map<String, Object> existente = eventoDAO.buscarPorId(id);
         if (existente == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("erro", "Evento não encontrado."));
         }
+        if (!canManageEvento(existente)) return forbidden();
 
         String titulo = (String) body.get("titulo");
         String descricao = (String) body.get("descricao");
@@ -218,13 +242,14 @@ public class GestaoEventoRestController {
     /** DELETE /api/gestao/eventos/{id} — delete event */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> remover(@PathVariable int id) {
-        if (!isAdminOrSecretario()) return forbidden();
+        if (!canManageEventos()) return forbidden();
 
         Map<String, Object> existente = eventoDAO.buscarPorId(id);
         if (existente == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("erro", "Evento não encontrado."));
         }
+        if (!canManageEvento(existente)) return forbidden();
 
         // Remove convocados first (also handled by CASCADE, but explicit for safety)
         String tipo = (String) existente.get("tipo");
@@ -246,13 +271,14 @@ public class GestaoEventoRestController {
     /** GET /api/gestao/eventos/{id}/convocados — get convocados */
     @GetMapping("/{id}/convocados")
     public ResponseEntity<?> listarConvocados(@PathVariable int id) {
-        if (!isAdminOrSecretario()) return forbidden();
+        if (!canManageEventos()) return forbidden();
 
         Map<String, Object> evento = eventoDAO.buscarPorId(id);
         if (evento == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("erro", "Evento não encontrado."));
         }
+        if (!canManageEvento(evento)) return forbidden();
 
         String tipo = (String) evento.get("tipo");
         if ("MODALIDADE".equals(tipo)) {
@@ -265,13 +291,14 @@ public class GestaoEventoRestController {
     /** PUT /api/gestao/eventos/{id}/convocados — replace convocados list */
     @PutMapping("/{id}/convocados")
     public ResponseEntity<?> atualizarConvocados(@PathVariable int id, @RequestBody Map<String, Object> body) {
-        if (!isAdminOrSecretario()) return forbidden();
+        if (!canManageEventos()) return forbidden();
 
         Map<String, Object> evento = eventoDAO.buscarPorId(id);
         if (evento == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("erro", "Evento não encontrado."));
         }
+        if (!canManageEvento(evento)) return forbidden();
 
         List<Integer> convocados = extrairIds(body.get("convocados"));
         String tipo = (String) evento.get("tipo");
@@ -297,5 +324,46 @@ public class GestaoEventoRestController {
             }
         }
         return ids;
+    }
+
+    private boolean canManageEvento(Map<String, Object> evento) {
+        if (SecurityUtils.isSuperAdmin() || "ROLE_SECRETARIO".equals(SecurityUtils.currentRole())) {
+            return true;
+        }
+        return eventoPertenceAoAdminDaEstrutura(evento);
+    }
+
+    private boolean eventoPertenceAoAdminDaEstrutura(Map<String, Object> evento) {
+        if (!SecurityUtils.isAdministradorEstrutura()) return false;
+
+        Integer clubeAtual = SecurityUtils.currentClubeId();
+        Integer coletividadeAtual = SecurityUtils.currentColetividadeId();
+
+        Object clubeId = evento.get("clubeId");
+        if (clubeAtual != null && clubeId instanceof Number numero) {
+            return clubeAtual.equals(numero.intValue());
+        }
+
+        Object coletividadeAtividadeId = evento.get("coletividadeAtividadeId");
+        if (coletividadeAtual != null && coletividadeAtividadeId instanceof Number numero) {
+            ColetividadeAtividade associacao = coletividadeAtividadeDAO.obterPorId(numero.intValue());
+            return associacao != null && coletividadeAtual.equals(associacao.getColetividadeId());
+        }
+
+        return false;
+    }
+
+    private boolean canManageClubeModalidade(Integer clubeModalidadeId) {
+        ClubeModalidade clubeModalidade = clubeModalidadeDAO.buscarPorId(clubeModalidadeId);
+        if (clubeModalidade == null || clubeModalidade.getClube() == null) return false;
+        if (SecurityUtils.isSuperAdmin() || "ROLE_SECRETARIO".equals(SecurityUtils.currentRole())) return true;
+        return SecurityUtils.canManageClube(clubeModalidade.getClube().getId());
+    }
+
+    private boolean canManageColetividadeAtividade(Integer coletividadeAtividadeId) {
+        ColetividadeAtividade associacao = coletividadeAtividadeDAO.obterPorId(coletividadeAtividadeId);
+        if (associacao == null) return false;
+        if (SecurityUtils.isSuperAdmin() || "ROLE_SECRETARIO".equals(SecurityUtils.currentRole())) return true;
+        return SecurityUtils.canManageColetividade(associacao.getColetividadeId());
     }
 }

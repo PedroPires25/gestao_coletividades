@@ -129,7 +129,7 @@ public class AdminRestController {
             return ResponseEntity.badRequest().body("Não foi possível alterar o perfil.");
         }
 
-        if (PerfilDAO.ADMIN.equals(perfilNovo)) {
+        if (PerfilDAO.SUPER_ADMIN.equals(perfilNovo)) {
             utilizadorDAO.atualizarEstadoRegisto(id, "APROVADO");
             utilizadorDAO.atualizarAfetacao(id, null, null, null, null);
         }
@@ -221,8 +221,8 @@ public class AdminRestController {
         }
 
         String role = perfilDAO.obterDescricaoPerfil(antes.getPerfilId());
-        if (PerfilDAO.ADMIN.equals(role)) {
-            return ResponseEntity.badRequest().body("Administradores não precisam de afetação.");
+        if (PerfilDAO.SUPER_ADMIN.equals(role)) {
+            return ResponseEntity.badRequest().body("Super administradores não precisam de afetação.");
         }
 
         boolean ok = utilizadorDAO.atualizarAfetacao(
@@ -276,6 +276,10 @@ public class AdminRestController {
             case PerfilDAO.TREINADOR_PRINCIPAL,
                  PerfilDAO.DEPARTAMENTO_MEDICO -> (u.getClubeId() == null)
                     ? "Para este perfil, é obrigatório definir pelo menos o clube."
+                    : null;
+
+            case PerfilDAO.ADMINISTRADOR -> (u.getClubeId() == null && u.getColetividadeId() == null)
+                    ? "Para ADMINISTRADOR, é obrigatório definir clube ou coletividade."
                     : null;
 
             case PerfilDAO.STAFF,

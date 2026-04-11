@@ -80,7 +80,51 @@ public class SecurityUtils {
         return null;
     }
 
+    public static Integer currentColetividadeId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return null;
+
+        Object principal = auth.getPrincipal();
+        if (principal instanceof JwtUtil.JwtUser jwtUser) {
+            return jwtUser.coletividadeId();
+        }
+
+        return null;
+    }
+
+    public static Integer currentAtividadeId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return null;
+
+        Object principal = auth.getPrincipal();
+        if (principal instanceof JwtUtil.JwtUser jwtUser) {
+            return jwtUser.atividadeId();
+        }
+
+        return null;
+    }
+
+    public static boolean isSuperAdmin() {
+        return "ROLE_SUPER_ADMIN".equals(currentRole());
+    }
+
+    public static boolean isAdministradorEstrutura() {
+        return "ROLE_ADMINISTRADOR".equals(currentRole()) && currentPrivilegiosAtivos();
+    }
+
     public static boolean isAdmin() {
-        return "ROLE_ADMIN".equals(currentRole());
+        return isSuperAdmin() || isAdministradorEstrutura();
+    }
+
+    public static boolean canManageClube(Integer clubeId) {
+        if (clubeId == null) return false;
+        if (isSuperAdmin()) return true;
+        return isAdministradorEstrutura() && clubeId.equals(currentClubeId());
+    }
+
+    public static boolean canManageColetividade(Integer coletividadeId) {
+        if (coletividadeId == null) return false;
+        if (isSuperAdmin()) return true;
+        return isAdministradorEstrutura() && coletividadeId.equals(currentColetividadeId());
     }
 }

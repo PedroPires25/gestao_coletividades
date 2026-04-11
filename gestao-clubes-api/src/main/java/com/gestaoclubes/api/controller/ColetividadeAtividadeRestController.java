@@ -4,8 +4,11 @@ import com.gestaoclubes.api.dao.AtividadeDAO;
 import com.gestaoclubes.api.dao.ColetividadeAtividadeDAO;
 import com.gestaoclubes.api.model.Atividade;
 import com.gestaoclubes.api.model.ColetividadeAtividade;
+import com.gestaoclubes.api.security.SecurityUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -48,6 +51,7 @@ public class ColetividadeAtividadeRestController {
             @PathVariable int coletividadeId,
             @RequestBody CriarAssociacaoRequest body
     ) {
+        exigirGestaoColetividade(coletividadeId);
         if (body == null || body.atividadeId == null || body.ano == null || body.ano.isBlank()) {
             return ResponseEntity.badRequest().body("atividadeId e ano são obrigatórios.");
         }
@@ -60,8 +64,19 @@ public class ColetividadeAtividadeRestController {
 
     @DeleteMapping("/atividade-associacao/{id}")
     public ResponseEntity<?> removerAssociacao(@PathVariable int id) {
+        ColetividadeAtividade associacao = coletividadeAtividadeDAO.obterPorId(id);
+        if (associacao == null) {
+            return ResponseEntity.badRequest().body("Não foi possível remover a associação.");
+        }
+        exigirGestaoColetividade(associacao.getColetividadeId());
         return coletividadeAtividadeDAO.removerAssociacao(id)
                 ? ResponseEntity.ok().build()
                 : ResponseEntity.badRequest().body("Não foi possível remover a associação.");
+    }
+
+    private void exigirGestaoColetividade(int coletividadeId) {
+        if (!SecurityUtils.canManageColetividade(coletividadeId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para gerir atividades desta coletividade.");
+        }
     }
 }

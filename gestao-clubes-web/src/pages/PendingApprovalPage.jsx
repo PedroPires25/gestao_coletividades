@@ -34,7 +34,7 @@ export default function PendingApprovalPage() {
                 </h1>
 
                 <p className="text-gray-600 mb-6">
-                    Obrigado pelo seu registo! Sua conta está aguardando aprovação de um administrador.
+                    Obrigado pelo seu registo! A sua conta está a aguardar aprovação de um super administrador.
                     Este processo geralmente leva 24 a 48 horas.
                 </p>
 

@@ -297,7 +297,7 @@ export default function AdminApprovedUsersPage() {
                             ) : filtrados.map((u) => {
                                 const saving = savingId === u.id;
                                 const draft = afetacaoDrafts[u.id] || {};
-                                const isAdmin = (perfilDrafts[u.id] || u.role) === "ADMIN";
+                                const isSuperAdmin = (perfilDrafts[u.id] || u.role) === "SUPER_ADMIN";
                                 const isEditing = !!editingAfetacao[u.id];
 
                                 return (
@@ -346,8 +346,8 @@ export default function AdminApprovedUsersPage() {
                                         </td>
 
                                         <td style={{ minWidth: 420 }}>
-                                            {isAdmin ? (
-                                                <div className="hint">Administrador não precisa de afetação.</div>
+                                            {isSuperAdmin ? (
+                                                <div className="hint">Super administrador não precisa de afetação.</div>
                                             ) : isEditing ? (
                                                 <>
                                                     <div className="row" style={{ gap: 8 }}>
@@ -408,7 +408,7 @@ export default function AdminApprovedUsersPage() {
                                         </td>
 
                                         <td>
-                                            {isAdmin ? null : isEditing ? (
+                                            {isSuperAdmin ? null : isEditing ? (
                                                 <div className="table-actions">
                                                     <button
                                                         className="btn btn-primary"

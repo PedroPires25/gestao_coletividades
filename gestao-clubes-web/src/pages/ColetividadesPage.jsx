@@ -20,7 +20,7 @@ function isoToInputDate(dateISO) {
 }
 
 export default function ColetividadesPage() {
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, canManageColetividade } = useAuth();
     const navigate = useNavigate();
 
     const [coletividades, setColetividades] = useState([]);
@@ -103,7 +103,7 @@ export default function ColetividadesPage() {
 
     async function onSubmit(e) {
         e.preventDefault();
-        if (!isAdmin) return;
+        if (!isSuperAdmin) return;
 
         setErro("");
         setMsg("");
@@ -146,7 +146,7 @@ export default function ColetividadesPage() {
     }
 
     async function onDelete(id) {
-        if (!isAdmin) return;
+        if (!isSuperAdmin) return;
 
         setErro("");
         setMsg("");
@@ -163,7 +163,7 @@ export default function ColetividadesPage() {
     }
 
     function openEditModal(coletividade) {
-        if (!isAdmin) return;
+        if (!canManageColetividade(coletividade.id)) return;
 
         setEditErro("");
         setEdit({
@@ -191,7 +191,7 @@ export default function ColetividadesPage() {
     }
 
     async function onSaveEdit() {
-        if (!isAdmin) return;
+        if (!canManageColetividade(edit.id)) return;
 
         setEditErro("");
         try {
@@ -269,7 +269,7 @@ export default function ColetividadesPage() {
                 </div>
 
                 <div className="stack-sections">
-                    {isAdmin && (
+                    {isSuperAdmin && (
                         <section className="card">
                             <h2>Criar coletividade</h2>
                             <p className="subtle">Preenche os campos e guarda na base de dados via API.</p>
@@ -421,8 +421,12 @@ export default function ColetividadesPage() {
                                         {isAdmin && (
                                             <td>
                                                 <div className="table-actions">
-                                                    <button className="btn" onClick={() => openEditModal(c)}>Editar</button>
-                                                    <button className="btn btn-danger" onClick={() => onDelete(c.id)}>Apagar</button>
+                                                    {canManageColetividade(c.id) && (
+                                                        <button className="btn" onClick={() => openEditModal(c)}>Editar</button>
+                                                    )}
+                                                    {isSuperAdmin && (
+                                                        <button className="btn btn-danger" onClick={() => onDelete(c.id)}>Apagar</button>
+                                                    )}
                                                 </div>
                                             </td>
                                         )}

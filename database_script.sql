@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS utilizadores (
 ) ENGINE=InnoDB;
 
 INSERT IGNORE INTO perfis (id, descricao) VALUES
-  (1, 'ADMIN'),
+  (1, 'SUPER_ADMIN'),
   (2, 'USER');
 
 -- -------------------------
@@ -622,9 +622,15 @@ CREATE TABLE IF NOT EXISTS perfis (
 ) ENGINE=InnoDB;
 
 INSERT INTO perfis (descricao)
-SELECT 'ADMIN'
+SELECT 'SUPER_ADMIN'
 WHERE NOT EXISTS (
-    SELECT 1 FROM perfis WHERE UPPER(descricao) = 'ADMIN'
+    SELECT 1 FROM perfis WHERE UPPER(descricao) IN ('SUPER_ADMIN', 'ADMIN')
+);
+
+INSERT INTO perfis (descricao)
+SELECT 'ADMINISTRADOR'
+WHERE NOT EXISTS (
+    SELECT 1 FROM perfis WHERE UPPER(descricao) = 'ADMINISTRADOR'
 );
 
 INSERT INTO perfis (descricao)

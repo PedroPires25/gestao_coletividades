@@ -10,8 +10,11 @@ import com.gestaoclubes.api.model.CargoStaff;
 import com.gestaoclubes.api.model.ClubeModalidade;
 import com.gestaoclubes.api.model.Escalao;
 import com.gestaoclubes.api.model.Staff;
+import com.gestaoclubes.api.security.SecurityUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.Date;
 import java.util.LinkedHashMap;
@@ -58,6 +61,7 @@ public class StaffRestController {
             @PathVariable int clubeId,
             @RequestBody CriarStaffRequest body
     ) {
+        exigirGestaoClube(clubeId);
         validarCriacao(body);
 
         ClubeModalidade clubeModalidade = null;
@@ -128,6 +132,7 @@ public class StaffRestController {
             @PathVariable int staffId,
             @RequestBody AtualizarStaffRequest body
     ) {
+        exigirGestaoClube(clubeId);
         Staff atual = staffDAO.buscarPorId(staffId);
         if (atual == null) {
             throw new IllegalArgumentException("Membro do staff não encontrado.");
@@ -158,6 +163,7 @@ public class StaffRestController {
             @PathVariable int afetacaoId,
             @RequestBody AtualizarAfetacaoRequest body
     ) {
+        exigirGestaoClube(clubeId);
         Map<String, Object> afetacao = staffAfetacaoDAO.buscarDetalhePorId(afetacaoId);
         if (afetacao == null) {
             throw new IllegalArgumentException("Afetação não encontrada.");
@@ -221,6 +227,12 @@ public class StaffRestController {
             @PathVariable int afetacaoId,
             @RequestBody(required = false) Map<String, String> body
     ) {
+        Map<String, Object> afetacao = staffAfetacaoDAO.buscarDetalhePorId(afetacaoId);
+        if (afetacao == null) {
+            throw new IllegalArgumentException("Afetação não encontrada.");
+        }
+        exigirGestaoClube(((Number) afetacao.get("clubeId")).intValue());
+
         Date dataFim = body != null && body.get("dataFim") != null && !body.get("dataFim").isBlank()
                 ? Date.valueOf(body.get("dataFim").trim())
                 : new Date(System.currentTimeMillis());
@@ -304,5 +316,11 @@ public class StaffRestController {
         public String observacoes;
         public Boolean ativo;
         public List<Integer> escaloesIds;
+    }
+
+    private void exigirGestaoClube(int clubeId) {
+        if (!SecurityUtils.canManageClube(clubeId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para gerir staff deste clube.");
+        }
     }
 }

@@ -21,7 +21,7 @@ export default function ColetividadeHomePage() {
     const coletividadeId = params.id ?? params.coletividadeId ?? null;
 
     const navigate = useNavigate();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
 
     const [coletividade, setColetividade] = useState(null);
     const [erro, setErro] = useState("");
@@ -68,7 +68,7 @@ export default function ColetividadeHomePage() {
             { label: "Home", to: "/menu" },
             { label: "Clubes", to: "/clubes" },
             { label: "Coletividades", to: "/coletividades" },
-            ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+            ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Atividades", to: `/coletividades/${coletividadeId}/atividades` },
             { label: "Utentes", to: `/coletividades/${coletividadeId}/utentes` },
             { label: "Staff", to: `/coletividades/${coletividadeId}/staff` },
@@ -80,7 +80,7 @@ export default function ColetividadeHomePage() {
                 },
             },
         ],
-        [coletividadeId, isAdmin, logout, navigate]
+        [coletividadeId, isSuperAdmin, logout, navigate]
     );
 
     const quickLinks = [
