@@ -9,8 +9,10 @@ import com.gestaoclubes.api.model.Utente;
 import com.gestaoclubes.api.model.Utilizador;
 import com.gestaoclubes.api.security.SecurityUtils;
 import com.gestaoclubes.api.util.ConexoBD;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -89,15 +91,28 @@ public class AdminRestController {
 
     @GetMapping("/users")
     public List<UtilizadorAdminDto> listarUsers(@RequestParam(value = "estado", required = false) String estado) {
+        if (!SecurityUtils.isSuperAdmin() && !SecurityUtils.isAdministradorEstrutura()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissões para consultar utilizadores.");
+        }
+
+        String estadoFiltro = (estado == null || estado.isBlank()) ? null : estado.trim().toUpperCase();
+        if (SecurityUtils.isAdministradorEstrutura() && !"PENDENTE".equals(estadoFiltro)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Os administradores de estrutura só podem consultar registos pendentes."
+            );
+        }
+
         List<Utilizador> lista;
 
-        if (estado == null || estado.isBlank()) {
+        if (estadoFiltro == null) {
             lista = utilizadorDAO.listarTodos();
         } else {
-            lista = utilizadorDAO.listarPorEstadoRegisto(estado.trim().toUpperCase());
+            lista = utilizadorDAO.listarPorEstadoRegisto(estadoFiltro);
         }
 
         return lista.stream()
+                .filter(u -> podeConsultarUtilizador(estadoFiltro, u))
                 .map(u -> new UtilizadorAdminDto(u, perfilDAO.obterDescricaoPerfil(u.getPerfilId())))
                 .toList();
     }
@@ -179,6 +194,10 @@ public class AdminRestController {
         }
 
         String role = perfilDAO.obterDescricaoPerfil(antes.getPerfilId());
+        if (!podeGerirEstadoRegisto(antes, role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Sem permissões para aprovar ou rejeitar este registo.");
+        }
 
         String erroValidacao = validarMinimosParaMaterializacao(role, antes);
         if ("APROVADO".equals(novoEstado) && erroValidacao != null) {
@@ -223,6 +242,10 @@ public class AdminRestController {
         String role = perfilDAO.obterDescricaoPerfil(antes.getPerfilId());
         if (PerfilDAO.SUPER_ADMIN.equals(role)) {
             return ResponseEntity.badRequest().body("Super administradores não precisam de afetação.");
+        }
+        if (!podeGerirAfetacao(antes, role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Sem permissões para alterar a afetação deste utilizador.");
         }
 
         boolean ok = utilizadorDAO.atualizarAfetacao(
@@ -654,6 +677,51 @@ public class AdminRestController {
         }
 
         return null;
+    }
+
+    private boolean podeConsultarUtilizador(String estadoFiltro, Utilizador utilizador) {
+        if (utilizador == null) return false;
+
+        String role = perfilDAO.obterDescricaoPerfil(utilizador.getPerfilId());
+        if (SecurityUtils.isSuperAdmin()) {
+            return !"PENDENTE".equals(estadoFiltro) || PerfilDAO.ADMINISTRADOR.equals(role);
+        }
+
+        return "PENDENTE".equals(estadoFiltro) && podeGerirPedidoPendente(utilizador, role);
+    }
+
+    private boolean podeGerirEstadoRegisto(Utilizador utilizador, String role) {
+        if (utilizador == null || role == null) return false;
+
+        if (SecurityUtils.isSuperAdmin()) {
+            return PerfilDAO.ADMINISTRADOR.equals(role);
+        }
+
+        return podeGerirPedidoPendente(utilizador, role);
+    }
+
+    private boolean podeGerirAfetacao(Utilizador utilizador, String role) {
+        if (utilizador == null || role == null) return false;
+
+        if (SecurityUtils.isSuperAdmin()) {
+            return true;
+        }
+
+        return podeGerirPedidoPendente(utilizador, role);
+    }
+
+    private boolean podeGerirPedidoPendente(Utilizador utilizador, String role) {
+        if (!SecurityUtils.isAdministradorEstrutura()) return false;
+        if (utilizador == null || role == null) return false;
+        if (!"PENDENTE".equalsIgnoreCase(utilizador.getEstadoRegisto())) return false;
+        if (perfilDAO.isPerfilAdministrativo(role)) return false;
+
+        Integer clubeAtual = SecurityUtils.currentClubeId();
+        Integer coletividadeAtual = SecurityUtils.currentColetividadeId();
+
+        boolean mesmoClube = clubeAtual != null && clubeAtual.equals(utilizador.getClubeId());
+        boolean mesmaColetividade = coletividadeAtual != null && coletividadeAtual.equals(utilizador.getColetividadeId());
+        return mesmoClube || mesmaColetividade;
     }
 
     private void registarAuditoria(String acao, int entidadeId, Utilizador antes, Utilizador depois) {

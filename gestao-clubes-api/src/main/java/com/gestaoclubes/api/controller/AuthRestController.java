@@ -356,8 +356,11 @@ public class AuthRestController {
         }
 
         if ("PENDENTE".equals(estadoRegisto)) {
+            String mensagemAprovacao = PerfilDAO.ADMINISTRADOR.equals(perfil)
+                    ? "Utilizador registado com sucesso. Aguarda aprovação de um super administrador."
+                    : "Utilizador registado com sucesso. Aguarda aprovação do administrador da estrutura.";
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("Utilizador registado com sucesso. Aguarda aprovação de um super administrador.");
+                    .body(mensagemAprovacao);
         }
 
         return ResponseEntity.status(HttpStatus.CREATED)

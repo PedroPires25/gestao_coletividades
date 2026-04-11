@@ -534,7 +534,7 @@ export default function LoginPage() {
 
                             {perfilPrecisaAprovacao && (
                                 <div className="hint">
-                                    Este perfil fica pendente até aprovação de um super administrador.
+                                    Este perfil fica pendente até aprovação da entidade responsável.
                                 </div>
                             )}
 

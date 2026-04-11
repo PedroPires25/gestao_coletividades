@@ -13,7 +13,7 @@ import {
 } from "../api";
 
 export default function AdminPendingUsersPage() {
-    const { logout } = useAuth();
+    const { logout, isSuperAdmin } = useAuth();
     const navigate = useNavigate();
 
     const [users, setUsers] = useState([]);
@@ -32,7 +32,7 @@ export default function AdminPendingUsersPage() {
         { label: "Home", to: "/menu" },
         { label: "Perfis", to: "/admin/users" },
         { label: "utilizadoresAprovar", to: "/admin/users/pending" },
-        { label: "utilizadoresAutorizados", to: "/admin/users/approved" },
+        ...(isSuperAdmin ? [{ label: "utilizadoresAutorizados", to: "/admin/users/approved" }] : []),
         {
             label: "Logout",
             onClick: () => {
@@ -184,7 +184,9 @@ export default function AdminPendingUsersPage() {
                 <div className="page-title">
                     <h1>Registos Pendentes</h1>
                     <div className="hint">
-                        Aprova ou rejeita pedidos novos. Ao aprovar, o utilizador passa automaticamente para os aprovados.
+                        {isSuperAdmin
+                            ? "Aqui aprovas apenas os pedidos de administradores de clube ou coletividade."
+                            : "Aqui aprovas ou rejeitas pedidos da tua estrutura. Ao aprovar, o utilizador passa automaticamente para os aprovados."}
                     </div>
                 </div>
 

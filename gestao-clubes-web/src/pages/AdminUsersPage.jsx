@@ -12,7 +12,7 @@ const QUICK_ICONS = {
 };
 
 export default function AdminUsersPage() {
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
     const navigate = useNavigate();
 
     const menuItems = useMemo(
@@ -35,13 +35,15 @@ export default function AdminUsersPage() {
         {
             label: "Utilizadores por Aprovar",
             to: "/admin/users/pending",
-            description: "Aprovar, rejeitar e completar a afetação dos pedidos pendentes.",
+            description: isSuperAdmin
+                ? "Aprovar pedidos pendentes de administradores de clube ou coletividade."
+                : "Aprovar, rejeitar e completar a afetação dos pedidos pendentes da tua estrutura.",
         },
-        {
+        ...(isSuperAdmin ? [{
             label: "Utilizadores Autorizados",
             to: "/admin/users/approved",
             description: "Editar perfil, privilégios e afetação dos utilizadores já aprovados.",
-        },
+        }] : []),
     ];
 
     const colorClasses = [
@@ -70,7 +72,9 @@ export default function AdminUsersPage() {
                 <div className="card card-quick-links">
                     <h2>Acessos rápidos</h2>
                     <p className="subtle">
-                        Seleciona uma das áreas abaixo para gerir os pedidos pendentes ou os utilizadores autorizados.
+                        {isSuperAdmin
+                            ? "Seleciona uma das áreas abaixo para gerir os pedidos pendentes ou os utilizadores autorizados."
+                            : "Seleciona a área abaixo para gerir os pedidos pendentes da tua estrutura."}
                     </p>
 
                     <div className="icon-links-row">
