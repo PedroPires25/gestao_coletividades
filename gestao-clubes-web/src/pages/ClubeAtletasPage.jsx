@@ -94,7 +94,7 @@ function getModalidadeId(item) {
 export default function ClubeAtletasPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin } = useAuth();
+    const { logout, isAdmin } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [modalidades, setModalidades] = useState([]);
@@ -126,7 +126,7 @@ export default function ClubeAtletasPage() {
             { label: "Home", to: "/menu" },
             { label: "Clubes", to: "/clubes" },
             { label: "Coletividades", to: "/coletividades" },
-            ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+            ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
             { label: "Staff", to: `/clubes/${clubeId}/staff` },
             { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
@@ -138,7 +138,7 @@ export default function ClubeAtletasPage() {
                 },
             },
         ],
-        [clubeId, isSuperAdmin, logout, navigate]
+        [clubeId, isAdmin, logout, navigate]
     );
 
     async function carregarPagina() {

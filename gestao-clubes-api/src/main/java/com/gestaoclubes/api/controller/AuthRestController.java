@@ -130,6 +130,12 @@ public class AuthRestController {
                     .body("Perfil de utilizador inválido.");
         }
 
+        // Corrigir administradores aprovados que não tenham privilégios ativos
+        if (PerfilDAO.ADMINISTRADOR.equals(rolePlain) && !u.isPrivilegiosAtivos()) {
+            utilizadorDAO.atualizarPrivilegios(u.getId(), true);
+            u = utilizadorDAO.buscarPorId(u.getId());
+        }
+
         if (!validarAcessoInterno(rolePlain, u)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("O utilizador não está registado de forma válida na estrutura correspondente.");

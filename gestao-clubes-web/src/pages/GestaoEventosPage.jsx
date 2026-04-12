@@ -66,7 +66,7 @@ const FORM_EMPTY = {
 };
 
 export default function GestaoEventosPage() {
-    const { logout, isAdmin, isSuperAdmin, role } = useAuth();
+    const { logout, isAdmin, role } = useAuth();
     const navigate = useNavigate();
 
     const [eventos, setEventos] = useState([]);
@@ -282,7 +282,7 @@ export default function GestaoEventosPage() {
         { label: "Home", to: "/menu" },
         { label: "Clubes", to: "/clubes" },
         { label: "Coletividades", to: "/coletividades" },
-        ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         { label: "Eventos", to: "/gestao/eventos" },
         {
             label: "Logout",
