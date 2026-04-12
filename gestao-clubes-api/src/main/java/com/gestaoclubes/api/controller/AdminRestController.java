@@ -96,10 +96,19 @@ public class AdminRestController {
         }
 
         String estadoFiltro = (estado == null || estado.isBlank()) ? null : estado.trim().toUpperCase();
-        if (SecurityUtils.isAdministradorEstrutura() && !"PENDENTE".equals(estadoFiltro)) {
+        if (SecurityUtils.isAdministradorEstrutura()
+                && estadoFiltro != null
+                && !"PENDENTE".equals(estadoFiltro)
+                && !"APROVADO".equals(estadoFiltro)) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Os administradores de estrutura só podem consultar registos pendentes."
+                    "Os administradores de estrutura só podem consultar registos pendentes ou aprovados."
+            );
+        }
+        if (SecurityUtils.isAdministradorEstrutura() && estadoFiltro == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Os administradores de estrutura devem filtrar por estado (PENDENTE ou APROVADO)."
             );
         }
 
@@ -687,7 +696,29 @@ public class AdminRestController {
             return !"PENDENTE".equals(estadoFiltro) || PerfilDAO.ADMINISTRADOR.equals(role);
         }
 
-        return "PENDENTE".equals(estadoFiltro) && podeGerirPedidoPendente(utilizador, role);
+        if ("PENDENTE".equals(estadoFiltro)) {
+            return podeGerirPedidoPendente(utilizador, role);
+        }
+
+        if ("APROVADO".equals(estadoFiltro)) {
+            return podeConsultarAprovado(utilizador, role);
+        }
+
+        return false;
+    }
+
+    private boolean podeConsultarAprovado(Utilizador utilizador, String role) {
+        if (!SecurityUtils.isAdministradorEstrutura()) return false;
+        if (utilizador == null || role == null) return false;
+        if (!"APROVADO".equalsIgnoreCase(utilizador.getEstadoRegisto())) return false;
+        if (perfilDAO.isPerfilAdministrativo(role)) return false;
+
+        Integer clubeAtual = SecurityUtils.currentClubeId();
+        Integer coletividadeAtual = SecurityUtils.currentColetividadeId();
+
+        boolean mesmoClube = clubeAtual != null && clubeAtual.equals(utilizador.getClubeId());
+        boolean mesmaColetividade = coletividadeAtual != null && coletividadeAtual.equals(utilizador.getColetividadeId());
+        return mesmoClube || mesmaColetividade;
     }
 
     private boolean podeGerirEstadoRegisto(Utilizador utilizador, String role) {
@@ -707,7 +738,15 @@ public class AdminRestController {
             return true;
         }
 
-        return podeGerirPedidoPendente(utilizador, role);
+        if ("PENDENTE".equalsIgnoreCase(utilizador.getEstadoRegisto())) {
+            return podeGerirPedidoPendente(utilizador, role);
+        }
+
+        if ("APROVADO".equalsIgnoreCase(utilizador.getEstadoRegisto())) {
+            return podeConsultarAprovado(utilizador, role);
+        }
+
+        return false;
     }
 
     private boolean podeGerirPedidoPendente(Utilizador utilizador, String role) {

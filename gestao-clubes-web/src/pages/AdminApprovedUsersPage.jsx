@@ -15,7 +15,7 @@ import {
 } from "../api";
 
 export default function AdminApprovedUsersPage() {
-    const { logout } = useAuth();
+    const { logout, isSuperAdmin } = useAuth();
     const navigate = useNavigate();
 
     const [users, setUsers] = useState([]);
@@ -64,7 +64,7 @@ export default function AdminApprovedUsersPage() {
                 atividadesData,
             ] = await Promise.all([
                 getAdminUsers("APROVADO"),
-                getAdminProfiles(),
+                isSuperAdmin ? getAdminProfiles() : Promise.resolve([]),
                 getClubes().catch(() => []),
                 getColetividades().catch(() => []),
                 getModalidades({ ativas: true }).catch(() => []),
@@ -250,7 +250,9 @@ export default function AdminApprovedUsersPage() {
                 <div className="page-title">
                     <h1>Utilizadores Aprovados</h1>
                     <div className="hint">
-                        Aqui podes alterar perfil, privilégios e afetação dos utilizadores aprovados.
+                        {isSuperAdmin
+                            ? "Aqui podes alterar perfil, privilégios e afetação dos utilizadores aprovados."
+                            : "Aqui podes consultar e gerir a afetação dos utilizadores aprovados da tua estrutura."}
                     </div>
                 </div>
 
@@ -279,8 +281,8 @@ export default function AdminApprovedUsersPage() {
                             <tr>
                                 <th>Nome</th>
                                 <th>Email</th>
-                                <th>Perfil</th>
-                                <th>Privilégios</th>
+                                {isSuperAdmin && <th>Perfil</th>}
+                                {isSuperAdmin && <th>Privilégios</th>}
                                 <th>Afetação</th>
                                 <th>Ações</th>
                             </tr>
@@ -288,16 +290,16 @@ export default function AdminApprovedUsersPage() {
                             <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} style={{ padding: 14 }}>A carregar...</td>
+                                    <td colSpan={isSuperAdmin ? 6 : 4} style={{ padding: 14 }}>A carregar...</td>
                                 </tr>
                             ) : filtrados.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} style={{ padding: 14 }}>Sem utilizadores aprovados.</td>
+                                    <td colSpan={isSuperAdmin ? 6 : 4} style={{ padding: 14 }}>Sem utilizadores aprovados.</td>
                                 </tr>
                             ) : filtrados.map((u) => {
                                 const saving = savingId === u.id;
                                 const draft = afetacaoDrafts[u.id] || {};
-                                const isSuperAdmin = (perfilDrafts[u.id] || u.role) === "SUPER_ADMIN";
+                                const isSuperAdminUser = (perfilDrafts[u.id] || u.role) === "SUPER_ADMIN";
                                 const isEditing = !!editingAfetacao[u.id];
 
                                 return (
@@ -305,6 +307,7 @@ export default function AdminApprovedUsersPage() {
                                         <td>{u.nome || "—"}</td>
                                         <td>{u.email}</td>
 
+                                        {isSuperAdmin && (
                                         <td>
                                             <div className="row" style={{ gap: 8 }}>
                                                 <select
@@ -333,7 +336,9 @@ export default function AdminApprovedUsersPage() {
                                                 </button>
                                             </div>
                                         </td>
+                                        )}
 
+                                        {isSuperAdmin && (
                                         <td>
                                             <button
                                                 className="btn"
@@ -344,9 +349,10 @@ export default function AdminApprovedUsersPage() {
                                                 {u.privilegiosAtivos ? "Revogar privilégios" : "Ativar privilégios"}
                                             </button>
                                         </td>
+                                        )}
 
                                         <td style={{ minWidth: 420 }}>
-                                            {isSuperAdmin ? (
+                                            {isSuperAdminUser ? (
                                                 <div className="hint">Super administrador não precisa de afetação.</div>
                                             ) : isEditing ? (
                                                 <>
@@ -408,7 +414,7 @@ export default function AdminApprovedUsersPage() {
                                         </td>
 
                                         <td>
-                                            {isSuperAdmin ? null : isEditing ? (
+                                            {isSuperAdminUser ? null : isEditing ? (
                                                 <div className="table-actions">
                                                     <button
                                                         className="btn btn-primary"

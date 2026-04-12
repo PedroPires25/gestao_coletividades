@@ -32,7 +32,7 @@ export default function AdminPendingUsersPage() {
         { label: "Home", to: "/menu" },
         { label: "Perfis", to: "/admin/users" },
         { label: "utilizadoresAprovar", to: "/admin/users/pending" },
-        ...(isSuperAdmin ? [{ label: "utilizadoresAutorizados", to: "/admin/users/approved" }] : []),
+        { label: "utilizadoresAutorizados", to: "/admin/users/approved" },
         {
             label: "Logout",
             onClick: () => {
