@@ -103,3 +103,8 @@ export async function terminarStaffAfetacao(afetacaoId, dataFim) {
         body: JSON.stringify({ dataFim }),
     });
 }
+
+export async function getStaffByDepartamento(clubeId, tipo) {
+    const data = await authFetch(`/clubes/${clubeId}/staff/departamento/${tipo}`);
+    return extractArray(data);
+}

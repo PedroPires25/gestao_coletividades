@@ -56,6 +56,17 @@ public class StaffRestController {
         return staffDAO.listarPorClubeModalidade(clubeId, clubeModalidadeId);
     }
 
+    @GetMapping("/clubes/{clubeId}/staff/departamento/{tipo}")
+    public List<Map<String, Object>> listarStaffPorDepartamento(
+            @PathVariable int clubeId,
+            @PathVariable String tipo
+    ) {
+        if (!"direcao".equalsIgnoreCase(tipo) && !"medico".equalsIgnoreCase(tipo)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tipo de departamento inválido. Utilize 'direcao' ou 'medico'.");
+        }
+        return staffDAO.listarPorClubeDepartamento(clubeId, tipo);
+    }
+
     @PostMapping("/clubes/{clubeId}/staff")
     public Map<String, Object> criarStaff(
             @PathVariable int clubeId,
