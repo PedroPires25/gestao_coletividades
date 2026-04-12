@@ -746,6 +746,8 @@ MODIFY COLUMN acao ENUM(
 INSERT INTO cargo_staff (nome, ativo)
 VALUES ('Professor', 1);
 
+INSERT IGNORE INTO cargo_staff (nome) VALUES ('Massagista');
+
 ALTER TABLE atleta MODIFY COLUMN nome VARCHAR(255) NULL;
 ALTER TABLE inscrito MODIFY COLUMN nome VARCHAR(255) NULL;
 ALTER TABLE staff MODIFY COLUMN nome VARCHAR(255) NULL;

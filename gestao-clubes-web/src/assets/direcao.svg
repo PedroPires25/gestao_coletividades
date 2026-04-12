@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+    <!-- Person with tie (presidente/secretário) -->
+    <circle cx="32" cy="18" r="8" stroke="white" stroke-width="3"/>
+    <path d="M14 52C14 40 22 35 32 35C42 35 50 40 50 52" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <!-- Tie -->
+    <path d="M32 35L29 44L32 52L35 44L32 35Z" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/>
+    <!-- Briefcase accent -->
+    <rect x="42" y="24" width="14" height="10" rx="2" stroke="white" stroke-width="2.5"/>
+    <path d="M46 24V22C46 20.9 46.9 20 48 20H50C51.1 20 52 20.9 52 22V24" stroke="white" stroke-width="2.5"/>
+</svg>

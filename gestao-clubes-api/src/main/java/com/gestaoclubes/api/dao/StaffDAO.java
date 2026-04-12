@@ -270,6 +270,60 @@ public class StaffDAO {
         return listarDetalhado(sql, clubeId, clubeModalidadeId);
     }
 
+    /**
+     * Lista staff de um clube cujo clube_modalidade_id é NULL,
+     * filtrado por nomes de cargo pertencentes ao departamento indicado.
+     * tipo = "direcao" → Presidente, Secretário
+     * tipo = "medico"  → Médico, Enfermeiro, Fisioterapeuta, Massagista
+     */
+    public List<Map<String, Object>> listarPorClubeDepartamento(int clubeId, String tipo) {
+        List<String> cargos;
+        if ("direcao".equalsIgnoreCase(tipo)) {
+            cargos = List.of("Presidente", "Secretário");
+        } else if ("medico".equalsIgnoreCase(tipo)) {
+            cargos = List.of("Médico", "Enfermeiro", "Fisioterapeuta", "Massagista");
+        } else {
+            return List.of();
+        }
+
+        String placeholders = String.join(",", cargos.stream().map(c -> "?").toList());
+
+        String sql = "SELECT s.id,"
+                + " COALESCE(u.nome, s.nome) AS nome,"
+                + " s.email, s.telefone, s.morada, s.num_registo, s.remuneracao,"
+                + " COALESCE(u.logo_path, s.foto_path) AS foto_path,"
+                + " sa.id AS afetacao_id, sa.clube_id, sa.clube_modalidade_id,"
+                + " sa.cargo_id, sa.data_inicio, sa.data_fim, sa.observacoes,"
+                + " CASE WHEN sa.data_fim IS NULL OR sa.data_fim >= CURDATE() THEN 1 ELSE 0 END AS ativo,"
+                + " cs.nome AS cargo_nome,"
+                + " cm.epoca, m.id AS modalidade_id, m.nome AS modalidade_nome,"
+                + " GROUP_CONCAT(DISTINCT e.id ORDER BY e.nome SEPARATOR ',') AS escaloes_ids,"
+                + " GROUP_CONCAT(DISTINCT e.nome ORDER BY e.nome SEPARATOR ', ') AS escaloes_nomes"
+                + " FROM staff s"
+                + " LEFT JOIN utilizadores u ON u.id = s.utilizador_id"
+                + " JOIN staff_afetacao sa ON sa.staff_id = s.id"
+                + " LEFT JOIN cargo_staff cs ON cs.id = sa.cargo_id"
+                + " LEFT JOIN clube_modalidade cm ON cm.id = sa.clube_modalidade_id"
+                + " LEFT JOIN modalidade m ON m.id = cm.modalidade_id"
+                + " LEFT JOIN staff_afetacao_escalao sae ON sae.staff_afetacao_id = sa.id"
+                + " LEFT JOIN escalao e ON e.id = sae.escalao_id"
+                + " WHERE sa.clube_id = ?"
+                + "   AND sa.clube_modalidade_id IS NULL"
+                + "   AND cs.nome IN (" + placeholders + ")"
+                + " GROUP BY s.id, nome, s.email, s.telefone, s.morada, s.num_registo, s.remuneracao, foto_path,"
+                + "   sa.id, sa.clube_id, sa.clube_modalidade_id, sa.cargo_id, sa.data_inicio, sa.data_fim,"
+                + "   sa.observacoes, cs.nome, cm.epoca, m.id, m.nome"
+                + " ORDER BY nome, sa.data_inicio DESC, sa.id DESC";
+
+        Object[] params = new Object[1 + cargos.size()];
+        params[0] = clubeId;
+        for (int i = 0; i < cargos.size(); i++) {
+            params[i + 1] = cargos.get(i);
+        }
+
+        return listarDetalhado(sql, params);
+    }
+
     private List<Map<String, Object>> listarDetalhado(String sql, Object... params) {
         List<Map<String, Object>> lista = new ArrayList<>();
 

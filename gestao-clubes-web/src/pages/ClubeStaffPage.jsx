@@ -11,6 +11,8 @@ import {
 } from "../services/staff";
 
 import atletasIcon from "../assets/atletas.svg";
+import direcaoIcon from "../assets/direcao.svg";
+import deptMedicoIcon from "../assets/departamento-medico.svg";
 import futebolIcon from "../assets/futebol.svg";
 import basquetebolIcon from "../assets/basquetebol.svg";
 import andebolIcon from "../assets/andebol.svg";
@@ -280,6 +282,40 @@ export default function ClubeStaffPage() {
                 {msg ? <div className="alert ok">{msg}</div> : null}
 
                 <div className="stack-sections">
+                    {/* Departamentos (sem modalidade) */}
+                    <section className="card card-quick-links">
+                        <h2>Departamentos</h2>
+                        <p className="subtle">Secções do clube não afetas a modalidades específicas.</p>
+
+                        <div className="modalidade-figuras-grid">
+                            <Link
+                                to={`/clubes/${clubeId}/staff/departamento/direcao`}
+                                className="modalidade-figura-btn icon-green"
+                                title="Direção"
+                            >
+                                <span className="modalidade-figura-circle">
+                                    <span className="menu-style-icon">
+                                        <img src={direcaoIcon} alt="Direção" />
+                                    </span>
+                                </span>
+                                <span className="modalidade-figura-label">Direção</span>
+                            </Link>
+
+                            <Link
+                                to={`/clubes/${clubeId}/staff/departamento/medico`}
+                                className="modalidade-figura-btn icon-red"
+                                title="Departamento Médico"
+                            >
+                                <span className="modalidade-figura-circle">
+                                    <span className="menu-style-icon">
+                                        <img src={deptMedicoIcon} alt="Departamento Médico" />
+                                    </span>
+                                </span>
+                                <span className="modalidade-figura-label">Dept. Médico</span>
+                            </Link>
+                        </div>
+                    </section>
+
                     <section className="card card-quick-links">
                         <h2>Modalidades</h2>
                         <p className="subtle">Clica numa modalidade para abrir a listagem do staff dessa modalidade.</p>
