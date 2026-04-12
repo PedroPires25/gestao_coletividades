@@ -221,6 +221,10 @@ public class AdminRestController {
         Utilizador depois = utilizadorDAO.buscarPorId(id);
 
         if ("APROVADO".equals(novoEstado)) {
+            if (PerfilDAO.ADMINISTRADOR.equals(role)) {
+                utilizadorDAO.atualizarPrivilegios(id, true);
+                depois = utilizadorDAO.buscarPorId(id);
+            }
             try {
                 materializarNoDominioSeNecessario(role, depois);
                 depois = utilizadorDAO.buscarPorId(id);

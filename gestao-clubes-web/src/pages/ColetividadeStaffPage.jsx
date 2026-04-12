@@ -12,7 +12,7 @@ const COLOR_CLASSES = ["icon-turquoise", "icon-orange", "icon-red", "icon-green"
 export default function ColetividadeStaffPage() {
     const { id: coletividadeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin } = useAuth();
+    const { logout, isAdmin } = useAuth();
 
     const [coletividade, setColetividade] = useState(null);
     const [atividades, setAtividades] = useState([]);
@@ -23,7 +23,7 @@ export default function ColetividadeStaffPage() {
         { label: "Home", to: "/menu" },
         { label: "Clubes", to: "/clubes" },
         { label: "Coletividades", to: "/coletividades" },
-        ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         { label: "Atividades", to: `/coletividades/${coletividadeId}/atividades` },
         { label: "Utentes", to: `/coletividades/${coletividadeId}/utentes` },
         { label: "Staff", to: `/coletividades/${coletividadeId}/staff` },
@@ -34,7 +34,7 @@ export default function ColetividadeStaffPage() {
                 navigate("/login", { replace: true });
             },
         },
-    ], [coletividadeId, isSuperAdmin, logout, navigate]);
+    ], [coletividadeId, isAdmin, logout, navigate]);
 
     useEffect(() => {
         async function carregarPagina() {

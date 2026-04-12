@@ -250,7 +250,7 @@ export default function ClubesPage() {
     const menuItems = [
         { label: "Home", to: "/menu" },
         { label: "Coletividades", to: "/coletividades" },
-        ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         {
             label: "Logout",
             onClick: () => {

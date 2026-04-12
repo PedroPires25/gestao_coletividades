@@ -9,11 +9,13 @@ import defaultLogo from "../assets/default-logo.svg";
 import modalidadesIcon from "../assets/modalidades.svg";
 import atletasIcon from "../assets/atletas.svg";
 import staffIcon from "../assets/staff.svg";
+import perfisIcon from "../assets/perfis.svg";
 
 const QUICK_ICONS = {
     "Atividades": modalidadesIcon,
     "Utentes": atletasIcon,
     "Staff": staffIcon,
+    "Perfis": perfisIcon,
 };
 
 export default function ColetividadeHomePage() {
@@ -21,7 +23,7 @@ export default function ColetividadeHomePage() {
     const coletividadeId = params.id ?? params.coletividadeId ?? null;
 
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin } = useAuth();
+    const { logout, isAdmin } = useAuth();
 
     const [coletividade, setColetividade] = useState(null);
     const [erro, setErro] = useState("");
@@ -68,7 +70,7 @@ export default function ColetividadeHomePage() {
             { label: "Home", to: "/menu" },
             { label: "Clubes", to: "/clubes" },
             { label: "Coletividades", to: "/coletividades" },
-            ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+            ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Atividades", to: `/coletividades/${coletividadeId}/atividades` },
             { label: "Utentes", to: `/coletividades/${coletividadeId}/utentes` },
             { label: "Staff", to: `/coletividades/${coletividadeId}/staff` },
@@ -80,7 +82,7 @@ export default function ColetividadeHomePage() {
                 },
             },
         ],
-        [coletividadeId, isSuperAdmin, logout, navigate]
+        [coletividadeId, isAdmin, logout, navigate]
     );
 
     const quickLinks = [
@@ -96,6 +98,10 @@ export default function ColetividadeHomePage() {
             label: "Staff",
             to: `/coletividades/${coletividadeId}/staff`,
         },
+        ...(isAdmin ? [{
+            label: "Perfis",
+            to: "/admin/users",
+        }] : []),
     ];
 
     const colorClasses = [

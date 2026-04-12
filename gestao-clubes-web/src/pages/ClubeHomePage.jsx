@@ -11,6 +11,7 @@ import atletasIcon from "../assets/atletas.svg";
 import staffIcon from "../assets/staff.svg";
 import transferenciasIcon from "../assets/transferencias.svg";
 import eventosIcon from "../assets/eventos.svg";
+import perfisIcon from "../assets/perfis.svg";
 
 const QUICK_ICONS = {
     "Modalidades do Clube": modalidadesIcon,
@@ -18,12 +19,13 @@ const QUICK_ICONS = {
     "Staff": staffIcon,
     "Transferências": transferenciasIcon,
     "Eventos": eventosIcon,
+    "Perfis": perfisIcon,
 };
 
 export default function ClubeHomePage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin } = useAuth();
+    const { logout, isAdmin } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [erro, setErro] = useState("");
@@ -68,7 +70,7 @@ export default function ClubeHomePage() {
             { label: "Home", to: "/menu" },
             { label: "Clubes", to: "/clubes" },
             { label: "Coletividades", to: "/coletividades" },
-            ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+            ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
             {
                 label: "Logout",
@@ -78,7 +80,7 @@ export default function ClubeHomePage() {
                 },
             },
         ],
-        [clubeId, isSuperAdmin, logout, navigate]
+        [clubeId, isAdmin, logout, navigate]
     );
 
     const quickLinks = [
@@ -87,6 +89,7 @@ export default function ClubeHomePage() {
         { label: "Staff", to: `/clubes/${clubeId}/staff` },
         { label: "Eventos", to: `/clubes/${clubeId}/eventos` },
         { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
+        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
     ];
 
     const colorClasses = [

@@ -81,7 +81,7 @@ function getModalidadeId(item) {
 export default function ClubeStaffPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin } = useAuth();
+    const { logout, isAdmin } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [modalidades, setModalidades] = useState([]);
@@ -113,7 +113,7 @@ export default function ClubeStaffPage() {
             { label: "Home", to: "/menu" },
             { label: "Clubes", to: "/clubes" },
             { label: "Coletividades", to: "/coletividades" },
-            ...(isSuperAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+            ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
             { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
             { label: "Staff", to: `/clubes/${clubeId}/staff` },
@@ -126,7 +126,7 @@ export default function ClubeStaffPage() {
                 },
             },
         ],
-        [clubeId, isSuperAdmin, logout, navigate]
+        [clubeId, isAdmin, logout, navigate]
     );
 
     useEffect(() => {
