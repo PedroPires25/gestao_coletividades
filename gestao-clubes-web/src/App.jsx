@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
 import RequireAdmin from "./auth/RequireAdmin";
-import RequireSuperAdmin from "./auth/RequireSuperAdmin";
 
 // páginas base
 import LoginPage from "./pages/LoginPage";
@@ -130,9 +129,9 @@ export default function App() {
                 <Route
                     path="/admin/users/approved"
                     element={
-                        <RequireSuperAdmin>
+                        <RequireAdmin>
                             <AdminApprovedUsersPage />
-                        </RequireSuperAdmin>
+                        </RequireAdmin>
                     }
                 />
 

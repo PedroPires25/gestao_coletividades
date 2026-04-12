@@ -39,11 +39,13 @@ export default function AdminUsersPage() {
                 ? "Aprovar pedidos pendentes de administradores de clube ou coletividade."
                 : "Aprovar, rejeitar e completar a afetação dos pedidos pendentes da tua estrutura.",
         },
-        ...(isSuperAdmin ? [{
+        {
             label: "Utilizadores Autorizados",
             to: "/admin/users/approved",
-            description: "Editar perfil, privilégios e afetação dos utilizadores já aprovados.",
-        }] : []),
+            description: isSuperAdmin
+                ? "Editar perfil, privilégios e afetação dos utilizadores já aprovados."
+                : "Consultar e gerir a afetação dos utilizadores aprovados da tua estrutura.",
+        },
     ];
 
     const colorClasses = [
@@ -72,9 +74,7 @@ export default function AdminUsersPage() {
                 <div className="card card-quick-links">
                     <h2>Acessos rápidos</h2>
                     <p className="subtle">
-                        {isSuperAdmin
-                            ? "Seleciona uma das áreas abaixo para gerir os pedidos pendentes ou os utilizadores autorizados."
-                            : "Seleciona a área abaixo para gerir os pedidos pendentes da tua estrutura."}
+                        Seleciona uma das áreas abaixo para gerir os pedidos pendentes ou os utilizadores autorizados.
                     </p>
 
                     <div className="icon-links-row">
