@@ -58,6 +58,9 @@ public class AuthRestController {
         public Integer atividadeId;
         public String logoPath;
         public String nome;
+        public String morada;
+        public String telefone;
+        public String temaPreferido;
 
         public UserDto(Utilizador u, String role) {
             this.id = u.getId();
@@ -73,6 +76,9 @@ public class AuthRestController {
             this.atividadeId = u.getAtividadeId();
             this.logoPath = u.getLogoPath();
             this.nome = u.getNome();
+            this.morada = u.getMorada();
+            this.telefone = u.getTelefone();
+            this.temaPreferido = u.getTemaPreferido();
         }
     }
 
@@ -196,6 +202,10 @@ public class AuthRestController {
 
     public static class UpdateProfileRequest {
         public String nome;
+        public String morada;
+        public String telefone;
+        public String email;
+        public String temaPreferido;
     }
 
     public static class ChangePasswordRequest {
@@ -234,6 +244,25 @@ public class AuthRestController {
 
         if (req.nome != null) {
             utilizadorDAO.atualizarNome(u.getId(), req.nome.trim());
+        }
+
+        if (req.morada != null || req.telefone != null || req.email != null) {
+            String morada = req.morada != null ? req.morada.trim() : u.getMorada();
+            String telefone = req.telefone != null ? req.telefone.trim() : u.getTelefone();
+            String email = req.email != null ? req.email.trim() : u.getUtilizador();
+
+            if (req.email != null && !req.email.trim().equals(u.getUtilizador())) {
+                Utilizador existente = utilizadorDAO.buscarPorEmail(req.email.trim());
+                if (existente != null && existente.getId() != u.getId()) {
+                    return ResponseEntity.badRequest().body("Já existe um utilizador com esse email.");
+                }
+            }
+
+            utilizadorDAO.atualizarDadosPessoais(u.getId(), morada, telefone, email);
+        }
+
+        if (req.temaPreferido != null) {
+            utilizadorDAO.atualizarTemaPreferido(u.getId(), req.temaPreferido.trim());
         }
 
         Utilizador updated = utilizadorDAO.buscarPorId(jwtUser.id());

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../auth/AuthContext";
+import { useTheme } from "../theme/ThemeContext";
 import SideMenu from "../components/SideMenu";
 import PasswordChecklist from "../components/PasswordChecklist";
 import ConfirmPasswordStatus from "../components/ConfirmPasswordStatus";
@@ -49,13 +50,25 @@ const eyeButtonStyle = {
 
 export default function PerfilPage() {
     const { user, updateSession } = useAuth();
+    const { setTheme } = useTheme();
     const [nome, setNome] = useState("");
     const [email, setEmail] = useState("");
+    const [morada, setMorada] = useState("");
+    const [telefone, setTelefone] = useState("");
+    const [editEmail, setEditEmail] = useState("");
+    const [temaPreferido, setTemaPreferido] = useState("");
     const [logoPath, setLogoPath] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState(null);
     const fileRef = useRef(null);
+
+    const [editingDados, setEditingDados] = useState(false);
+    const [savingDados, setSavingDados] = useState(false);
+    const [dadosMsg, setDadosMsg] = useState(null);
+
+    const [savingTema, setSavingTema] = useState(false);
+    const [temaMsg, setTemaMsg] = useState(null);
 
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
@@ -76,6 +89,10 @@ export default function PerfilPage() {
                 if (cancelled) return;
                 setNome(data.nome || "");
                 setEmail(data.email || "");
+                setEditEmail(data.email || "");
+                setMorada(data.morada || "");
+                setTelefone(data.telefone || "");
+                setTemaPreferido(data.temaPreferido || "");
                 setLogoPath(data.logoPath || null);
             })
             .catch(() => setMsg({ type: "error", text: "Erro ao carregar perfil." }))
@@ -114,6 +131,63 @@ export default function PerfilPage() {
         } finally {
             setSaving(false);
             if (fileRef.current) fileRef.current.value = "";
+        }
+    }
+
+    function handleEditDados() {
+        setEditingDados(true);
+        setDadosMsg(null);
+    }
+
+    function handleCancelDados() {
+        setEditingDados(false);
+        setEditEmail(email);
+        getMyProfile().then((data) => {
+            setMorada(data.morada || "");
+            setTelefone(data.telefone || "");
+        });
+        setDadosMsg(null);
+    }
+
+    async function handleSaveDados(e) {
+        e.preventDefault();
+        setSavingDados(true);
+        setDadosMsg(null);
+        try {
+            const updated = await updateMyProfile({
+                morada: morada.trim(),
+                telefone: telefone.trim(),
+                email: editEmail.trim(),
+            });
+            setEmail(updated.email || editEmail);
+            setEditEmail(updated.email || editEmail);
+            setMorada(updated.morada || "");
+            setTelefone(updated.telefone || "");
+            updateSession({ email: updated.email });
+            setEditingDados(false);
+            setDadosMsg({ type: "success", text: "Dados pessoais atualizados com sucesso." });
+        } catch (err) {
+            const text = typeof err === "string" ? err
+                : err?.message || "Erro ao guardar dados pessoais.";
+            setDadosMsg({ type: "error", text });
+        } finally {
+            setSavingDados(false);
+        }
+    }
+
+    async function handleSaveTema(novoTema) {
+        setSavingTema(true);
+        setTemaMsg(null);
+        try {
+            await updateMyProfile({ temaPreferido: novoTema });
+            setTemaPreferido(novoTema);
+            setTheme(novoTema);
+            updateSession({ temaPreferido: novoTema });
+            setTemaMsg({ type: "success", text: "Tema predefinido guardado." });
+        } catch {
+            setTemaMsg({ type: "error", text: "Erro ao guardar tema." });
+        } finally {
+            setSavingTema(false);
         }
     }
 
@@ -222,6 +296,128 @@ export default function PerfilPage() {
                             {saving ? "A guardar..." : "Guardar"}
                         </button>
                     </form>
+
+                    <hr className="perfil-divider" />
+
+                    <h3>Dados Pessoais</h3>
+
+                    {dadosMsg && (
+                        <div className={`perfil-msg perfil-msg-${dadosMsg.type}`}>
+                            {dadosMsg.text}
+                        </div>
+                    )}
+
+                    {!editingDados ? (
+                        <div className="perfil-dados-resumo">
+                            <div className="perfil-dados-row">
+                                <span className="perfil-dados-label">Email:</span>
+                                <span className="perfil-dados-value">{email || "—"}</span>
+                            </div>
+                            <div className="perfil-dados-row">
+                                <span className="perfil-dados-label">Morada:</span>
+                                <span className="perfil-dados-value">{morada || "—"}</span>
+                            </div>
+                            <div className="perfil-dados-row">
+                                <span className="perfil-dados-label">Telefone:</span>
+                                <span className="perfil-dados-value">{telefone || "—"}</span>
+                            </div>
+                            <button
+                                type="button"
+                                className="perfil-save-btn"
+                                onClick={handleEditDados}
+                            >
+                                Editar Dados Pessoais
+                            </button>
+                        </div>
+                    ) : (
+                        <form className="perfil-form" onSubmit={handleSaveDados}>
+                            <div className="perfil-field">
+                                <label htmlFor="perfil-edit-email">Email</label>
+                                <input
+                                    id="perfil-edit-email"
+                                    type="email"
+                                    value={editEmail}
+                                    onChange={(e) => setEditEmail(e.target.value)}
+                                    className="perfil-input"
+                                    maxLength={120}
+                                />
+                            </div>
+
+                            <div className="perfil-field">
+                                <label htmlFor="perfil-morada">Morada</label>
+                                <input
+                                    id="perfil-morada"
+                                    type="text"
+                                    value={morada}
+                                    onChange={(e) => setMorada(e.target.value)}
+                                    className="perfil-input"
+                                    maxLength={255}
+                                />
+                            </div>
+
+                            <div className="perfil-field">
+                                <label htmlFor="perfil-telefone">Telefone</label>
+                                <input
+                                    id="perfil-telefone"
+                                    type="tel"
+                                    value={telefone}
+                                    onChange={(e) => setTelefone(e.target.value)}
+                                    className="perfil-input"
+                                    maxLength={30}
+                                />
+                            </div>
+
+                            <div className="perfil-form-actions">
+                                <button type="submit" className="perfil-save-btn" disabled={savingDados}>
+                                    {savingDados ? "A guardar..." : "Guardar Dados"}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="perfil-cancel-btn"
+                                    onClick={handleCancelDados}
+                                    disabled={savingDados}
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    <hr className="perfil-divider" />
+
+                    <h3>Estilo de Visualização Predefinido</h3>
+                    <p className="perfil-tema-desc">
+                        Escolha o tema que será aplicado automaticamente ao entrar na plataforma.
+                    </p>
+
+                    {temaMsg && (
+                        <div className={`perfil-msg perfil-msg-${temaMsg.type}`}>
+                            {temaMsg.text}
+                        </div>
+                    )}
+
+                    <div className="perfil-tema-options" role="radiogroup" aria-label="Tema predefinido">
+                        {[
+                            { value: "theme-normal", label: "Normal" },
+                            { value: "theme-light", label: "White" },
+                            { value: "theme-dark", label: "Black" },
+                        ].map((t) => (
+                            <label
+                                key={t.value}
+                                className={`perfil-tema-option ${temaPreferido === t.value ? "active" : ""}`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="tema-preferido"
+                                    checked={temaPreferido === t.value}
+                                    onChange={() => handleSaveTema(t.value)}
+                                    disabled={savingTema}
+                                />
+                                <span className={`perfil-tema-preview ${t.value}`} />
+                                <span>{t.label}</span>
+                            </label>
+                        ))}
+                    </div>
 
                     <hr className="perfil-divider" />
 

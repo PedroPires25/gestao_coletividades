@@ -15,6 +15,9 @@ public class Utilizador {
     private Integer atividadeId;
     private String logoPath;
     private String nome;
+    private String morada;
+    private String telefone;
+    private String temaPreferido;
 
     public Utilizador() {
     }
@@ -138,5 +141,29 @@ public class Utilizador {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public String getMorada() {
+        return morada;
+    }
+
+    public void setMorada(String morada) {
+        this.morada = morada;
+    }
+
+    public String getTelefone() {
+        return telefone;
+    }
+
+    public void setTelefone(String telefone) {
+        this.telefone = telefone;
+    }
+
+    public String getTemaPreferido() {
+        return temaPreferido;
+    }
+
+    public void setTemaPreferido(String temaPreferido) {
+        this.temaPreferido = temaPreferido;
     }
 }

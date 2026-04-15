@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { apiLogin } from "../api";
+import { useTheme } from "../theme/ThemeContext";
 
 const AuthContext = createContext(null);
 const LS_KEY = "gc_user";
@@ -83,6 +84,8 @@ function calcularRedirectUrl(user) {
 }
 
 export function AuthProvider({ children }) {
+    const { resetTheme, applyUserTheme } = useTheme();
+
     const [session, setSession] = useState(() => {
         try {
             const raw = localStorage.getItem(LS_KEY);
@@ -95,10 +98,9 @@ export function AuthProvider({ children }) {
     async function login(email, password) {
         const response = await apiLogin(email.trim(), password);
         
-        // Calcular redirectUrl com base no user retornado
         if (response?.user) {
-            const redirectUrl = calcularRedirectUrl(response.user);
-            response.redirectUrl = redirectUrl;
+            response.redirectUrl = calcularRedirectUrl(response.user);
+            applyUserTheme(response.user.temaPreferido);
         }
         
         setSession(response);
@@ -109,6 +111,7 @@ export function AuthProvider({ children }) {
     function logout() {
         setSession(null);
         localStorage.removeItem(LS_KEY);
+        resetTheme();
     }
 
     function updateSession(updatedUser) {
@@ -119,6 +122,7 @@ export function AuthProvider({ children }) {
         });
     }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const value = useMemo(() => {
         const role = session?.user?.role ?? null;
         const redirectUrl = session?.redirectUrl ?? calcularRedirectUrl(session?.user) ?? "/menu";
