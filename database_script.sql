@@ -870,3 +870,15 @@ ALTER TABLE atleta
 
 ALTER TABLE staff
   ADD COLUMN foto_path VARCHAR(255) DEFAULT NULL;
+
+-- -------------------------
+-- DADOS PESSOAIS E PREFERÊNCIA DE TEMA DO UTILIZADOR
+-- -------------------------
+ALTER TABLE utilizadores
+  ADD COLUMN morada VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE utilizadores
+  ADD COLUMN telefone VARCHAR(30) DEFAULT NULL;
+
+ALTER TABLE utilizadores
+  ADD COLUMN tema_preferido VARCHAR(30) DEFAULT NULL;

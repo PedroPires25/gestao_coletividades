@@ -8,12 +8,12 @@ import { ThemeProvider } from "./theme/ThemeContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
-        <AuthProvider>
-            <ThemeProvider>
+        <ThemeProvider>
+            <AuthProvider>
                 <BrowserRouter>
                     <App />
                 </BrowserRouter>
-            </ThemeProvider>
-        </AuthProvider>
+            </AuthProvider>
+        </ThemeProvider>
     </React.StrictMode>
 );
