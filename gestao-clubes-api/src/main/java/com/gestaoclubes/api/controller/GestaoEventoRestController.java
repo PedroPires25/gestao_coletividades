@@ -25,15 +25,16 @@ public class GestaoEventoRestController {
     private final ColetividadeAtividadeDAO coletividadeAtividadeDAO = new ColetividadeAtividadeDAO();
 
     private boolean canManageEventos() {
-        String role = SecurityUtils.currentRole();
         return SecurityUtils.isSuperAdmin()
                 || SecurityUtils.isAdministradorEstrutura()
-                || "ROLE_SECRETARIO".equals(role);
+                || isSecretario()
+                || isTreinadorPrincipal()
+                || isProfessor();
     }
 
     private ResponseEntity<?> forbidden() {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("erro", "Acesso negado. Apenas super administrador, administrador da estrutura ou secretário podem gerir eventos."));
+                .body(Map.of("erro", "Acesso negado. Apenas utilizadores com permissão na respetiva estrutura, modalidade ou atividade podem gerir eventos."));
     }
 
     /** GET /api/gestao/eventos — list all events */
@@ -41,20 +42,15 @@ public class GestaoEventoRestController {
     public ResponseEntity<?> listarTodos() {
         if (!canManageEventos()) return forbidden();
 
-        if (SecurityUtils.isAdministradorEstrutura()) {
-            Integer clubeId = SecurityUtils.currentClubeId();
-            if (clubeId != null) {
-                return ResponseEntity.ok(eventoDAO.listarPorClube(clubeId));
-            }
-
-            return ResponseEntity.ok(
-                    eventoDAO.listarTodos().stream()
-                            .filter(this::eventoPertenceAoAdminDaEstrutura)
-                            .toList()
-            );
+        if (SecurityUtils.isSuperAdmin()) {
+            return ResponseEntity.ok(eventoDAO.listarTodos());
         }
 
-        return ResponseEntity.ok(eventoDAO.listarTodos());
+        return ResponseEntity.ok(
+                eventoDAO.listarTodos().stream()
+                        .filter(this::canManageEvento)
+                        .toList()
+        );
     }
 
     /** GET /api/gestao/eventos/{id} — get single event */
@@ -327,43 +323,70 @@ public class GestaoEventoRestController {
     }
 
     private boolean canManageEvento(Map<String, Object> evento) {
-        if (SecurityUtils.isSuperAdmin() || "ROLE_SECRETARIO".equals(SecurityUtils.currentRole())) {
+        if (SecurityUtils.isSuperAdmin()) {
             return true;
         }
-        return eventoPertenceAoAdminDaEstrutura(evento);
-    }
 
-    private boolean eventoPertenceAoAdminDaEstrutura(Map<String, Object> evento) {
-        if (!SecurityUtils.isAdministradorEstrutura()) return false;
-
-        Integer clubeAtual = SecurityUtils.currentClubeId();
-        Integer coletividadeAtual = SecurityUtils.currentColetividadeId();
-
-        Object clubeId = evento.get("clubeId");
-        if (clubeAtual != null && clubeId instanceof Number numero) {
-            return clubeAtual.equals(numero.intValue());
+        String tipo = (String) evento.get("tipo");
+        if ("MODALIDADE".equals(tipo) && evento.get("clubeModalidadeId") instanceof Number numero) {
+            return canManageClubeModalidade(numero.intValue());
         }
-
-        Object coletividadeAtividadeId = evento.get("coletividadeAtividadeId");
-        if (coletividadeAtual != null && coletividadeAtividadeId instanceof Number numero) {
-            ColetividadeAtividade associacao = coletividadeAtividadeDAO.obterPorId(numero.intValue());
-            return associacao != null && coletividadeAtual.equals(associacao.getColetividadeId());
+        if ("ATIVIDADE".equals(tipo) && evento.get("coletividadeAtividadeId") instanceof Number numero) {
+            return canManageColetividadeAtividade(numero.intValue());
         }
-
         return false;
     }
 
     private boolean canManageClubeModalidade(Integer clubeModalidadeId) {
         ClubeModalidade clubeModalidade = clubeModalidadeDAO.buscarPorId(clubeModalidadeId);
         if (clubeModalidade == null || clubeModalidade.getClube() == null) return false;
-        if (SecurityUtils.isSuperAdmin() || "ROLE_SECRETARIO".equals(SecurityUtils.currentRole())) return true;
-        return SecurityUtils.canManageClube(clubeModalidade.getClube().getId());
+
+        Integer clubeId = clubeModalidade.getClube().getId();
+        if (clubeId == null) return false;
+        if (SecurityUtils.isSuperAdmin()) return true;
+
+        if (SecurityUtils.isAdministradorEstrutura() || isSecretario()) {
+            return clubeId.equals(SecurityUtils.currentClubeId());
+        }
+
+        if ((isTreinadorPrincipal() || isProfessor())
+                && clubeId.equals(SecurityUtils.currentClubeId())) {
+            Integer modalidadeAtual = SecurityUtils.currentModalidadeId();
+            return modalidadeAtual != null && modalidadeAtual.equals(clubeModalidadeId);
+        }
+
+        return false;
     }
 
     private boolean canManageColetividadeAtividade(Integer coletividadeAtividadeId) {
         ColetividadeAtividade associacao = coletividadeAtividadeDAO.obterPorId(coletividadeAtividadeId);
         if (associacao == null) return false;
-        if (SecurityUtils.isSuperAdmin() || "ROLE_SECRETARIO".equals(SecurityUtils.currentRole())) return true;
-        return SecurityUtils.canManageColetividade(associacao.getColetividadeId());
+
+        Integer coletividadeId = associacao.getColetividadeId();
+        if (coletividadeId == null) return false;
+        if (SecurityUtils.isSuperAdmin()) return true;
+
+        if (SecurityUtils.isAdministradorEstrutura() || isSecretario()) {
+            return coletividadeId.equals(SecurityUtils.currentColetividadeId());
+        }
+
+        if (isProfessor() && coletividadeId.equals(SecurityUtils.currentColetividadeId())) {
+            Integer atividadeAtual = SecurityUtils.currentAtividadeId();
+            return atividadeAtual != null && atividadeAtual.equals(coletividadeAtividadeId);
+        }
+
+        return false;
+    }
+
+    private boolean isSecretario() {
+        return "ROLE_SECRETARIO".equals(SecurityUtils.currentRole());
+    }
+
+    private boolean isTreinadorPrincipal() {
+        return "ROLE_TREINADOR_PRINCIPAL".equals(SecurityUtils.currentRole());
+    }
+
+    private boolean isProfessor() {
+        return "ROLE_PROFESSOR".equals(SecurityUtils.currentRole());
     }
 }

@@ -22,6 +22,11 @@ export default function MenuPage() {
     const navigate = useNavigate();
     const [meusEventos, setMeusEventos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const canOpenGestaoEventos =
+        isAdmin ||
+        role === "SECRETARIO" ||
+        role === "TREINADOR_PRINCIPAL" ||
+        role === "PROFESSOR";
 
     const carregarMeusEventos = useCallback(async () => {
         try {
@@ -58,7 +63,7 @@ export default function MenuPage() {
         { label: "Clubes", to: "/clubes" },
         { label: "Coletividades", to: "/coletividades" },
                         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
-        ...((isAdmin || role === "SECRETARIO") ? [{ label: "Eventos", to: "/gestao/eventos" }] : []),
+        ...(canOpenGestaoEventos ? [{ label: "Eventos", to: "/gestao/eventos" }] : []),
         {
             label: "Logout",
             onClick: () => {
@@ -111,7 +116,7 @@ export default function MenuPage() {
                         </Link>
                     )}
 
-                    {(isAdmin || role === "SECRETARIO") && (
+                    {canOpenGestaoEventos && (
                         <Link to="/gestao/eventos" className="quick-action quick-action-purple">
                             <span className="quick-action-circle">
                                 <span className="quick-action-icon">
