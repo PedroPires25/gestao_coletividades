@@ -8,6 +8,7 @@ import {
     getCargosStaff,
     getEscaloesStaff,
     getModalidadesByClube,
+    getStaffByClube,
 } from "../services/staff";
 
 import atletasIcon from "../assets/atletas.svg";
@@ -40,12 +41,21 @@ const COLOR_CLASSES = [
     "icon-purple",
 ];
 
-function normalizarNomeModalidade(nome) {
+const DEPARTAMENTO_LABELS = {
+    direcao: "Direção",
+    medico: "Dept. Médico",
+};
+
+function normalizarTexto(nome) {
     return String(nome || "")
         .trim()
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
+}
+
+function normalizarNomeModalidade(nome) {
+    return normalizarTexto(nome);
 }
 
 function getFiguraModalidade(nome) {
@@ -80,12 +90,89 @@ function getModalidadeId(item) {
     return String(item?.modalidade?.id ?? item?.modalidadeId ?? item?.modalidade_id ?? "");
 }
 
+function formatDateOnly(value) {
+    if (!value) return "";
+    const text = String(value).trim();
+    if (!text) return "";
+    return text.includes("T") ? text.split("T")[0] : text.slice(0, 10);
+}
+
+function displayEscaloes(item) {
+    if (item?.escaloesNomes) return item.escaloesNomes;
+    if (item?.escaloes_nomes) return item.escaloes_nomes;
+    return "-";
+}
+
+function hasPendingName(value) {
+    return !value || String(value).trim() === "-";
+}
+
+function PendingNameCell() {
+    return (
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+                padding: "8px 10px",
+                borderRadius: "10px",
+                background: "rgba(255, 193, 7, 0.14)",
+                border: "1px solid rgba(255, 193, 7, 0.38)",
+                boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.04)",
+            }}
+        >
+            <div style={{ color: "#ffd166", fontWeight: 800 }}>
+                ⚠ Completar dados de inscrição
+            </div>
+            <div style={{ fontSize: "0.8rem", opacity: 0.9 }}>
+                Registo criado por aprovação administrativa
+            </div>
+        </div>
+    );
+}
+
+function getDepartamentoTipoFromCargo(cargo) {
+    const normalized = normalizarTexto(cargo);
+
+    if (["presidente", "secretario"].includes(normalized)) {
+        return "direcao";
+    }
+
+    if (["medico", "enfermeiro", "fisioterapeuta", "massagista"].includes(normalized)) {
+        return "medico";
+    }
+
+    return "";
+}
+
+function getStaffAreaLabel(item) {
+    if (item?.modalidade) return item.modalidade;
+
+    const departamentoTipo = getDepartamentoTipoFromCargo(item?.cargo);
+    return DEPARTAMENTO_LABELS[departamentoTipo] || "-";
+}
+
+function getStaffDestination(clubeId, item) {
+    const clubeModalidadeId = item?.clubeModalidadeId;
+    if (clubeModalidadeId != null && clubeModalidadeId !== "") {
+        return `/clubes/${clubeId}/staff/modalidades/${clubeModalidadeId}`;
+    }
+
+    const departamentoTipo = getDepartamentoTipoFromCargo(item?.cargo);
+    if (departamentoTipo) {
+        return `/clubes/${clubeId}/staff/departamento/${departamentoTipo}`;
+    }
+
+    return "";
+}
+
 export default function ClubeStaffPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
     const { logout, isAdmin } = useAuth();
 
     const [clube, setClube] = useState(null);
+    const [staffRows, setStaffRows] = useState([]);
     const [modalidades, setModalidades] = useState([]);
     const [cargos, setCargos] = useState([]);
     const [escaloes, setEscaloes] = useState([]);
@@ -139,8 +226,9 @@ export default function ClubeStaffPage() {
             setLoadingPagina(true);
 
             try {
-                const [clubeData, modalidadesData, cargosData, escaloesData] = await Promise.all([
+                const [clubeData, staffData, modalidadesData, cargosData, escaloesData] = await Promise.all([
                     getClubeById(clubeId),
+                    getStaffByClube(clubeId),
                     getModalidadesByClube(clubeId),
                     getCargosStaff(),
                     getEscaloesStaff(),
@@ -151,6 +239,7 @@ export default function ClubeStaffPage() {
                 const listaEscaloes = Array.isArray(escaloesData) ? escaloesData : [];
 
                 setClube(clubeData || null);
+                setStaffRows(Array.isArray(staffData) ? staffData : []);
                 setModalidades(listaModalidades);
                 setCargos(listaCargos);
                 setEscaloes(listaEscaloes);
@@ -348,6 +437,77 @@ export default function ClubeStaffPage() {
                                         </Link>
                                     );
                                 })}
+                            </div>
+                        )}
+                    </section>
+
+                    <section className="card">
+                        <div className="modalidades-toolbar">
+                            <div className="toolbar-title-group">
+                                <h2>Listagem de staff</h2>
+                                <span className="toolbar-count">{staffRows.length} registo(s)</span>
+                            </div>
+                        </div>
+
+                        {loadingPagina ? (
+                            <p className="subtle">A carregar staff...</p>
+                        ) : staffRows.length === 0 ? (
+                            <p className="subtle">Sem staff registado neste clube.</p>
+                        ) : (
+                            <div className="table-wrap">
+                                <table className="dashboard-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Cargo</th>
+                                        <th>Área</th>
+                                        <th>Escalões</th>
+                                        <th>Época</th>
+                                        <th>Data Início</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {staffRows.map((row) => {
+                                        const pendingName = hasPendingName(row.nome);
+                                        const destination = getStaffDestination(clubeId, row);
+
+                                        return (
+                                            <tr
+                                                key={`${row.id}-${row.afetacaoId ?? row.clubeModalidadeId ?? "sem-afetacao"}`}
+                                                style={
+                                                    pendingName
+                                                        ? {
+                                                            background: "rgba(255, 193, 7, 0.18)",
+                                                            boxShadow: "inset 5px 0 0 #ffcc33",
+                                                        }
+                                                        : {}
+                                                }
+                                            >
+                                                <td>{pendingName ? <PendingNameCell /> : row.nome}</td>
+                                                <td>{row.cargo || "-"}</td>
+                                                <td>{getStaffAreaLabel(row)}</td>
+                                                <td>{displayEscaloes(row)}</td>
+                                                <td>{row.epoca || "-"}</td>
+                                                <td>{formatDateOnly(row.dataInicio) || "-"}</td>
+                                                <td>
+                                                    {destination ? (
+                                                        <button
+                                                            type="button"
+                                                            className="btn"
+                                                            onClick={() => navigate(destination)}
+                                                        >
+                                                            Abrir
+                                                        </button>
+                                                    ) : (
+                                                        <span className="cell-muted">-</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
                     </section>
