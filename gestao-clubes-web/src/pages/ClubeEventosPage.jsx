@@ -19,7 +19,8 @@ function formatDataHora(val) {
 export default function ClubeEventosPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, modalidadeId } = useAuth(); // modalidadeId = clube_modalidade.id
+    const { logout, modalidadeId, role } = useAuth(); // modalidadeId = clube_modalidade.id
+    const isDeptMedico = role === "DEPARTAMENTO_MEDICO";
 
     const [clube, setClube] = useState(null);
     const [eventos, setEventos] = useState([]);
@@ -66,7 +67,9 @@ export default function ClubeEventosPage() {
     }
 
     const menuItems = [
-        { label: "Voltar ao Clube", onClick: () => navigate(`/clubes/${clubeId}`) },
+        isDeptMedico
+            ? { label: "Módulo Clínico", onClick: () => navigate(`/clubes/${clubeId}/medico`) }
+            : { label: "Voltar ao Clube", onClick: () => navigate(`/clubes/${clubeId}`) },
         { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
     ];
 
@@ -102,6 +105,17 @@ export default function ClubeEventosPage() {
                         </div>
                     </div>
                     <div className="hint">{clube?.nome || ""}</div>
+                    {isDeptMedico && (
+                        <div className="actions">
+                            <button
+                                type="button"
+                                className="btn"
+                                onClick={() => navigate(`/clubes/${clubeId}/medico`)}
+                            >
+                                ← Módulo Clínico
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {erro && <div className="alert error">{erro}</div>}

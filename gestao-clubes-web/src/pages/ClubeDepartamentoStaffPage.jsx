@@ -413,6 +413,11 @@ export default function ClubeDepartamentoStaffPage() {
                     </div>
 
                     <div className="actions">
+                        {tipo === "medico" && (
+                            <button type="button" className="btn btn-primary" onClick={() => navigate(`/clubes/${clubeId}/medico`)}>
+                                Módulo Clínico 🩺
+                            </button>
+                        )}
                         <button type="button" className="btn" onClick={() => navigate(`/clubes/${clubeId}/staff`)}>
                             Voltar
                         </button>

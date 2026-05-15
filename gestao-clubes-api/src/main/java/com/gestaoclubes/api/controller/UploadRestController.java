@@ -189,6 +189,37 @@ public class UploadRestController {
         }
     }
 
+    // ---- UPLOAD DE FICHEIRO PARA EXAME MÉDICO ----
+    @PostMapping("/clubes/{clubeId}/medico/exames/{exameId}/ficheiro")
+    public ResponseEntity<?> uploadExameFicheiro(
+            @PathVariable int clubeId,
+            @PathVariable int exameId,
+            @RequestParam("file") MultipartFile file) {
+
+        Map<String, Object> exame = new com.gestaoclubes.api.dao.ExameMedicoDAO().buscarPorId(exameId);
+        if (exame == null || ((Number) exame.get("clubeId")).intValue() != clubeId) {
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            String oldPath = (String) exame.get("ficheiroPath");
+            if (oldPath != null) uploadService.removerFicheiro(oldPath);
+
+            String relativePath = uploadService.guardarFicheiro(file, "exames");
+            new com.gestaoclubes.api.dao.ExameMedicoDAO().atualizarFicheiro(exameId, relativePath);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Ficheiro do exame atualizado.",
+                    "ficheiroPath", relativePath
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Erro ao guardar ficheiro."));
+        }
+    }
+
     // ---- SERVIR FICHEIROS DE UPLOADS ----
     @GetMapping("/uploads/**")
     public ResponseEntity<Resource> servirFicheiro(HttpServletRequest request) {
