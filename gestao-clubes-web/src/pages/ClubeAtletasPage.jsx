@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 import { getClubeById } from "../api";
 import {
     createAtleta,
+    getAtletasByClube,
     getEscaloes,
     getEstadosAtleta,
     getModalidadesByClube,
@@ -91,12 +92,68 @@ function getModalidadeId(item) {
     );
 }
 
+function formatDateOnly(value) {
+    if (!value) return "";
+    const text = String(value).trim();
+    if (!text) return "";
+    return text.includes("T") ? text.split("T")[0] : text.slice(0, 10);
+}
+
+function displayEscalao(atleta) {
+    return (
+        atleta?.escalao?.nome ||
+        atleta?.escalao_nome ||
+        atleta?.escalaoNome ||
+        atleta?.escalao ||
+        "-"
+    );
+}
+
+function displayEstado(atleta) {
+    return (
+        atleta?.estado?.descricao ||
+        atleta?.estado_descricao ||
+        atleta?.estadoDescricao ||
+        atleta?.estado ||
+        "-"
+    );
+}
+
+function hasPendingName(value) {
+    return !value || String(value).trim() === "-";
+}
+
+function PendingNameCell() {
+    return (
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+                padding: "8px 10px",
+                borderRadius: "10px",
+                background: "rgba(255, 193, 7, 0.14)",
+                border: "1px solid rgba(255, 193, 7, 0.38)",
+                boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.04)",
+            }}
+        >
+            <div style={{ color: "#ffd166", fontWeight: 800 }}>
+                ⚠ Completar dados de inscrição
+            </div>
+            <div style={{ fontSize: "0.8rem", opacity: 0.9 }}>
+                Registo criado por aprovação administrativa
+            </div>
+        </div>
+    );
+}
+
 export default function ClubeAtletasPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
     const { logout, isAdmin } = useAuth();
 
     const [clube, setClube] = useState(null);
+    const [atletasRows, setAtletasRows] = useState([]);
     const [modalidades, setModalidades] = useState([]);
     const [escaloes, setEscaloes] = useState([]);
     const [estados, setEstados] = useState([]);
@@ -141,6 +198,14 @@ export default function ClubeAtletasPage() {
         [clubeId, isAdmin, logout, navigate]
     );
 
+    const modalidadesByClubeModalidadeId = useMemo(() => {
+        const entries = modalidades.map((item) => [
+            getClubeModalidadeId(item),
+            item?.modalidade?.nome || item?.nome || "Modalidade",
+        ]);
+        return new Map(entries);
+    }, [modalidades]);
+
     async function carregarPagina() {
         if (!clubeId) return;
 
@@ -149,8 +214,9 @@ export default function ClubeAtletasPage() {
         setLoadingPagina(true);
 
         try {
-            const [clubeData, modalidadesData, escaloesData, estadosData] = await Promise.all([
+            const [clubeData, atletasData, modalidadesData, escaloesData, estadosData] = await Promise.all([
                 getClubeById(clubeId),
+                getAtletasByClube(clubeId),
                 getModalidadesByClube(clubeId),
                 getEscaloes(),
                 getEstadosAtleta(),
@@ -161,6 +227,7 @@ export default function ClubeAtletasPage() {
             const listaEstados = Array.isArray(estadosData) ? estadosData : [];
 
             setClube(clubeData || null);
+            setAtletasRows(Array.isArray(atletasData) ? atletasData : []);
             setModalidades(listaModalidades);
             setEscaloes(listaEscaloes);
             setEstados(listaEstados);
@@ -313,6 +380,83 @@ export default function ClubeAtletasPage() {
                                         </Link>
                                     );
                                 })}
+                            </div>
+                        )}
+                    </section>
+
+                    <section className="card">
+                        <div className="modalidades-toolbar">
+                            <div className="toolbar-title-group">
+                                <h2>Listagem de atletas</h2>
+                                <span className="toolbar-count">{atletasRows.length} registo(s)</span>
+                            </div>
+                        </div>
+
+                        {loadingPagina ? (
+                            <p className="subtle">A carregar atletas...</p>
+                        ) : atletasRows.length === 0 ? (
+                            <p className="subtle">Sem atletas registados neste clube.</p>
+                        ) : (
+                            <div className="table-wrap">
+                                <table className="dashboard-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Modalidade</th>
+                                        <th>Escalão</th>
+                                        <th>Estado</th>
+                                        <th>Época</th>
+                                        <th>Data Inscrição</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {atletasRows.map((atleta) => {
+                                        const pendingName = hasPendingName(atleta.nome);
+                                        const clubeModalidadeId = String(atleta?.clubeModalidadeId ?? "");
+                                        const modalidadeNome =
+                                            modalidadesByClubeModalidadeId.get(clubeModalidadeId) || "Modalidade";
+
+                                        return (
+                                            <tr
+                                                key={`${atleta.id}-${clubeModalidadeId || "sem-modalidade"}`}
+                                                style={
+                                                    pendingName
+                                                        ? {
+                                                            background: "rgba(255, 193, 7, 0.18)",
+                                                            boxShadow: "inset 5px 0 0 #ffcc33",
+                                                        }
+                                                        : {}
+                                                }
+                                            >
+                                                <td>{pendingName ? <PendingNameCell /> : atleta.nome}</td>
+                                                <td>{modalidadeNome}</td>
+                                                <td>{displayEscalao(atleta)}</td>
+                                                <td>{displayEstado(atleta)}</td>
+                                                <td>{atleta.epoca || "-"}</td>
+                                                <td>{formatDateOnly(atleta.dataInscricao) || "-"}</td>
+                                                <td>
+                                                    {clubeModalidadeId ? (
+                                                        <button
+                                                            type="button"
+                                                            className="btn"
+                                                            onClick={() =>
+                                                                navigate(
+                                                                    `/clubes/${clubeId}/atletas/modalidades/${clubeModalidadeId}`
+                                                                )
+                                                            }
+                                                        >
+                                                            Abrir
+                                                        </button>
+                                                    ) : (
+                                                        <span className="cell-muted">-</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
                     </section>
