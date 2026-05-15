@@ -16,16 +16,22 @@ public class EventoDAO {
         String sql = """
             SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
-                   e.latitude, e.longitude,
-                   cm.clube_id,
-                   c.nome AS clube_nome,
-                   m.nome AS modalidade_nome,
-                   (SELECT COUNT(*) FROM evento_atleta ea WHERE ea.evento_id = e.id) +
-                   (SELECT COUNT(*) FROM evento_inscrito ei WHERE ei.evento_id = e.id) AS total_convocados
+                    e.latitude, e.longitude,
+                    cm.clube_id,
+                    c.nome AS clube_nome,
+                    m.nome AS modalidade_nome,
+                    ca.coletividade_id,
+                    col.nome AS coletividade_nome,
+                    a.nome AS atividade_nome,
+                    (SELECT COUNT(*) FROM evento_atleta ea WHERE ea.evento_id = e.id) +
+                    (SELECT COUNT(*) FROM evento_inscrito ei WHERE ei.evento_id = e.id) AS total_convocados
             FROM evento e
             LEFT JOIN clube_modalidade cm ON cm.id = e.clube_modalidade_id
             LEFT JOIN clube c ON c.id = cm.clube_id
             LEFT JOIN modalidade m ON m.id = cm.modalidade_id
+            LEFT JOIN coletividade_atividade ca ON ca.id = e.coletividade_atividade_id
+            LEFT JOIN coletividade col ON col.id = ca.coletividade_id
+            LEFT JOIN atividade a ON a.id = ca.atividade_id
             WHERE COALESCE(e.data_hora_fim, e.data_hora) >= ?
             ORDER BY e.data_hora ASC
         """;
@@ -51,14 +57,20 @@ public class EventoDAO {
         String sql = """
             SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
-                   e.latitude, e.longitude,
-                   cm.clube_id,
-                   c.nome AS clube_nome,
-                   m.nome AS modalidade_nome
+                    e.latitude, e.longitude,
+                    cm.clube_id,
+                    c.nome AS clube_nome,
+                    m.nome AS modalidade_nome,
+                    ca.coletividade_id,
+                    col.nome AS coletividade_nome,
+                    a.nome AS atividade_nome
             FROM evento e
             LEFT JOIN clube_modalidade cm ON cm.id = e.clube_modalidade_id
             LEFT JOIN clube c ON c.id = cm.clube_id
             LEFT JOIN modalidade m ON m.id = cm.modalidade_id
+            LEFT JOIN coletividade_atividade ca ON ca.id = e.coletividade_atividade_id
+            LEFT JOIN coletividade col ON col.id = ca.coletividade_id
+            LEFT JOIN atividade a ON a.id = ca.atividade_id
             WHERE e.id = ?
         """;
 
@@ -85,12 +97,22 @@ public class EventoDAO {
         String sql = """
             SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
-                   e.latitude, e.longitude,
-                   cm.clube_id,
-                   m.nome AS modalidade_nome
+                    e.latitude, e.longitude,
+                    cm.clube_id,
+                    c.nome AS clube_nome,
+                    m.nome AS modalidade_nome,
+                    ca.coletividade_id,
+                    col.nome AS coletividade_nome,
+                    a.nome AS atividade_nome,
+                    (SELECT COUNT(*) FROM evento_atleta ea WHERE ea.evento_id = e.id) +
+                    (SELECT COUNT(*) FROM evento_inscrito ei WHERE ei.evento_id = e.id) AS total_convocados
             FROM evento e
             JOIN clube_modalidade cm ON cm.id = e.clube_modalidade_id
+            LEFT JOIN clube c ON c.id = cm.clube_id
             LEFT JOIN modalidade m ON m.id = cm.modalidade_id
+            LEFT JOIN coletividade_atividade ca ON ca.id = e.coletividade_atividade_id
+            LEFT JOIN coletividade col ON col.id = ca.coletividade_id
+            LEFT JOIN atividade a ON a.id = ca.atividade_id
             WHERE cm.clube_id = ?
               AND COALESCE(e.data_hora_fim, e.data_hora) >= ?
             ORDER BY e.data_hora ASC
@@ -120,12 +142,22 @@ public class EventoDAO {
         String sql = """
             SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
-                   e.latitude, e.longitude,
-                   cm.clube_id,
-                   m.nome AS modalidade_nome
+                    e.latitude, e.longitude,
+                    cm.clube_id,
+                    c.nome AS clube_nome,
+                    m.nome AS modalidade_nome,
+                    ca.coletividade_id,
+                    col.nome AS coletividade_nome,
+                    a.nome AS atividade_nome,
+                    (SELECT COUNT(*) FROM evento_atleta ea WHERE ea.evento_id = e.id) +
+                    (SELECT COUNT(*) FROM evento_inscrito ei WHERE ei.evento_id = e.id) AS total_convocados
             FROM evento e
             LEFT JOIN clube_modalidade cm ON cm.id = e.clube_modalidade_id
+            LEFT JOIN clube c ON c.id = cm.clube_id
             LEFT JOIN modalidade m ON m.id = cm.modalidade_id
+            LEFT JOIN coletividade_atividade ca ON ca.id = e.coletividade_atividade_id
+            LEFT JOIN coletividade col ON col.id = ca.coletividade_id
+            LEFT JOIN atividade a ON a.id = ca.atividade_id
             WHERE e.clube_modalidade_id = ?
               AND COALESCE(e.data_hora_fim, e.data_hora) >= ?
             ORDER BY e.data_hora ASC
@@ -155,8 +187,22 @@ public class EventoDAO {
         String sql = """
             SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
-                   e.latitude, e.longitude
+                    e.latitude, e.longitude,
+                    cm.clube_id,
+                    c.nome AS clube_nome,
+                    m.nome AS modalidade_nome,
+                    ca.coletividade_id,
+                    col.nome AS coletividade_nome,
+                    a.nome AS atividade_nome,
+                    (SELECT COUNT(*) FROM evento_atleta ea WHERE ea.evento_id = e.id) +
+                    (SELECT COUNT(*) FROM evento_inscrito ei WHERE ei.evento_id = e.id) AS total_convocados
             FROM evento e
+            LEFT JOIN clube_modalidade cm ON cm.id = e.clube_modalidade_id
+            LEFT JOIN clube c ON c.id = cm.clube_id
+            LEFT JOIN modalidade m ON m.id = cm.modalidade_id
+            LEFT JOIN coletividade_atividade ca ON ca.id = e.coletividade_atividade_id
+            LEFT JOIN coletividade col ON col.id = ca.coletividade_id
+            LEFT JOIN atividade a ON a.id = ca.atividade_id
             WHERE e.coletividade_atividade_id = ?
               AND COALESCE(e.data_hora_fim, e.data_hora) >= ?
             ORDER BY e.data_hora ASC
@@ -287,6 +333,9 @@ public class EventoDAO {
         tryPut(row, rs, "clubeId", "clube_id");
         tryPut(row, rs, "clubeNome", "clube_nome");
         tryPut(row, rs, "modalidadeNome", "modalidade_nome");
+        tryPut(row, rs, "coletividadeId", "coletividade_id");
+        tryPut(row, rs, "coletividadeNome", "coletividade_nome");
+        tryPut(row, rs, "atividadeNome", "atividade_nome");
         tryPut(row, rs, "totalConvocados", "total_convocados");
         return row;
     }

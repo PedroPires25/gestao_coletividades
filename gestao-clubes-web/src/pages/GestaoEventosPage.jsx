@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import MapPicker from "../components/MapPicker";
 import MiniMap from "../components/MiniMap";
 import { useAuth } from "../auth/AuthContext";
-import { getUploadUrl } from "../api";
+import { getClubeById, getColetividadeById, getUploadUrl } from "../api";
 import * as eventosService from "../services/eventos";
 import { getModalidadesByClube, getAtletasByClubeModalidade } from "../services/atletas";
 import { getAtividadesByColetividade } from "../services/coletividadeAtividades";
@@ -66,8 +66,78 @@ const FORM_EMPTY = {
 };
 
 export default function GestaoEventosPage() {
-    const { logout, isAdmin, role } = useAuth();
+    const {
+        logout,
+        isAdmin,
+        isSuperAdmin,
+        isScopedAdmin,
+        role,
+        clubeId: currentClubeId,
+        modalidadeId: currentModalidadeId,
+        coletividadeId: currentColetividadeId,
+        atividadeId: currentAtividadeId,
+    } = useAuth();
     const navigate = useNavigate();
+    const isSecretario = role === "SECRETARIO";
+    const isTreinadorPrincipal = role === "TREINADOR_PRINCIPAL";
+    const isProfessor = role === "PROFESSOR";
+    const canManageClubeEstrutura =
+        (isScopedAdmin || isSecretario)
+        && currentClubeId != null;
+    const canManageColetividadeEstrutura =
+        (isScopedAdmin || isSecretario)
+        && currentColetividadeId != null;
+    const canManageAssignedModalidade =
+        (isTreinadorPrincipal || isProfessor)
+        && currentClubeId != null
+        && currentModalidadeId != null;
+    const canManageAssignedAtividade =
+        isProfessor
+        && currentColetividadeId != null
+        && currentAtividadeId != null;
+    const temClubeGerivel = isSuperAdmin || canManageClubeEstrutura || canManageAssignedModalidade;
+    const temColetividadeGerivel = isSuperAdmin || canManageColetividadeEstrutura || canManageAssignedAtividade;
+    const tiposDisponiveis = useMemo(() => ([
+        ...(temClubeGerivel ? ["MODALIDADE"] : []),
+        ...(temColetividadeGerivel ? ["ATIVIDADE"] : []),
+    ]), [temClubeGerivel, temColetividadeGerivel]);
+    const canChooseEstruturaLivremente = isSuperAdmin;
+    const canChooseTipoLivremente = canChooseEstruturaLivremente || tiposDisponiveis.length > 1;
+
+    const criarFormularioBase = useCallback((tipoPreferido = null) => {
+        const tipoInicial = tipoPreferido && tiposDisponiveis.includes(tipoPreferido)
+            ? tipoPreferido
+            : (tiposDisponiveis[0] || FORM_EMPTY.tipo);
+
+        const base = { ...FORM_EMPTY, tipo: tipoInicial };
+
+        if (tipoInicial === "MODALIDADE" && !canChooseEstruturaLivremente && currentClubeId != null) {
+            return {
+                ...base,
+                clubeId: String(currentClubeId),
+                clubeModalidadeId: canManageAssignedModalidade ? String(currentModalidadeId) : "",
+            };
+        }
+
+        if (tipoInicial === "ATIVIDADE" && !canChooseEstruturaLivremente && currentColetividadeId != null) {
+            return {
+                ...base,
+                coletividadeId: String(currentColetividadeId),
+                coletividadeAtividadeId: canManageAssignedAtividade ? String(currentAtividadeId) : "",
+            };
+        }
+
+        return base;
+    }, [
+        canChooseEstruturaLivremente,
+        currentAtividadeId,
+        canManageAssignedAtividade,
+        canManageAssignedModalidade,
+        currentClubeId,
+        currentColetividadeId,
+        currentModalidadeId,
+        tiposDisponiveis,
+    ]);
 
     const [eventos, setEventos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -76,7 +146,7 @@ export default function GestaoEventosPage() {
     // Form state
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
-    const [form, setForm] = useState(FORM_EMPTY);
+    const [form, setForm] = useState(() => criarFormularioBase());
     const [saving, setSaving] = useState(false);
     const [formErro, setFormErro] = useState(null);
 
@@ -97,7 +167,12 @@ export default function GestaoEventosPage() {
     const [viewingMap, setViewingMap] = useState(null);
     const [convocadosList, setConvocadosList] = useState([]);
 
-    const canManage = role === "SUPER_ADMIN" || role === "ADMINISTRADOR" || role === "SECRETARIO";
+    const canManage =
+        isAdmin
+        || canManageClubeEstrutura
+        || canManageColetividadeEstrutura
+        || canManageAssignedModalidade
+        || canManageAssignedAtividade;
 
     const carregarEventos = useCallback(async () => {
         setLoading(true);
@@ -114,26 +189,89 @@ export default function GestaoEventosPage() {
 
     useEffect(() => { carregarEventos(); }, [carregarEventos]);
 
-    // Load clubs & coletividades on mount
+    // Load accessible structures on mount
     useEffect(() => {
-        apiFetch("/clubes")
-            .then(d => setClubes(Array.isArray(d) ? d : (d?.data ?? d?.content ?? [])))
-            .catch(() => {});
-        apiFetch("/coletividades")
-            .then(d => setColetividades(Array.isArray(d) ? d : (d?.data ?? d?.content ?? [])))
-            .catch(() => {});
-    }, []);
+        let active = true;
+
+        async function carregarEstruturas() {
+            if (canChooseEstruturaLivremente) {
+                apiFetch("/clubes")
+                    .then(d => {
+                        if (active) setClubes(Array.isArray(d) ? d : (d?.data ?? d?.content ?? []));
+                    })
+                    .catch(() => {
+                        if (active) setClubes([]);
+                    });
+
+                apiFetch("/coletividades")
+                    .then(d => {
+                        if (active) setColetividades(Array.isArray(d) ? d : (d?.data ?? d?.content ?? []));
+                    })
+                    .catch(() => {
+                        if (active) setColetividades([]);
+                    });
+                return;
+            }
+
+            try {
+                const [clubeData, coletividadeData] = await Promise.all([
+                    temClubeGerivel && currentClubeId != null ? getClubeById(currentClubeId) : Promise.resolve(null),
+                    temColetividadeGerivel && currentColetividadeId != null ? getColetividadeById(currentColetividadeId) : Promise.resolve(null),
+                ]);
+
+                if (!active) return;
+                setClubes(clubeData ? [clubeData] : []);
+                setColetividades(coletividadeData ? [coletividadeData] : []);
+            } catch {
+                if (!active) return;
+                setClubes([]);
+                setColetividades([]);
+            }
+        }
+
+        carregarEstruturas();
+        return () => {
+            active = false;
+        };
+    }, [
+        canChooseEstruturaLivremente,
+        temClubeGerivel,
+        temColetividadeGerivel,
+        currentClubeId,
+        currentColetividadeId,
+    ]);
+
+    useEffect(() => {
+        if (!showForm && !editingId) {
+            setForm(criarFormularioBase(form.tipo));
+        }
+    }, [
+        showForm,
+        editingId,
+        form.tipo,
+        criarFormularioBase,
+        currentClubeId,
+        currentModalidadeId,
+        currentColetividadeId,
+        currentAtividadeId,
+    ]);
 
     // Load modalidades when clube changes
     useEffect(() => {
         if (form.tipo === "MODALIDADE" && form.clubeId) {
             getModalidadesByClube(form.clubeId)
-                .then(d => setModalidades(Array.isArray(d) ? d : []))
+                .then(d => {
+                    const lista = Array.isArray(d) ? d : [];
+                    const filtradas = !canChooseEstruturaLivremente && currentModalidadeId != null
+                        ? lista.filter(m => Number(m.id) === Number(currentModalidadeId))
+                        : lista;
+                    setModalidades(filtradas);
+                })
                 .catch(() => setModalidades([]));
         } else {
             setModalidades([]);
         }
-    }, [form.clubeId, form.tipo]);
+    }, [form.clubeId, form.tipo, canChooseEstruturaLivremente, currentModalidadeId]);
 
     // Load atletas when modalidade changes
     useEffect(() => {
@@ -150,12 +288,18 @@ export default function GestaoEventosPage() {
     useEffect(() => {
         if (form.tipo === "ATIVIDADE" && form.coletividadeId) {
             getAtividadesByColetividade(form.coletividadeId, { apenasAtivas: false })
-                .then(d => setAtividades(Array.isArray(d) ? d : (d?.data ?? [])))
+                .then(d => {
+                    const lista = Array.isArray(d) ? d : (d?.data ?? []);
+                    const filtradas = !canChooseEstruturaLivremente && currentAtividadeId != null
+                        ? lista.filter(a => Number(a.id) === Number(currentAtividadeId))
+                        : lista;
+                    setAtividades(filtradas);
+                })
                 .catch(() => setAtividades([]));
         } else {
             setAtividades([]);
         }
-    }, [form.coletividadeId, form.tipo]);
+    }, [form.coletividadeId, form.tipo, canChooseEstruturaLivremente, currentAtividadeId]);
 
     // Load utentes when atividade changes
     useEffect(() => {
@@ -169,7 +313,7 @@ export default function GestaoEventosPage() {
     }, [form.coletividadeAtividadeId, form.coletividadeId, form.tipo]);
 
     function abrirCriar() {
-        setForm(FORM_EMPTY);
+        setForm(criarFormularioBase(form.tipo));
         setEditingId(null);
         setFormErro(null);
         setConvocadosSearch("");
@@ -196,10 +340,10 @@ export default function GestaoEventosPage() {
             local: evento.local || "",
             observacoes: evento.observacoes || "",
             tipo: evento.tipo || "MODALIDADE",
-            clubeId: evento.clubeId ? String(evento.clubeId) : "",
-            clubeModalidadeId: evento.clubeModalidadeId || "",
-            coletividadeId: "",
-            coletividadeAtividadeId: evento.coletividadeAtividadeId || "",
+            clubeId: evento.clubeId ? String(evento.clubeId) : (currentClubeId ? String(currentClubeId) : ""),
+            clubeModalidadeId: evento.clubeModalidadeId ? String(evento.clubeModalidadeId) : "",
+            coletividadeId: evento.coletividadeId ? String(evento.coletividadeId) : (currentColetividadeId ? String(currentColetividadeId) : ""),
+            coletividadeAtividadeId: evento.coletividadeAtividadeId ? String(evento.coletividadeAtividadeId) : "",
             convocados: convocadosExistentes,
             latitude: evento.latitude || null,
             longitude: evento.longitude || null,
@@ -389,56 +533,57 @@ export default function GestaoEventosPage() {
                                 </div>
 
                                 {/* Tipo */}
-                                {!editingId && (
+                                {!editingId && canChooseTipoLivremente && (
                                     <div className="form-group">
                                         <label>Tipo *</label>
                                         <div style={{ display: "flex", gap: "1.5rem", marginTop: "0.4rem" }}>
-                                            {["MODALIDADE", "ATIVIDADE"].map(t => (
-                                                <label key={t} style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer" }}>
-                                                    <input
-                                                        type="radio"
-                                                        name="tipo"
-                                                        value={t}
-                                                        checked={form.tipo === t}
-                                                        onChange={() => setForm(p => ({ ...p, tipo: t, clubeId: "", clubeModalidadeId: "", coletividadeId: "", coletividadeAtividadeId: "", convocados: [] }))}
-                                                    />
-                                                    {t === "MODALIDADE" ? "Modalidade" : "Atividade"}
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                             {tiposDisponiveis.map(t => (
+                                                 <label key={t} style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer" }}>
+                                                     <input
+                                                         type="radio"
+                                                         name="tipo"
+                                                         value={t}
+                                                         checked={form.tipo === t}
+                                                         onChange={() => setForm(criarFormularioBase(t))}
+                                                     />
+                                                     {t === "MODALIDADE" ? "Modalidade" : "Atividade"}
+                                                 </label>
+                                             ))}
+                                         </div>
+                                     </div>
+                                 )}
 
                                 {/* MODALIDADE selectors */}
                                 {!editingId && form.tipo === "MODALIDADE" && (
                                     <>
                                         <div className="form-group">
                                             <label>Clube *</label>
-                                            <select
-                                                className="input"
-                                                value={form.clubeId}
-                                                onChange={e => setForm(p => ({ ...p, clubeId: e.target.value, clubeModalidadeId: "", convocados: [] }))}
-                                                required
-                                            >
-                                                <option value="">-- Selecione o clube --</option>
-                                                {clubes.map(c => (
-                                                    <option key={c.id} value={c.id}>{c.nome}</option>
-                                                ))}
+                                             <select
+                                                 className="input"
+                                                 value={form.clubeId}
+                                                 onChange={e => setForm(p => ({ ...p, clubeId: e.target.value, clubeModalidadeId: "", convocados: [] }))}
+                                                 required
+                                                 disabled={!canChooseEstruturaLivremente}
+                                             >
+                                                 <option value="">-- Selecione o clube --</option>
+                                                 {clubes.map(c => (
+                                                     <option key={c.id} value={c.id}>{c.nome}</option>
+                                                 ))}
                                             </select>
                                         </div>
                                         <div className="form-group">
                                             <label>Modalidade *</label>
-                                            <select
-                                                className="input"
-                                                value={form.clubeModalidadeId}
-                                                onChange={e => setForm(p => ({ ...p, clubeModalidadeId: e.target.value, convocados: [] }))}
-                                                required
-                                                disabled={!form.clubeId}
-                                            >
-                                                <option value="">-- Selecione a modalidade --</option>
-                                                {modalidades.map(m => (
-                                                    <option key={m.id} value={m.id}>{m.nome || m.modalidade?.nome}</option>
-                                                ))}
+                                             <select
+                                                 className="input"
+                                                 value={form.clubeModalidadeId}
+                                                 onChange={e => setForm(p => ({ ...p, clubeModalidadeId: e.target.value, convocados: [] }))}
+                                                 required
+                                                 disabled={!form.clubeId || (!canChooseEstruturaLivremente && canManageAssignedModalidade)}
+                                             >
+                                                 <option value="">-- Selecione a modalidade --</option>
+                                                 {modalidades.map(m => (
+                                                     <option key={m.id} value={m.id}>{m.nome || m.modalidade?.nome}</option>
+                                                 ))}
                                             </select>
                                         </div>
                                     </>
@@ -449,31 +594,32 @@ export default function GestaoEventosPage() {
                                     <>
                                         <div className="form-group">
                                             <label>Coletividade *</label>
-                                            <select
-                                                className="input"
-                                                value={form.coletividadeId}
-                                                onChange={e => setForm(p => ({ ...p, coletividadeId: e.target.value, coletividadeAtividadeId: "", convocados: [] }))}
-                                                required
-                                            >
-                                                <option value="">-- Selecione a coletividade --</option>
-                                                {coletividades.map(c => (
-                                                    <option key={c.id} value={c.id}>{c.nome}</option>
-                                                ))}
+                                             <select
+                                                 className="input"
+                                                 value={form.coletividadeId}
+                                                 onChange={e => setForm(p => ({ ...p, coletividadeId: e.target.value, coletividadeAtividadeId: "", convocados: [] }))}
+                                                 required
+                                                 disabled={!canChooseEstruturaLivremente}
+                                             >
+                                                 <option value="">-- Selecione a coletividade --</option>
+                                                 {coletividades.map(c => (
+                                                     <option key={c.id} value={c.id}>{c.nome}</option>
+                                                 ))}
                                             </select>
                                         </div>
                                         <div className="form-group">
                                             <label>Atividade *</label>
-                                            <select
-                                                className="input"
-                                                value={form.coletividadeAtividadeId}
-                                                onChange={e => setForm(p => ({ ...p, coletividadeAtividadeId: e.target.value, convocados: [] }))}
-                                                required
-                                                disabled={!form.coletividadeId}
-                                            >
-                                                <option value="">-- Selecione a atividade --</option>
-                                                {atividades.map(a => (
-                                                    <option key={a.id} value={a.id}>{a.nomeAtividade || a.nome}</option>
-                                                ))}
+                                             <select
+                                                 className="input"
+                                                 value={form.coletividadeAtividadeId}
+                                                 onChange={e => setForm(p => ({ ...p, coletividadeAtividadeId: e.target.value, convocados: [] }))}
+                                                 required
+                                                 disabled={!form.coletividadeId || (!canChooseEstruturaLivremente && canManageAssignedAtividade)}
+                                             >
+                                                 <option value="">-- Selecione a atividade --</option>
+                                                 {atividades.map(a => (
+                                                     <option key={a.id} value={a.id}>{a.nomeAtividade || a.nome}</option>
+                                                 ))}
                                             </select>
                                         </div>
                                     </>
