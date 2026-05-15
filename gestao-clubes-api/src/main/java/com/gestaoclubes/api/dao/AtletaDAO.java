@@ -342,6 +342,30 @@ public class AtletaDAO {
         return null;
     }
 
+    public List<Map<String, Object>> listarPorClube(int clubeId) {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        String sql = """
+            SELECT DISTINCT a.id, COALESCE(u.nome, a.nome) AS nome
+            FROM atleta a
+            LEFT JOIN utilizadores u ON u.id = a.utilizador_id
+            WHERE a.clube_atual_id = ?
+            ORDER BY nome
+        """;
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, clubeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", rs.getInt("id"));
+                    row.put("nome", rs.getString("nome"));
+                    lista.add(row);
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return lista;
+    }
+
     public boolean atualizarFotoPath(int atletaId, String fotoPath) {
         String sql = "UPDATE atleta SET foto_path=? WHERE id=?";
         try (Connection conn = ConexoBD.getConnection();

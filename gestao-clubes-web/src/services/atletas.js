@@ -48,6 +48,11 @@ async function authFetch(path, options = {}) {
     return response.text();
 }
 
+export async function getAtletasByClube(clubeId) {
+    const data = await authFetch(`/clubes/${clubeId}/medico/atletas`);
+    return extractArray(data);
+}
+
 export async function getModalidadesByClube(clubeId) {
     const data = await authFetch(`/clubes/${clubeId}/modalidades?ativas=true`);
     return extractArray(data);

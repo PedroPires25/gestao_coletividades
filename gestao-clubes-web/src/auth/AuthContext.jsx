@@ -42,7 +42,7 @@ function calcularRedirectUrl(user) {
 
         case "DEPARTAMENTO_MEDICO":
             if (clubeId) {
-                return `/clubes/${clubeId}`;
+                return `/clubes/${clubeId}/medico`;
             }
             return null;
 

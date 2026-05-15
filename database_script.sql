@@ -882,3 +882,211 @@ ALTER TABLE utilizadores
 
 ALTER TABLE utilizadores
   ADD COLUMN tema_preferido VARCHAR(30) DEFAULT NULL;
+
+-- =========================================================
+-- MÓDULO CLÍNICO – DEPARTAMENTO MÉDICO
+-- =========================================================
+
+USE gestao_clubes;
+
+-- -------------------------
+-- FICHA MÉDICA DO ATLETA (1 por atleta por clube)
+-- -------------------------
+CREATE TABLE IF NOT EXISTS ficha_medica (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  atleta_id INT NOT NULL,
+  clube_id INT NOT NULL,
+  grupo_sanguineo VARCHAR(5),
+  alergias TEXT,
+  condicoes_cronicas TEXT,
+  contacto_emergencia_nome VARCHAR(120),
+  contacto_emergencia_telefone VARCHAR(30),
+  notas_gerais TEXT,
+  criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uq_ficha_atleta_clube (atleta_id, clube_id),
+
+  CONSTRAINT fk_fm_atleta
+    FOREIGN KEY (atleta_id) REFERENCES atleta(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+
+  CONSTRAINT fk_fm_clube
+    FOREIGN KEY (clube_id) REFERENCES clube(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  KEY idx_fm_atleta (atleta_id),
+  KEY idx_fm_clube (clube_id)
+) ENGINE=InnoDB;
+
+-- -------------------------
+-- REGISTO DE LESÃO
+-- -------------------------
+CREATE TABLE IF NOT EXISTS registo_lesao (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  clube_id INT NOT NULL,
+  atleta_id INT NOT NULL,
+  staff_id INT NULL,
+  tipo VARCHAR(100) NOT NULL,
+  parte_corpo VARCHAR(100),
+  gravidade ENUM('LEVE','MODERADA','GRAVE') NOT NULL DEFAULT 'LEVE',
+  data_lesao DATE NOT NULL,
+  data_retorno_prevista DATE,
+  data_retorno_efetiva DATE,
+  descricao TEXT,
+  tratamento TEXT,
+  criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_rl_clube
+    FOREIGN KEY (clube_id) REFERENCES clube(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_rl_atleta
+    FOREIGN KEY (atleta_id) REFERENCES atleta(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_rl_staff
+    FOREIGN KEY (staff_id) REFERENCES staff(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
+  KEY idx_rl_clube (clube_id),
+  KEY idx_rl_atleta (atleta_id),
+  KEY idx_rl_data (data_lesao)
+) ENGINE=InnoDB;
+
+-- -------------------------
+-- CONSULTA MÉDICA
+-- -------------------------
+CREATE TABLE IF NOT EXISTS consulta_medica (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  clube_id INT NOT NULL,
+  atleta_id INT NOT NULL,
+  staff_id INT NULL,
+  data_consulta DATE NOT NULL,
+  tipo VARCHAR(60) NOT NULL,
+  motivo TEXT,
+  diagnostico TEXT,
+  notas TEXT,
+  criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_cmed_clube
+    FOREIGN KEY (clube_id) REFERENCES clube(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_cmed_atleta
+    FOREIGN KEY (atleta_id) REFERENCES atleta(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_cmed_staff
+    FOREIGN KEY (staff_id) REFERENCES staff(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
+  KEY idx_cmed_clube (clube_id),
+  KEY idx_cmed_atleta (atleta_id),
+  KEY idx_cmed_data (data_consulta)
+) ENGINE=InnoDB;
+
+-- -------------------------
+-- EXAME MÉDICO
+-- -------------------------
+CREATE TABLE IF NOT EXISTS exame_medico (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  clube_id INT NOT NULL,
+  atleta_id INT NOT NULL,
+  staff_id INT NULL,
+  data_exame DATE NOT NULL,
+  tipo VARCHAR(100) NOT NULL,
+  resultado TEXT,
+  ficheiro_path VARCHAR(255),
+  notas TEXT,
+  criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_em_clube
+    FOREIGN KEY (clube_id) REFERENCES clube(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_em_atleta
+    FOREIGN KEY (atleta_id) REFERENCES atleta(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_em_staff
+    FOREIGN KEY (staff_id) REFERENCES staff(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
+  KEY idx_em_clube (clube_id),
+  KEY idx_em_atleta (atleta_id),
+  KEY idx_em_data (data_exame)
+) ENGINE=InnoDB;
+
+-- -------------------------
+-- PRESCRIÇÃO
+-- -------------------------
+CREATE TABLE IF NOT EXISTS prescricao (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  clube_id INT NOT NULL,
+  atleta_id INT NOT NULL,
+  staff_id INT NULL,
+  consulta_id INT NULL,
+  medicamento VARCHAR(255) NOT NULL,
+  dosagem VARCHAR(100),
+  frequencia VARCHAR(100),
+  data_inicio DATE,
+  data_fim DATE,
+  notas TEXT,
+  criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_pr_clube
+    FOREIGN KEY (clube_id) REFERENCES clube(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_pr_atleta
+    FOREIGN KEY (atleta_id) REFERENCES atleta(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_pr_staff
+    FOREIGN KEY (staff_id) REFERENCES staff(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
+  CONSTRAINT fk_pr_consulta
+    FOREIGN KEY (consulta_id) REFERENCES consulta_medica(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
+  KEY idx_pr_clube (clube_id),
+  KEY idx_pr_atleta (atleta_id)
+) ENGINE=InnoDB;
+
+-- -------------------------
+-- RELATÓRIO MÉDICO
+-- -------------------------
+CREATE TABLE IF NOT EXISTS relatorio_medico (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  clube_id INT NOT NULL,
+  atleta_id INT NOT NULL,
+  staff_id INT NULL,
+  data_relatorio DATE NOT NULL,
+  tipo VARCHAR(100) NOT NULL,
+  conteudo TEXT,
+  confidencial TINYINT(1) NOT NULL DEFAULT 0,
+  criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_rm_clube
+    FOREIGN KEY (clube_id) REFERENCES clube(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_rm_atleta
+    FOREIGN KEY (atleta_id) REFERENCES atleta(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_rm_staff
+    FOREIGN KEY (staff_id) REFERENCES staff(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
+  KEY idx_rm_clube (clube_id),
+  KEY idx_rm_atleta (atleta_id),
+  KEY idx_rm_data (data_relatorio)
+) ENGINE=InnoDB;

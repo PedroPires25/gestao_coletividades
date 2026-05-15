@@ -45,6 +45,15 @@ import ColetividadeStaffAtividadePage from "./pages/ColetividadeStaffAtividadePa
 import AreaAcessoClubePage from "./pages/AreaAcessoClubePage";
 import AreaAcessoColetividadePage from "./pages/AreaAcessoColetividadePage";
 
+// módulo clínico
+import ClubeModuloMedicoPage from "./pages/ClubeModuloMedicoPage";
+import RegistosLesaoPage from "./pages/RegistosLesaoPage";
+import ConsultasMedicasPage from "./pages/ConsultasMedicasPage";
+import ExamesMedicosPage from "./pages/ExamesMedicosPage";
+import PrescricoesPage from "./pages/PrescricoesPage";
+import RelatoriosMedicosPage from "./pages/RelatoriosMedicosPage";
+import AtletaFichaMedicaPage from "./pages/AtletaFichaMedicaPage";
+
 // perfil
 import PerfilPage from "./pages/PerfilPage";
 
@@ -335,6 +344,15 @@ export default function App() {
                         </RequireAuth>
                     }
                 />
+
+                {/* MÓDULO CLÍNICO */}
+                <Route path="/clubes/:clubeId/medico" element={<RequireAuth><ClubeModuloMedicoPage /></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico/lesoes" element={<RequireAuth><RegistosLesaoPage /></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico/consultas" element={<RequireAuth><ConsultasMedicasPage /></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico/exames" element={<RequireAuth><ExamesMedicosPage /></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico/prescricoes" element={<RequireAuth><PrescricoesPage /></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico/relatorios" element={<RequireAuth><RelatoriosMedicosPage /></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico/atletas/:atletaId/ficha" element={<RequireAuth><AtletaFichaMedicaPage /></RequireAuth>} />
 
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
