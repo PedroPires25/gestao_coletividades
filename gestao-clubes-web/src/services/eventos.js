@@ -39,7 +39,7 @@ async function http(path, options = {}) {
   return res.text();
 }
 
-// --- Gestão endpoints (admin / secretário) ---
+// --- Gestão endpoints (admin / secretário / treinador / professor) ---
 
 export async function listarTodosEventos() {
   return http("/gestao/eventos");
@@ -87,13 +87,15 @@ export async function listarMeusEventos(clubeId) {
   return http(`/eventos/por-clube/${clubeId}`);
 }
 
-// --- Club-scoped event management (treinador / secretário) ---
+// --- Club-scoped event management (treinador / professor / secretário) ---
 
 export async function criarEvento(clubeId, clubeModalidadeId, payload) {
+  const { atletaIds, ...rest } = payload || {};
   return http(`/gestao/eventos`, {
     method: "POST",
     body: JSON.stringify({
-      ...payload,
+      ...rest,
+      ...(Array.isArray(atletaIds) ? { convocados: atletaIds } : {}),
       tipo: "MODALIDADE",
       clubeModalidadeId,
     }),
@@ -101,9 +103,13 @@ export async function criarEvento(clubeId, clubeModalidadeId, payload) {
 }
 
 export async function atualizarEvento(clubeId, clubeModalidadeId, eventoId, payload) {
+  const { atletaIds, ...rest } = payload || {};
   return http(`/gestao/eventos/${eventoId}`, {
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      ...rest,
+      ...(Array.isArray(atletaIds) ? { convocados: atletaIds } : {}),
+    }),
   });
 }
 

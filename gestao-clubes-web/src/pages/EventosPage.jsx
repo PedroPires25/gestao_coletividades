@@ -44,7 +44,7 @@ function convertToServerFormat(datetimeLocalValue) {
 }
 
 export default function EventosPage() {
-  const { isAdmin, role } = useAuth();
+  const { isAdmin, role, clubeId: currentClubeId, modalidadeId: currentModalidadeId } = useAuth();
   const { clubeId, clubeModalidadeId } = useParams();
 
   const [clube, setClube] = useState(null);
@@ -103,11 +103,16 @@ export default function EventosPage() {
     }
   }, [clubeId, clubeModalidadeId]);
 
+  const isModalidadeAfetada =
+    currentClubeId != null &&
+    currentModalidadeId != null &&
+    Number(currentClubeId) === Number(clubeId) &&
+    Number(currentModalidadeId) === Number(clubeModalidadeId);
+
   const canManageEventos =
     isAdmin ||
-    role === "TREINADOR_PRINCIPAL" ||
-    role === "PROFESSOR" ||
-    role === "SECRETARIO";
+    role === "SECRETARIO" ||
+    ((role === "TREINADOR_PRINCIPAL" || role === "PROFESSOR") && isModalidadeAfetada);
 
   const atletasFiltrados = atletas.filter((a) =>
     a.nome.toLowerCase().includes(atletasSearch.toLowerCase())
