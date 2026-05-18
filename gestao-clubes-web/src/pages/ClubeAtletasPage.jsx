@@ -5,7 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 import { getClubeById } from "../api";
 import {
     createAtleta,
-    getAtletasByClube,
+    getAtletasByClubeModalidade,
     getEscaloes,
     getEstadosAtleta,
     getModalidadesByClube,
@@ -214,9 +214,8 @@ export default function ClubeAtletasPage() {
         setLoadingPagina(true);
 
         try {
-            const [clubeData, atletasData, modalidadesData, escaloesData, estadosData] = await Promise.all([
+            const [clubeData, modalidadesData, escaloesData, estadosData] = await Promise.all([
                 getClubeById(clubeId),
-                getAtletasByClube(clubeId),
                 getModalidadesByClube(clubeId),
                 getEscaloes(),
                 getEstadosAtleta(),
@@ -225,9 +224,17 @@ export default function ClubeAtletasPage() {
             const listaModalidades = Array.isArray(modalidadesData) ? modalidadesData : [];
             const listaEscaloes = Array.isArray(escaloesData) ? escaloesData : [];
             const listaEstados = Array.isArray(estadosData) ? estadosData : [];
+            const atletasPorModalidade = await Promise.all(
+                listaModalidades.map(async (item) => {
+                    const clubeModalidadeId = getClubeModalidadeId(item);
+                    if (!clubeModalidadeId) return [];
+                    const atletas = await getAtletasByClubeModalidade(clubeId, clubeModalidadeId);
+                    return Array.isArray(atletas) ? atletas : [];
+                })
+            );
 
             setClube(clubeData || null);
-            setAtletasRows(Array.isArray(atletasData) ? atletasData : []);
+            setAtletasRows(atletasPorModalidade.flat());
             setModalidades(listaModalidades);
             setEscaloes(listaEscaloes);
             setEstados(listaEstados);

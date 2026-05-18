@@ -94,26 +94,7 @@ public class AtletaDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Map<String, Object> row = new LinkedHashMap<>();
-                    row.put("id", rs.getInt("id"));
-                    row.put("nome", rs.getString("nome"));
-                    row.put("dataNascimento", rs.getDate("data_nascimento"));
-                    row.put("email", rs.getString("email"));
-                    row.put("telefone", rs.getString("telefone"));
-                    row.put("morada", rs.getString("morada"));
-                    row.put("remuneracao", rs.getBigDecimal("remuneracao"));
-                    row.put("clubeAtualId", rs.getInt("clube_atual_id"));
-                    row.put("estadoId", rs.getInt("estado_id"));
-                    row.put("estado", rs.getString("estado"));
-                    row.put("escalaoId", rs.getInt("escalao_id"));
-                    row.put("escalao", rs.getString("escalao"));
-                    row.put("clubeModalidadeId", rs.getInt("clube_modalidade_id"));
-                    row.put("epoca", rs.getString("epoca"));
-                    row.put("dataInscricao", rs.getDate("data_inscricao"));
-                    row.put("dataFim", rs.getDate("data_fim"));
-                    row.put("ativo", rs.getBoolean("ativo"));
-                    row.put("fotoPath", rs.getString("foto_path"));
-                    lista.add(row);
+                    lista.add(mapAthleteRow(rs));
                 }
             }
 
@@ -164,26 +145,7 @@ public class AtletaDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Map<String, Object> row = new LinkedHashMap<>();
-                    row.put("id", rs.getInt("id"));
-                    row.put("nome", rs.getString("nome"));
-                    row.put("dataNascimento", rs.getDate("data_nascimento"));
-                    row.put("email", rs.getString("email"));
-                    row.put("telefone", rs.getString("telefone"));
-                    row.put("morada", rs.getString("morada"));
-                    row.put("remuneracao", rs.getBigDecimal("remuneracao"));
-                    row.put("clubeAtualId", rs.getInt("clube_atual_id"));
-                    row.put("estadoId", rs.getInt("estado_id"));
-                    row.put("estado", rs.getString("estado"));
-                    row.put("escalaoId", rs.getInt("escalao_id"));
-                    row.put("escalao", rs.getString("escalao"));
-                    row.put("clubeModalidadeId", rs.getInt("clube_modalidade_id"));
-                    row.put("epoca", rs.getString("epoca"));
-                    row.put("dataInscricao", rs.getDate("data_inscricao"));
-                    row.put("dataFim", rs.getDate("data_fim"));
-                    row.put("ativo", rs.getBoolean("ativo"));
-                    row.put("fotoPath", rs.getString("foto_path"));
-                    lista.add(row);
+                    lista.add(mapAthleteRow(rs));
                 }
             }
 
@@ -364,6 +326,29 @@ public class AtletaDAO {
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return lista;
+    }
+
+    private Map<String, Object> mapAthleteRow(ResultSet rs) throws SQLException {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("id", rs.getInt("id"));
+        row.put("nome", rs.getString("nome"));
+        row.put("dataNascimento", rs.getDate("data_nascimento"));
+        row.put("email", rs.getString("email"));
+        row.put("telefone", rs.getString("telefone"));
+        row.put("morada", rs.getString("morada"));
+        row.put("remuneracao", rs.getBigDecimal("remuneracao"));
+        row.put("clubeAtualId", rs.getInt("clube_atual_id"));
+        row.put("estadoId", rs.getInt("estado_id"));
+        row.put("estado", rs.getString("estado"));
+        row.put("escalaoId", rs.getInt("escalao_id"));
+        row.put("escalao", rs.getString("escalao"));
+        row.put("clubeModalidadeId", rs.getInt("clube_modalidade_id"));
+        row.put("epoca", rs.getString("epoca"));
+        row.put("dataInscricao", rs.getDate("data_inscricao"));
+        row.put("dataFim", rs.getDate("data_fim"));
+        row.put("ativo", rs.getBoolean("ativo"));
+        row.put("fotoPath", rs.getString("foto_path"));
+        return row;
     }
 
     public boolean atualizarFotoPath(int atletaId, String fotoPath) {
