@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: gestao-clubes-api
+    runtime: docker
+    dockerfilePath: ./gestao-clubes-api/Dockerfile
+    dockerContext: ./gestao-clubes-api
+    envVars:
+      # Render expõe na porta 10000 por defeito para serviços Docker
+      - key: SERVER_PORT
+        value: 10000
+
+      # JWT - gerar valor aleatório forte
+      - key: JWT_SECRET
+        generateValue: true
+
+      # Base de dados (Aiven)
+      # Exemplo: jdbc:mysql://host:port/db?useSSL=true&requireSSL=true&serverSslCert=classpath:cert/ca.pem
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+
+      # Email Gmail
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+
+      # Cloudinary (uploads de imagens)
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
