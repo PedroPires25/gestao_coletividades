@@ -87,6 +87,13 @@
         <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
+        <!-- Cloudinary - upload de imagens na cloud -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.36.0</version>
+        </dependency>
+
         <!-- Tests -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
