@@ -48,22 +48,26 @@ public class ConexoBD {
                 .getResourceAsStream("db.properties")) {
 
             if (input == null) {
-                System.err.println("Erro: Ficheiro db.properties não encontrado!");
-                // Valores padrão caso o ficheiro não exista
-                URL = "jdbc:mysql://localhost:3306/ci-java";
-                USERNAME = "root";
-                PASSWORD = "";
-                DRIVER = "com.mysql.cj.jdbc.Driver";
+                System.err.println("Aviso: db.properties não encontrado, usando variáveis de ambiente.");
+                URL      = System.getenv("DB_URL")      != null ? System.getenv("DB_URL")      : "jdbc:mysql://localhost:3306/ci-java";
+                USERNAME = System.getenv("DB_USERNAME") != null ? System.getenv("DB_USERNAME") : "root";
+                PASSWORD = System.getenv("DB_PASSWORD") != null ? System.getenv("DB_PASSWORD") : "";
+                DRIVER   = "com.mysql.cj.jdbc.Driver";
                 propertiesLoaded = true;
                 return;
             }
 
             props.load(input);
 
-            URL = props.getProperty("db.url", "jdbc:mysql://localhost:3306/ci-java");
-            USERNAME = props.getProperty("db.username", "root");
-            PASSWORD = props.getProperty("db.password", "");
-            DRIVER = props.getProperty("db.driver", "com.mysql.cj.jdbc.Driver");
+            // Env vars têm prioridade sobre db.properties (produção no Render)
+            String envUrl      = System.getenv("DB_URL");
+            String envUser     = System.getenv("DB_USERNAME");
+            String envPassword = System.getenv("DB_PASSWORD");
+
+            URL      = (envUrl      != null) ? envUrl      : props.getProperty("db.url",      "jdbc:mysql://localhost:3306/ci-java");
+            USERNAME = (envUser     != null) ? envUser     : props.getProperty("db.username", "root");
+            PASSWORD = (envPassword != null) ? envPassword : props.getProperty("db.password", "");
+            DRIVER   = props.getProperty("db.driver", "com.mysql.cj.jdbc.Driver");
             String sslCertPath = props.getProperty("db.ssl.cert.path", "");
 
             // Se o certificado não estiver na URL e o caminho estiver definido, adiciona à URL
@@ -102,12 +106,10 @@ public class ConexoBD {
 
         } catch (Exception e) {
             LOGGER.severe("Erro ao carregar db.properties: " + e.getMessage());
-
-            // Valores padrão em caso de erro
-            URL = "jdbc:mysql://localhost:3306/ci-java";
-            USERNAME = "root";
-            PASSWORD = "";
-            DRIVER = "com.mysql.cj.jdbc.Driver";
+            URL      = System.getenv("DB_URL")      != null ? System.getenv("DB_URL")      : "jdbc:mysql://localhost:3306/ci-java";
+            USERNAME = System.getenv("DB_USERNAME") != null ? System.getenv("DB_USERNAME") : "root";
+            PASSWORD = System.getenv("DB_PASSWORD") != null ? System.getenv("DB_PASSWORD") : "";
+            DRIVER   = "com.mysql.cj.jdbc.Driver";
             propertiesLoaded = true;
         }
     }

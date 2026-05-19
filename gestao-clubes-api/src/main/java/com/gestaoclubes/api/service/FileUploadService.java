@@ -1,5 +1,8 @@
 package com.gestaoclubes.api.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,6 +14,7 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -18,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -25,128 +30,183 @@ import java.util.UUID;
 public class FileUploadService {
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp");
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
     private static final int AVATAR_SIZE = 400;
     private static final float JPEG_QUALITY = 0.80f;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
+    @Value("${cloudinary.cloud-name:}")
+    private String cloudName;
+
+    @Value("${cloudinary.api-key:}")
+    private String apiKey;
+
+    @Value("${cloudinary.api-secret:}")
+    private String apiSecret;
+
+    private Cloudinary cloudinary;
+    private boolean useCloudinary;
+
+    @PostConstruct
+    public void init() {
+        useCloudinary = cloudName != null && !cloudName.isBlank();
+        if (useCloudinary) {
+            cloudinary = new Cloudinary(ObjectUtils.asMap(
+                    "cloud_name", cloudName,
+                    "api_key", apiKey,
+                    "api_secret", apiSecret,
+                    "secure", true
+            ));
+            System.out.println("FileUploadService: Cloudinary configurado (" + cloudName + ")");
+        } else {
+            System.out.println("FileUploadService: Usando armazenamento local ('" + uploadDir + "')");
+        }
+    }
+
     /**
-     * Guarda o ficheiro no disco e devolve o caminho relativo (ex: "clubes/uuid.png").
+     * Guarda um ficheiro (qualquer formato permitido) e devolve o caminho/URL.
      */
     public String guardarFicheiro(MultipartFile file, String subpasta) throws IOException {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Ficheiro vazio.");
-        }
-
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("Ficheiro demasiado grande (máx. 10MB).");
-        }
-
-        String originalName = file.getOriginalFilename();
-        String extension = getExtension(originalName);
-
+        validar(file);
+        String extension = getExtension(file.getOriginalFilename());
         if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
             throw new IllegalArgumentException("Extensão não permitida. Use: " + ALLOWED_EXTENSIONS);
         }
-
-        String uniqueName = UUID.randomUUID() + "." + extension.toLowerCase();
-        String relativePath = subpasta + "/" + uniqueName;
-
-        Path destDir = Paths.get(uploadDir, subpasta);
-        Files.createDirectories(destDir);
-
-        Path destFile = destDir.resolve(uniqueName);
-        Files.copy(file.getInputStream(), destFile, StandardCopyOption.REPLACE_EXISTING);
-
-        return relativePath;
+        if (useCloudinary) {
+            return uploadParaCloudinary(file.getBytes(), "gestao-clubes/" + subpasta, "auto");
+        }
+        return guardarLocal(file, subpasta, extension);
     }
 
     /**
-     * Guarda uma imagem de avatar: recorta ao centro para ficar quadrada,
-     * redimensiona para AVATAR_SIZE x AVATAR_SIZE e comprime como JPEG.
+     * Guarda uma imagem de avatar: recorta ao centro, redimensiona e comprime.
      */
     public String guardarAvatar(MultipartFile file, String subpasta) throws IOException {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Ficheiro vazio.");
-        }
-
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("Ficheiro demasiado grande (máx. 10MB).");
-        }
-
-        String originalName = file.getOriginalFilename();
-        String extension = getExtension(originalName);
-
+        validar(file);
+        String extension = getExtension(file.getOriginalFilename());
         if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
             throw new IllegalArgumentException("Extensão não permitida. Use: " + ALLOWED_EXTENSIONS);
         }
-
         BufferedImage original = ImageIO.read(file.getInputStream());
-        if (original == null) {
-            throw new IllegalArgumentException("Não foi possível ler a imagem.");
+        if (original == null) throw new IllegalArgumentException("Não foi possível ler a imagem.");
+
+        BufferedImage processed = resize(cropToSquare(original), AVATAR_SIZE);
+
+        if (useCloudinary) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            writeCompressedJpeg(processed, baos, JPEG_QUALITY);
+            return uploadParaCloudinary(baos.toByteArray(), "gestao-clubes/" + subpasta, "image");
         }
+        return guardarAvatarLocal(processed, subpasta);
+    }
 
-        BufferedImage squared = cropToSquare(original);
-        BufferedImage resized = resize(squared, AVATAR_SIZE);
+    /**
+     * Remove um ficheiro (local ou Cloudinary).
+     */
+    public void removerFicheiro(String path) {
+        if (path == null || path.isBlank()) return;
+        if (useCloudinary && path.startsWith("http")) {
+            try {
+                String publicId = extractPublicId(path);
+                if (publicId != null) {
+                    cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao remover ficheiro do Cloudinary: " + e.getMessage());
+            }
+        } else {
+            try {
+                Files.deleteIfExists(Paths.get(uploadDir, path));
+            } catch (IOException e) {
+                System.err.println("Erro ao remover ficheiro local: " + e.getMessage());
+            }
+        }
+    }
 
-        String uniqueName = UUID.randomUUID() + ".jpg";
-        String relativePath = subpasta + "/" + uniqueName;
+    /**
+     * Devolve o Path absoluto de um ficheiro local (usado para servir ficheiros via HTTP).
+     */
+    public Path resolverCaminho(String relativePath) {
+        return Paths.get(uploadDir, relativePath);
+    }
 
+    // ── Cloudinary ──────────────────────────────────────────────────────────
+
+    private String uploadParaCloudinary(byte[] bytes, String folder, String resourceType) throws IOException {
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> result = cloudinary.uploader().upload(bytes, ObjectUtils.asMap(
+                    "public_id", folder + "/" + UUID.randomUUID(),
+                    "resource_type", resourceType
+            ));
+            return (String) result.get("secure_url");
+        } catch (Exception e) {
+            throw new IOException("Erro ao fazer upload para o Cloudinary: " + e.getMessage(), e);
+        }
+    }
+
+    /** Extrai o public_id de uma URL Cloudinary para permitir a eliminação. */
+    private String extractPublicId(String url) {
+        int idx = url.indexOf("/upload/");
+        if (idx < 0) return null;
+        String after = url.substring(idx + 8);
+        // remove segmento de versão (v1234567/)
+        if (after.matches("v\\d+/.*")) after = after.substring(after.indexOf('/') + 1);
+        // remove extensão
+        int dot = after.lastIndexOf('.');
+        if (dot > 0 && dot > after.lastIndexOf('/')) after = after.substring(0, dot);
+        return after;
+    }
+
+    // ── Armazenamento local ──────────────────────────────────────────────────
+
+    private String guardarLocal(MultipartFile file, String subpasta, String extension) throws IOException {
+        String uniqueName = UUID.randomUUID() + "." + extension.toLowerCase();
         Path destDir = Paths.get(uploadDir, subpasta);
         Files.createDirectories(destDir);
-
-        Path destFile = destDir.resolve(uniqueName);
-        writeCompressedJpeg(resized, destFile, JPEG_QUALITY);
-
-        return relativePath;
+        Files.copy(file.getInputStream(), destDir.resolve(uniqueName), StandardCopyOption.REPLACE_EXISTING);
+        return subpasta + "/" + uniqueName;
     }
 
-    /**
-     * Recorta a imagem ao centro para ficar quadrada.
-     */
-    private BufferedImage cropToSquare(BufferedImage img) {
-        int w = img.getWidth();
-        int h = img.getHeight();
-        int size = Math.min(w, h);
-        int x = (w - size) / 2;
-        int y = (h - size) / 2;
-        return img.getSubimage(x, y, size, size);
-    }
-
-    /**
-     * Redimensiona a imagem para targetSize x targetSize.
-     */
-    private BufferedImage resize(BufferedImage img, int targetSize) {
-        if (img.getWidth() <= targetSize && img.getHeight() <= targetSize) {
-            return img;
+    private String guardarAvatarLocal(BufferedImage img, String subpasta) throws IOException {
+        String uniqueName = UUID.randomUUID() + ".jpg";
+        Path destDir = Paths.get(uploadDir, subpasta);
+        Files.createDirectories(destDir);
+        try (OutputStream os = Files.newOutputStream(destDir.resolve(uniqueName))) {
+            writeCompressedJpeg(img, os, JPEG_QUALITY);
         }
-        BufferedImage resized = new BufferedImage(targetSize, targetSize, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = resized.createGraphics();
+        return subpasta + "/" + uniqueName;
+    }
+
+    // ── Processamento de imagem ──────────────────────────────────────────────
+
+    private BufferedImage cropToSquare(BufferedImage img) {
+        int w = img.getWidth(), h = img.getHeight(), size = Math.min(w, h);
+        return img.getSubimage((w - size) / 2, (h - size) / 2, size, size);
+    }
+
+    private BufferedImage resize(BufferedImage img, int targetSize) {
+        if (img.getWidth() <= targetSize && img.getHeight() <= targetSize) return img;
+        BufferedImage out = new BufferedImage(targetSize, targetSize, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = out.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.drawImage(img, 0, 0, targetSize, targetSize, null);
         g.dispose();
-        return resized;
+        return out;
     }
 
-    /**
-     * Escreve a imagem como JPEG com o nível de qualidade indicado (0.0 – 1.0).
-     */
-    private void writeCompressedJpeg(BufferedImage img, Path dest, float quality) throws IOException {
+    private void writeCompressedJpeg(BufferedImage img, OutputStream os, float quality) throws IOException {
         Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
-        if (!writers.hasNext()) {
-            throw new IOException("JPEG writer não disponível.");
-        }
+        if (!writers.hasNext()) throw new IOException("JPEG writer não disponível.");
         ImageWriter writer = writers.next();
         ImageWriteParam param = writer.getDefaultWriteParam();
         param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
         param.setCompressionQuality(quality);
-
-        try (OutputStream os = Files.newOutputStream(dest);
-             ImageOutputStream ios = ImageIO.createImageOutputStream(os)) {
+        try (ImageOutputStream ios = ImageIO.createImageOutputStream(os)) {
             writer.setOutput(ios);
             writer.write(null, new IIOImage(img, null, null), param);
         } finally {
@@ -154,30 +214,15 @@ public class FileUploadService {
         }
     }
 
-    /**
-     * Remove um ficheiro de upload anterior (se existir).
-     */
-    public void removerFicheiro(String relativePath) {
-        if (relativePath == null || relativePath.isBlank()) return;
-        try {
-            Path filePath = Paths.get(uploadDir, relativePath);
-            Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            System.err.println("Erro ao remover ficheiro: " + e.getMessage());
-        }
-    }
+    // ── Validação ────────────────────────────────────────────────────────────
 
-    /**
-     * Devolve o Path absoluto de um ficheiro relativo.
-     */
-    public Path resolverCaminho(String relativePath) {
-        return Paths.get(uploadDir, relativePath);
+    private void validar(MultipartFile file) {
+        if (file == null || file.isEmpty()) throw new IllegalArgumentException("Ficheiro vazio.");
+        if (file.getSize() > MAX_FILE_SIZE) throw new IllegalArgumentException("Ficheiro demasiado grande (máx. 10MB).");
     }
 
     private String getExtension(String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return "";
-        }
+        if (filename == null || !filename.contains(".")) return "";
         return filename.substring(filename.lastIndexOf('.') + 1);
     }
 }

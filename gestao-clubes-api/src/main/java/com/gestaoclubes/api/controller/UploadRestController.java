@@ -220,7 +220,7 @@ public class UploadRestController {
         }
     }
 
-    // ---- SERVIR FICHEIROS DE UPLOADS ----
+    // ---- SERVIR FICHEIROS DE UPLOADS (apenas armazenamento local) ----
     @GetMapping("/uploads/**")
     public ResponseEntity<Resource> servirFicheiro(HttpServletRequest request) {
         String fullPath = request.getRequestURI();
@@ -235,9 +235,7 @@ public class UploadRestController {
 
             Resource resource = new UrlResource(filePath.toUri());
             String contentType = Files.probeContentType(filePath);
-            if (contentType == null) {
-                contentType = "application/octet-stream";
-            }
+            if (contentType == null) contentType = "application/octet-stream";
 
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))

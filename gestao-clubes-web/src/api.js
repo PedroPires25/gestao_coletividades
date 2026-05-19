@@ -287,6 +287,10 @@ export async function uploadStaffFoto(id, file) {
 
 export function getUploadUrl(relativePath) {
     if (!relativePath) return null;
+    // Cloudinary (ou outra CDN) já devolve URL completa
+    if (relativePath.startsWith("http://") || relativePath.startsWith("https://")) {
+        return relativePath;
+    }
     return `${API_BASE}/uploads/${relativePath}`;
 }
 

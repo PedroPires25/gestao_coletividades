@@ -12,5 +12,3 @@ yarn.lock
 *.swo
 .DS_Store
 db.properties
-application.properties
-*.properties
