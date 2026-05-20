@@ -1090,3 +1090,21 @@ CREATE TABLE IF NOT EXISTS relatorio_medico (
   KEY idx_rm_atleta (atleta_id),
   KEY idx_rm_data (data_relatorio)
 ) ENGINE=InnoDB;
+
+-- -------------------------
+-- NOTIFICAÇÕES
+-- -------------------------
+CREATE TABLE IF NOT EXISTS notificacao (
+  id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+  utilizador_id INT NULL,
+  evento_id   INT NULL,
+  canal       VARCHAR(20)  NOT NULL,   -- EMAIL, SMS, WHATSAPP
+  destino     VARCHAR(100) NOT NULL,
+  mensagem    TEXT         NOT NULL,
+  estado      VARCHAR(20)  NOT NULL,   -- PENDENTE, ENVIADA, ERRO, SIMULADA
+  data_criacao DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  data_envio  DATETIME     NULL,
+
+  KEY idx_notif_evento (evento_id),
+  KEY idx_notif_estado (estado)
+) ENGINE=InnoDB;

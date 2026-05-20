@@ -5,6 +5,8 @@ import com.gestaoclubes.api.model.ClubeModalidade;
 import com.gestaoclubes.api.model.ColetividadeAtividade;
 import com.gestaoclubes.api.model.Evento;
 import com.gestaoclubes.api.security.SecurityUtils;
+import com.gestaoclubes.api.service.ConvocatoriaNotificacaoService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +25,9 @@ public class GestaoEventoRestController {
     private final EventoInscritoDAO eventoInscritoDAO = new EventoInscritoDAO();
     private final ClubeModalidadeDAO clubeModalidadeDAO = new ClubeModalidadeDAO();
     private final ColetividadeAtividadeDAO coletividadeAtividadeDAO = new ColetividadeAtividadeDAO();
+
+    @Autowired
+    private ConvocatoriaNotificacaoService notificacaoService;
 
     private boolean canManageEventos() {
         return SecurityUtils.isSuperAdmin()
@@ -150,6 +155,11 @@ public class GestaoEventoRestController {
                 eventoAtletaDAO.inserirMultiplos(eventoId, convocados);
             } else {
                 eventoInscritoDAO.inserirMultiplos(eventoId, convocados);
+            }
+            // Notificar convocados de forma assíncrona
+            Map<String, Object> eventoGuardado = eventoDAO.buscarPorId(eventoId);
+            if (eventoGuardado != null) {
+                notificacaoService.notificarConvocados(eventoId, eventoGuardado, tipo);
             }
         }
 
@@ -305,6 +315,11 @@ public class GestaoEventoRestController {
         } else {
             eventoInscritoDAO.removerTodos(id);
             if (!convocados.isEmpty()) eventoInscritoDAO.inserirMultiplos(id, convocados);
+        }
+
+        // Notificar novos convocados de forma assíncrona
+        if (!convocados.isEmpty()) {
+            notificacaoService.notificarConvocados(id, evento, tipo);
         }
 
         return ResponseEntity.ok(Map.of("mensagem", "Convocados atualizados com sucesso."));
