@@ -27,6 +27,22 @@ public class EmailService {
 
         mailSender.send(mensagem);
     }
+    public void enviarConvocatoria(String emailDestino, String nomeDestinatario,
+                                    String nomeEvento, String dataHora, String local) {
+        SimpleMailMessage mensagem = new SimpleMailMessage();
+        mensagem.setTo(emailDestino);
+        mensagem.setSubject("Convocatória - " + nomeEvento);
+        mensagem.setText("Olá" + (nomeDestinatario != null ? " " + nomeDestinatario : "") + ",\n\n" +
+                "Foi convocado(a) para o seguinte evento:\n\n" +
+                "  Evento : " + nomeEvento + "\n" +
+                "  Data/Hora: " + dataHora + "\n" +
+                "  Local   : " + local + "\n\n" +
+                "Por favor confirme a sua presença na plataforma.\n\n" +
+                "Cumprimentos,\n" +
+                "Equipa Gestão de Coletividades");
+        mailSender.send(mensagem);
+    }
+
     public void enviarEmailConfirmacaoAlteracao(String emailDestino) {
         SimpleMailMessage mensagem = new SimpleMailMessage();
         mensagem.setTo(emailDestino);
