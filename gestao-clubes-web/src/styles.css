@@ -372,7 +372,7 @@ body.theme-dark::after {
 
 .login-shell {
     width: 100%;
-    max-width: 480px;
+    max-width: 420px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -383,8 +383,8 @@ body.theme-dark::after {
     width: 100%;
     background: var(--login-card-bg);
     border: 1px solid var(--login-card-border);
-    border-radius: 22px;
-    padding: 28px 36px;
+    border-radius: 20px;
+    padding: 24px 30px;
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     box-shadow:
