@@ -928,7 +928,37 @@ table td:last-child {
     top: 0;
     z-index: 2;
     background: var(--bg-modal);
-    padding-bottom: 8px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 10px 0 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Quando o modal tem um .modal-body, o header/footer ficam realmente
+   fixos (não sticky) e só o corpo faz scroll. */
+.modal:has(> .modal-body) {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal:has(> .modal-body) > .modal-header,
+.modal:has(> .modal-body) > .modal-footer {
+    position: static;
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px 4px;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translate(-50%, -10px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
 }
 
 .modal-header h3 {
@@ -952,6 +982,11 @@ table td:last-child {
     z-index: 2;
     background: var(--bg-modal);
     padding-top: 10px;
+}
+
+.modal:has(> .modal-body) > .modal-footer {
+    border-top: 1px solid var(--border);
+    padding: 12px 0 4px;
 }
 
 /* =========================
