@@ -216,8 +216,7 @@ body::before {
     position: fixed;
     inset: 0;
     z-index: -2;
-    background: url("./assets/background.png") center/cover no-repeat;
-    transform: scale(1.02);
+    background: url("./assets/background.png") center center / cover no-repeat;
     opacity: 1;
     transition: opacity 0.25s ease;
 }
