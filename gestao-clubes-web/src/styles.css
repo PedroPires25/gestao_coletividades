@@ -357,8 +357,8 @@ body.theme-dark::after {
 }
 
 .login-logo-fixed {
-    width: 235px;
-    max-width: 32vw;
+    width: 185px;
+    max-width: 28vw;
     height: auto;
     display: block;
     object-fit: contain;
@@ -463,10 +463,10 @@ body.theme-dark::after {
 .login-theme-floating-wrap {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     align-items: stretch;
-    padding: 12px 14px;
-    border-radius: 16px;
+    padding: 9px 11px;
+    border-radius: 13px;
     border: 1px solid var(--border);
     background: var(--bg-appbar);
     backdrop-filter: blur(12px);
@@ -488,9 +488,9 @@ body.theme-dark::after {
 
 .login-theme-floating-select {
     width: 100%;
-    min-width: 140px;
-    padding: 10px 12px;
-    border-radius: 12px;
+    min-width: 118px;
+    padding: 7px 10px;
+    border-radius: 10px;
     border: 1px solid var(--border);
     background: var(--bg-input);
     color: var(--text);
