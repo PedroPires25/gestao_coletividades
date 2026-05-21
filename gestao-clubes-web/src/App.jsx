@@ -57,6 +57,9 @@ import AtletaFichaMedicaPage from "./pages/AtletaFichaMedicaPage";
 // perfil
 import PerfilPage from "./pages/PerfilPage";
 
+// política de privacidade
+import PoliticaPrivacidadePage from "./pages/PoliticaPrivacidadePage";
+
 function NotFoundPage() {
     return (
         <div style={{ padding: 24 }}>
@@ -94,6 +97,7 @@ export default function App() {
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/recuperar-password/confirmar" element={<EmailFeedbackPage />} />
                 <Route path="/reset-password/success" element={<ResetSuccessPage />} />
+                <Route path="/politica-privacidade" element={<PoliticaPrivacidadePage />} />
 
                 {/* Página de registo pendente */}
                 <Route path="/pending-approval" element={<PendingApprovalPage />} />
