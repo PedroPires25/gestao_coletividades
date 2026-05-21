@@ -218,7 +218,7 @@ body::before {
     z-index: -2;
     background-image: url("./assets/background.png");
     background-position: center center;
-    background-size: clamp(1000px, 100vw, 1800px) auto;
+    background-size: cover;
     background-repeat: no-repeat;
     opacity: 1;
     transition: opacity 0.25s ease;
