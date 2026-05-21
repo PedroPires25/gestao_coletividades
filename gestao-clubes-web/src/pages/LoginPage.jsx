@@ -95,6 +95,11 @@ export default function LoginPage() {
     const [rOk, setROk] = useState("");
     const [rLoading, setRLoading] = useState(false);
 
+    // ── consentimentos ──
+    const [consentGeral, setConsentGeral] = useState(false);
+    const [consentMedico, setConsentMedico] = useState(false);
+    const [consentMenor, setConsentMenor] = useState(false);
+
     const registerPasswordState = evaluatePassword(rPass);
 
     useEffect(() => {
@@ -225,6 +230,13 @@ export default function LoginPage() {
         }
     }
 
+    function closeRegisterModal() {
+        setOpen(false);
+        setConsentGeral(false);
+        setConsentMedico(false);
+        setConsentMenor(false);
+    }
+
     async function onSubmit(e) {
         e.preventDefault();
         setErro("");
@@ -260,6 +272,17 @@ export default function LoginPage() {
     async function onRegister() {
         setRErro("");
         setROk("");
+
+        if (!consentGeral) {
+            setRErro("Deves aceitar os Termos e Condições e a Política de Privacidade para continuar.");
+            return;
+        }
+
+        const PERFIS_MEDICO = ["ATLETA", "DEPARTAMENTO_MEDICO", "TREINADOR_PRINCIPAL"];
+        if (PERFIS_MEDICO.includes(rPerfil) && !consentMedico) {
+            setRErro("Para este perfil é obrigatória a autorização do tratamento de dados médicos.");
+            return;
+        }
 
         if (!rEmail.trim()) {
             setRErro("O email é obrigatório.");
@@ -422,11 +445,11 @@ export default function LoginPage() {
             </div>
 
             {open && (
-                <div className="modal-backdrop" onMouseDown={() => setOpen(false)}>
+                <div className="modal-backdrop" onMouseDown={closeRegisterModal}>
                     <div className="modal scale-in" onMouseDown={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3>Novo Utilizador</h3>
-                            <button className="btn modal-close" onClick={() => setOpen(false)} type="button">
+                            <button className="btn modal-close" onClick={closeRegisterModal} type="button">
                                 ×
                             </button>
                         </div>
@@ -580,16 +603,79 @@ export default function LoginPage() {
                                 password={rPass}
                                 confirmPassword={rPass2}
                             />
+
+                            {/* ── CONSENTIMENTOS ── */}
+                            <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                                {/* Consentimento Geral — OBRIGATÓRIO */}
+                                <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", fontSize: 13 }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={consentGeral}
+                                        onChange={(e) => setConsentGeral(e.target.checked)}
+                                        style={{ marginTop: 2, flexShrink: 0 }}
+                                    />
+                                    <span>
+                                        Declaro que li e aceito os{" "}
+                                        <a href="/politica-privacidade" target="_blank" rel="noopener noreferrer"
+                                           style={{ color: "#4da6ff" }}>
+                                            Termos e Condições e a Política de Privacidade
+                                        </a>{" "}
+                                        da plataforma. <span style={{ color: "#e05252" }}>*</span>
+                                    </span>
+                                </label>
+
+                                {/* Consentimento Médico — obrigatório para perfis clínicos/desportivos */}
+                                {["ATLETA", "DEPARTAMENTO_MEDICO", "TREINADOR_PRINCIPAL"].includes(rPerfil) && (
+                                    <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", fontSize: 13 }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={consentMedico}
+                                            onChange={(e) => setConsentMedico(e.target.checked)}
+                                            style={{ marginTop: 2, flexShrink: 0 }}
+                                        />
+                                        <span>
+                                            Autorizo expressamente o tratamento dos meus dados médicos e informação clínica
+                                            para fins de acompanhamento desportivo e segurança.{" "}
+                                            <span style={{ color: "#e05252" }}>*</span>
+                                        </span>
+                                    </label>
+                                )}
+
+                                {/* Consentimento Menor — opcional */}
+                                <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", fontSize: 13 }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={consentMenor}
+                                        onChange={(e) => setConsentMenor(e.target.checked)}
+                                        style={{ marginTop: 2, flexShrink: 0 }}
+                                    />
+                                    <span>
+                                        Na qualidade de encarregado(a) de educação, autorizo a recolha e tratamento dos dados
+                                        pessoais do menor sob minha responsabilidade, incluindo informação médica necessária
+                                        às atividades desportivas e culturais. <em style={{ color: "#888" }}>(se aplicável)</em>
+                                    </span>
+                                </label>
+
+                                <p style={{ fontSize: 11, color: "#888", margin: 0 }}>
+                                    <span style={{ color: "#e05252" }}>*</span> Campo obrigatório
+                                </p>
+                            </div>
                         </div>
 
                         <div className="modal-footer">
-                            <button className="btn" type="button" onClick={() => setOpen(false)}>
+                            <button className="btn" type="button" onClick={closeRegisterModal}>
                                 Cancelar
                             </button>
                             <button
                                 className="btn btn-primary"
                                 type="button"
-                                disabled={rLoading || !registerPasswordState.isValid || rPass !== rPass2}
+                                disabled={
+                                    rLoading ||
+                                    !registerPasswordState.isValid ||
+                                    rPass !== rPass2 ||
+                                    !consentGeral ||
+                                    (["ATLETA", "DEPARTAMENTO_MEDICO", "TREINADOR_PRINCIPAL"].includes(rPerfil) && !consentMedico)
+                                }
                                 onClick={onRegister}
                             >
                                 {rLoading ? "A criar..." : "Registar"}
