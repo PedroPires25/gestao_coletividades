@@ -277,6 +277,7 @@ export default function ColetividadesPage() {
                             {erro && <div className="alert error">{erro}</div>}
                             {msg && <div className="alert ok">{msg}</div>}
 
+                            <div className="form-scroll">
                             <form onSubmit={onSubmit} className="row">
                                 <input className="input" name="nome" placeholder="Nome *" value={form.nome} onChange={onChange} required />
 
@@ -354,6 +355,7 @@ export default function ColetividadesPage() {
                                     <button className="btn" type="button" onClick={carregar}>Recarregar</button>
                                 </div>
                             </form>
+                            </div>
                         </section>
                     )}
 

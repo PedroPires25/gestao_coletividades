@@ -525,6 +525,7 @@ export default function ClubeStaffPage() {
                         ) : modalidades.length === 0 ? (
                             <p className="subtle">Este clube ainda não tem modalidades associadas.</p>
                         ) : (
+                            <div className="form-scroll">
                             <form onSubmit={onSubmit} className="row">
                                 <div className="row2">
                                     <div className="row">
@@ -629,6 +630,7 @@ export default function ClubeStaffPage() {
                                     </button>
                                 </div>
                             </form>
+                            </div>
                         )}
                     </section>
                 </div>

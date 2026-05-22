@@ -259,6 +259,7 @@ export default function ColetividadeStaffAtividadePage() {
 
                     <section className="card">
                         <h2>Registar staff</h2>
+                        <div className="form-scroll">
                         <form className="row" onSubmit={onSubmit}>
                             <input className="input" name="nome" placeholder="Nome *" value={form.nome} onChange={onChange} />
                             <div className="row2">
@@ -288,6 +289,7 @@ export default function ColetividadeStaffAtividadePage() {
                                 </button>
                             </div>
                         </form>
+                        </div>
                     </section>
                 </div>
             </div>
