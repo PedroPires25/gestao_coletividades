@@ -49,7 +49,7 @@ export default function SideMenu({
                                      title = "Gestão de Coletividades",
                                      subtitle = "",
                                      logoHref = "/menu",
-                                     logoSrc = "/logo.png",
+                                     logoSrc = "/LOGO_GCDC04.png",
                                      items = [],
                                      showBurger = true,
                                      eventoBadge = null,
