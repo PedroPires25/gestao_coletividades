@@ -424,8 +424,8 @@ export default function GestaoEventosPage() {
 
     const menuItems = [
         { label: "Home", to: "/menu" },
-        { label: "Clubes", to: "/clubes" },
-        { label: "Coletividades", to: "/coletividades" },
+        ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+        ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         { label: "Eventos", to: "/gestao/eventos" },
         {

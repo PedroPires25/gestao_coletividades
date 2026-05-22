@@ -22,6 +22,7 @@ public class ColetividadeRestController {
 
     @GetMapping
     public List<Coletividade> listarTodos() {
+        exigirSuperAdmin();
         return coletividadeDAO.listarTodos();
     }
 

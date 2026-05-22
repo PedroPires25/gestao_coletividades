@@ -169,7 +169,7 @@ function getStaffDestination(clubeId, item) {
 export default function ClubeStaffPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [staffRows, setStaffRows] = useState([]);
@@ -200,8 +200,8 @@ export default function ClubeStaffPage() {
     const menuItems = useMemo(
         () => [
             { label: "Home", to: "/menu" },
-            { label: "Clubes", to: "/clubes" },
-            { label: "Coletividades", to: "/coletividades" },
+            ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+            ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
             { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
@@ -215,7 +215,7 @@ export default function ClubeStaffPage() {
                 },
             },
         ],
-        [clubeId, isAdmin, logout, navigate]
+        [clubeId, isAdmin, isSuperAdmin, logout, navigate]
     );
 
     useEffect(() => {

@@ -12,6 +12,7 @@ import staffIcon from "../assets/staff.svg";
 import transferenciasIcon from "../assets/transferencias.svg";
 import eventosIcon from "../assets/eventos.svg";
 import perfisIcon from "../assets/perfis.svg";
+import definicoesIcon from "../assets/direcao.svg";
 
 const QUICK_ICONS = {
     "Modalidades do Clube": modalidadesIcon,
@@ -20,12 +21,13 @@ const QUICK_ICONS = {
     "Transferências": transferenciasIcon,
     "Eventos": eventosIcon,
     "Perfis": perfisIcon,
+    "Definições do Clube": definicoesIcon,
 };
 
 export default function ClubeHomePage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, canManageClube } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [erro, setErro] = useState("");
@@ -68,10 +70,11 @@ export default function ClubeHomePage() {
     const menuItems = useMemo(
         () => [
             { label: "Home", to: "/menu" },
-            { label: "Clubes", to: "/clubes" },
-            { label: "Coletividades", to: "/coletividades" },
+            ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+            ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
+            ...(canManageClube(Number(clubeId)) ? [{ label: "Definições do Clube", to: `/clubes/${clubeId}/editar` }] : []),
             {
                 label: "Logout",
                 onClick: () => {
@@ -80,7 +83,7 @@ export default function ClubeHomePage() {
                 },
             },
         ],
-        [clubeId, isAdmin, logout, navigate]
+        [clubeId, isAdmin, isSuperAdmin, canManageClube, logout, navigate]
     );
 
     const quickLinks = [
@@ -90,6 +93,7 @@ export default function ClubeHomePage() {
         { label: "Eventos", to: `/clubes/${clubeId}/eventos` },
         { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+        ...(canManageClube(Number(clubeId)) ? [{ label: "Definições do Clube", to: `/clubes/${clubeId}/editar` }] : []),
     ];
 
     const colorClasses = [

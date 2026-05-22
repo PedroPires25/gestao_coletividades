@@ -10,12 +10,14 @@ import modalidadesIcon from "../assets/modalidades.svg";
 import atletasIcon from "../assets/atletas.svg";
 import staffIcon from "../assets/staff.svg";
 import perfisIcon from "../assets/perfis.svg";
+import definicoesIcon from "../assets/direcao.svg";
 
 const QUICK_ICONS = {
     "Atividades": modalidadesIcon,
     "Utentes": atletasIcon,
     "Staff": staffIcon,
     "Perfis": perfisIcon,
+    "Definições da Coletividade": definicoesIcon,
 };
 
 export default function ColetividadeHomePage() {
@@ -23,7 +25,7 @@ export default function ColetividadeHomePage() {
     const coletividadeId = params.id ?? params.coletividadeId ?? null;
 
     const navigate = useNavigate();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, canManageColetividade } = useAuth();
 
     const [coletividade, setColetividade] = useState(null);
     const [erro, setErro] = useState("");
@@ -68,12 +70,13 @@ export default function ColetividadeHomePage() {
     const menuItems = useMemo(
         () => [
             { label: "Home", to: "/menu" },
-            { label: "Clubes", to: "/clubes" },
-            { label: "Coletividades", to: "/coletividades" },
+            ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+            ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Atividades", to: `/coletividades/${coletividadeId}/atividades` },
             { label: "Utentes", to: `/coletividades/${coletividadeId}/utentes` },
             { label: "Staff", to: `/coletividades/${coletividadeId}/staff` },
+            ...(canManageColetividade(Number(coletividadeId)) ? [{ label: "Definições da Coletividade", to: `/coletividades/${coletividadeId}/editar` }] : []),
             {
                 label: "Logout",
                 onClick: () => {
@@ -82,7 +85,7 @@ export default function ColetividadeHomePage() {
                 },
             },
         ],
-        [coletividadeId, isAdmin, logout, navigate]
+        [coletividadeId, isAdmin, isSuperAdmin, canManageColetividade, logout, navigate]
     );
 
     const quickLinks = [
@@ -101,6 +104,10 @@ export default function ColetividadeHomePage() {
         ...(isAdmin ? [{
             label: "Perfis",
             to: "/admin/users",
+        }] : []),
+        ...(canManageColetividade(Number(coletividadeId)) ? [{
+            label: "Definições da Coletividade",
+            to: `/coletividades/${coletividadeId}/editar`,
         }] : []),
     ];
 

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
 import RequireAdmin from "./auth/RequireAdmin";
+import RequireSuperAdmin from "./auth/RequireSuperAdmin";
 
 // páginas base
 import LoginPage from "./pages/LoginPage";
@@ -10,6 +11,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import EmailFeedbackPage from "./pages/EmailFeedbackPage";
 import ResetSuccessPage from "./pages/ResetSuccessPage";
 import PendingApprovalPage from "./pages/PendingApprovalPage";
+import AcessoNegadoPage from "./pages/AcessoNegadoPage";
 
 // admin
 import AdminUsersPage from "./pages/AdminUsersPage";
@@ -19,6 +21,7 @@ import AdminApprovedUsersPage from "./pages/AdminApprovedUsersPage";
 // clubes
 import ClubesPage from "./pages/ClubesPage";
 import ClubeHomePage from "./pages/ClubeHomePage";
+import ClubeEditPage from "./pages/ClubeEditPage";
 import ClubeAtletasPage from "./pages/ClubeAtletasPage";
 import ClubeAtletasModalidadePage from "./pages/ClubeAtletasModalidadePage";
 import ClubeStaffPage from "./pages/ClubeStaffPage";
@@ -33,6 +36,7 @@ import ModalidadeEventosPage from "./pages/ModalidadeEventosPage";
 // coletividades
 import ColetividadesPage from "./pages/ColetividadesPage";
 import ColetividadeHomePage from "./pages/ColetividadeHomePage";
+import ColetividadeEditPage from "./pages/ColetividadeEditPage";
 
 // novas páginas das coletividades
 import ColetividadeAtividadesPage from "./pages/ColetividadeAtividadesPage";
@@ -102,6 +106,9 @@ export default function App() {
                 {/* Página de registo pendente */}
                 <Route path="/pending-approval" element={<PendingApprovalPage />} />
 
+                {/* Acesso negado */}
+                <Route path="/acesso-negado" element={<RequireAuth><AcessoNegadoPage /></RequireAuth>} />
+
                 <Route
                     path="/menu"
                     element={
@@ -149,13 +156,13 @@ export default function App() {
                     }
                 />
 
-                {/* CLUBES */}
+                {/* CLUBES — lista global (apenas SUPER_ADMIN) */}
                 <Route
                     path="/clubes"
                     element={
-                        <RequireAuth>
+                        <RequireSuperAdmin>
                             <ClubesPage />
-                        </RequireAuth>
+                        </RequireSuperAdmin>
                     }
                 />
 
@@ -164,6 +171,16 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <ClubeHomePage />
+                        </RequireAuth>
+                    }
+                />
+
+                {/* Edição de dados do clube (SUPER_ADMIN ou ADMIN do próprio clube) */}
+                <Route
+                    path="/clubes/:clubeId/editar"
+                    element={
+                        <RequireAuth>
+                            <ClubeEditPage />
                         </RequireAuth>
                     }
                 />
@@ -249,13 +266,13 @@ export default function App() {
                     }
                 />
 
-                {/* COLETIVIDADES */}
+                {/* COLETIVIDADES — lista global (apenas SUPER_ADMIN) */}
                 <Route
                     path="/coletividades"
                     element={
-                        <RequireAuth>
+                        <RequireSuperAdmin>
                             <ColetividadesPage />
-                        </RequireAuth>
+                        </RequireSuperAdmin>
                     }
                 />
 
@@ -264,6 +281,16 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <ColetividadeHomePage />
+                        </RequireAuth>
+                    }
+                />
+
+                {/* Edição de dados da coletividade (SUPER_ADMIN ou ADMIN da própria coletividade) */}
+                <Route
+                    path="/coletividades/:id/editar"
+                    element={
+                        <RequireAuth>
+                            <ColetividadeEditPage />
                         </RequireAuth>
                     }
                 />
