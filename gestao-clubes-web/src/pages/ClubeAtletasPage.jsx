@@ -329,7 +329,7 @@ export default function ClubeAtletasPage() {
                 title="Gestão de Coletividades"
                 subtitle={clube?.nome || "Clube"}
                 logoHref="/menu"
-                logoSrc="/logo.png"
+                logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
 

@@ -73,7 +73,7 @@ export default function ModalidadeEventosPage() {
     if (loading) {
         return (
             <div>
-                <SideMenu title={clube?.nome || "Clube"} subtitle="Eventos do Clube" logoHref={`/clubes/${clubeId}/clube-modalidade/${clubeModalidadeId}/modalidade`} logoSrc="/logo.png" items={menuItems} />
+                <SideMenu title={clube?.nome || "Clube"} subtitle="Eventos do Clube" logoHref={`/clubes/${clubeId}/clube-modalidade/${clubeModalidadeId}/modalidade`} logoSrc="/LOGO_GCDC04.png" items={menuItems} />
                 <div className="container" style={{ paddingTop: 24 }}><p>A carregar...</p></div>
             </div>
         );
@@ -85,7 +85,7 @@ export default function ModalidadeEventosPage() {
                 title={clube?.nome || "Clube"}
                 subtitle="Eventos do Clube"
                 logoHref={`/clubes/${clubeId}/clube-modalidade/${clubeModalidadeId}/modalidade`}
-                logoSrc="/logo.png"
+                logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
 
