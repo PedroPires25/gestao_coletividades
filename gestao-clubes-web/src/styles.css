@@ -2627,17 +2627,17 @@ img.avatar-circle-sm {
 ========================= */
 
 @media (max-width: 768px) {
-    /* Permitir scroll vertical na página inteira */
+    /* Página nunca faz scroll horizontal */
     html,
     body,
     #root {
+        width: 100%;
         min-height: 100%;
-        height: auto;
-        overflow-x: hidden;
-        overflow-y: auto;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
     }
 
-    /* Containers principais: sem overflow a cortar conteúdo */
+    /* Containers principais: sem overflow a cortar */
     .container,
     .page,
     .content,
@@ -2645,62 +2645,67 @@ img.avatar-circle-sm {
     .dashboard-content {
         width: 100%;
         max-width: 100vw;
-        height: auto;
-        overflow-x: hidden;
-        overflow-y: visible;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+        box-sizing: border-box;
         padding-left: 12px;
         padding-right: 12px;
-        box-sizing: border-box;
     }
 
-    /* Cartões: crescem com o conteúdo, não cortam formulários */
+    /* Cartões: clip de overflow — o scroll fica dentro deles */
     .card,
     .panel,
     .glass-card,
-    .table-card,
     .form-card {
         width: 100%;
         max-width: 100%;
-        height: auto !important;
-        max-height: none !important;
+        overflow: hidden !important;
         box-sizing: border-box;
-        overflow: visible;
         border-radius: 16px;
     }
 
-    /* Formulários: altura livre */
-    form {
-        width: 100%;
-        height: auto;
-        overflow: visible;
-    }
-
-    /* .row2 já colapsa para 1 coluna em <600px, garantir também em 768px */
-    .row2 {
-        grid-template-columns: 1fr;
-    }
-
-    /* Wrappers de tabela: scroll horizontal interno */
+    /* Zonas com scroll horizontal interno (tabelas e formulários) */
     .table-wrap,
+    .mobile-scroll,
     .table-wrapper,
     .table-container,
     .responsive-table,
     .crud-table-wrapper,
-    .table-responsive {
+    .table-responsive,
+    .form-scroll {
+        display: block;
         width: 100%;
         max-width: 100%;
-        overflow-x: auto;
-        overflow-y: hidden;
+        overflow-x: auto !important;
+        overflow-y: visible !important;
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Tabelas com largura mínima para não esmagar colunas */
-    table {
+    /* Tabelas dentro dos wrappers */
+    .table-wrap table,
+    .mobile-scroll table,
+    .table-wrapper table,
+    .table-container table,
+    .responsive-table table,
+    .crud-table-wrapper table,
+    .table-responsive table {
+        width: max-content;
         min-width: 700px;
-        border-collapse: collapse;
     }
 
-    /* Inputs/selects/botões: nunca ultrapassam a largura */
+    /* Formulários dentro de form-scroll */
+    .form-scroll form {
+        min-width: 480px;
+        max-width: none;
+        width: 100%;
+    }
+
+    /* .row2 colapsa para 1 coluna */
+    .row2 {
+        grid-template-columns: 1fr;
+    }
+
+    /* Inputs e botões não ultrapassam o pai */
     input,
     select,
     textarea,
@@ -2709,7 +2714,7 @@ img.avatar-circle-sm {
         box-sizing: border-box;
     }
 
-    /* Barras de pesquisa e ações: ficam em coluna */
+    /* Barras de pesquisa em coluna */
     .actions,
     .form-actions,
     .filters,
