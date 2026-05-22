@@ -290,6 +290,7 @@ export default function PrescricoesPage() {
                             </button>
                         </div>
                         {showForm && (
+                            <div className="form-scroll">
                             <form onSubmit={onSubmit} className="row">
                                 <FormFields values={form} onChange={onChange} />
                                 <div className="actions" style={{ marginTop: 8 }}>
@@ -298,6 +299,7 @@ export default function PrescricoesPage() {
                                     </button>
                                 </div>
                             </form>
+                            </div>
                         )}
                     </div>
                 </div>

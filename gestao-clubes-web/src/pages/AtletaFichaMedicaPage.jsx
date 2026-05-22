@@ -125,6 +125,7 @@ export default function AtletaFichaMedicaPage() {
                             </div>
                         )}
 
+                        <div className="form-scroll">
                         <form onSubmit={onSubmit} className="row">
                             <div className="row">
                                 <label className="field-label">Grupo sanguíneo</label>
@@ -200,6 +201,7 @@ export default function AtletaFichaMedicaPage() {
                                 </button>
                             </div>
                         </form>
+                        </div>
                     </div>
                 )}
             </div>

@@ -249,6 +249,7 @@ export default function ColetividadeUtentesAtividadePage() {
 
                     <section className="card">
                         <h2>Registar utente</h2>
+                        <div className="form-scroll">
                         <form className="row" onSubmit={onSubmit}>
                             <input className="input" name="nome" placeholder="Nome *" value={form.nome} onChange={onChange} />
                             <div className="row2">
@@ -274,6 +275,7 @@ export default function ColetividadeUtentesAtividadePage() {
                                 </button>
                             </div>
                         </form>
+                        </div>
                     </section>
                 </div>
             </div>
