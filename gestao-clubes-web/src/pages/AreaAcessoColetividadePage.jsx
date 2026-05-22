@@ -51,7 +51,7 @@ export default function AreaAcessoColetividadePage() {
     if (loading) {
         return (
             <div>
-                <SideMenu title={coletividade?.nome || "Coletividade"} subtitle="Área de Acesso" logoHref="/login" logoSrc="/logo.png" items={menuItems} />
+                <SideMenu title={coletividade?.nome || "Coletividade"} subtitle="Área de Acesso" logoHref="/login" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
                 <div className="container" style={{ paddingTop: 24 }}>
                     <p>A carregar...</p>
                 </div>
@@ -65,7 +65,7 @@ export default function AreaAcessoColetividadePage() {
                 title={coletividade?.nome || "Coletividade"}
                 subtitle="Área de Acesso"
                 logoHref={`/minha-area/coletividade/${coletividadeId}`}
-                logoSrc="/logo.png"
+                logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
 

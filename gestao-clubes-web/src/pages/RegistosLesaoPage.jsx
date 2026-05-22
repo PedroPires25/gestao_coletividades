@@ -241,7 +241,7 @@ export default function RegistosLesaoPage() {
 
     return (
         <>
-            <SideMenu title="Gestão de Clubes" subtitle={clube?.nome || "Clube"} logoHref="/menu" logoSrc="/logo.png" items={menuItems} />
+            <SideMenu title="Gestão de Clubes" subtitle={clube?.nome || "Clube"} logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
 
             <div className="container" style={{ paddingTop: 24 }}>
                 <div className="page-title page-title-with-icon">

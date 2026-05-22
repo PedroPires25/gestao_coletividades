@@ -59,7 +59,7 @@ export default function AdminUsersPage() {
                 title="Gestão de Coletividades"
                 subtitle="Gestão de Perfis"
                 logoHref="/menu"
-                logoSrc="/logo.png"
+                logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
 
