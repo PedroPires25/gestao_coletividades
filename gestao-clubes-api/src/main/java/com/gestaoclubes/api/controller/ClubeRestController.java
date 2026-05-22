@@ -22,6 +22,7 @@ public class ClubeRestController {
 
     @GetMapping
     public List<Clube> listarTodos() {
+        exigirSuperAdmin();
         return clubeDAO.listarTodos();
     }
 

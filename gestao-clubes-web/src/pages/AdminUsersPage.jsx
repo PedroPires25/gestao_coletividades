@@ -18,8 +18,8 @@ export default function AdminUsersPage() {
     const menuItems = useMemo(
         () => [
             { label: "Home", to: "/menu" },
-            { label: "Clubes", to: "/clubes" },
-            { label: "Coletividades", to: "/coletividades" },
+            ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+            ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             {
                 label: "Logout",
                 onClick: () => {
@@ -28,7 +28,7 @@ export default function AdminUsersPage() {
                 },
             },
         ],
-        [isAdmin, logout, navigate]
+        [isAdmin, isSuperAdmin, logout, navigate]
     );
 
     const quickLinks = [

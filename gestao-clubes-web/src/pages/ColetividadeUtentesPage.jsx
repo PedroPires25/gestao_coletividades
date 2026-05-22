@@ -12,7 +12,7 @@ const COLOR_CLASSES = ["icon-turquoise", "icon-orange", "icon-red", "icon-green"
 export default function ColetividadeUtentesPage() {
     const { id: coletividadeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
 
     const [coletividade, setColetividade] = useState(null);
     const [atividades, setAtividades] = useState([]);
@@ -21,8 +21,8 @@ export default function ColetividadeUtentesPage() {
 
     const menuItems = useMemo(() => [
         { label: "Home", to: "/menu" },
-        { label: "Clubes", to: "/clubes" },
-        { label: "Coletividades", to: "/coletividades" },
+        ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+        ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         { label: "Atividades", to: `/coletividades/${coletividadeId}/atividades` },
         { label: "Utentes", to: `/coletividades/${coletividadeId}/utentes` },
@@ -34,7 +34,7 @@ export default function ColetividadeUtentesPage() {
                 navigate("/login", { replace: true });
             },
         },
-    ], [coletividadeId, isAdmin, logout, navigate]);
+    ], [coletividadeId, isAdmin, isSuperAdmin, logout, navigate]);
 
     useEffect(() => {
         async function carregarPagina() {

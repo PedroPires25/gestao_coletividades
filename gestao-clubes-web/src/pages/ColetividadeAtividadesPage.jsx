@@ -49,7 +49,7 @@ function buildAnos({ past = 10, future = 10 } = {}) {
 
 export default function ColetividadeAtividadesPage() {
     const { id: coletividadeId } = useParams();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
     const navigate = useNavigate();
 
     const [coletividade, setColetividade] = useState(null);
@@ -80,8 +80,8 @@ export default function ColetividadeAtividadesPage() {
     const menuItems = useMemo(
         () => [
             { label: "Home", to: "/menu" },
-            { label: "Clubes", to: "/clubes" },
-            { label: "Coletividades", to: "/coletividades" },
+            ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+            ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Atividades", to: `/coletividades/${coletividadeId}/atividades` },
             { label: "Utentes", to: `/coletividades/${coletividadeId}/utentes` },
@@ -94,7 +94,7 @@ export default function ColetividadeAtividadesPage() {
                 },
             },
         ],
-        [coletividadeId, isAdmin, logout, navigate]
+        [coletividadeId, isAdmin, isSuperAdmin, logout, navigate]
     );
 
     const anosGerados = useMemo(() => buildAnos(), []);
