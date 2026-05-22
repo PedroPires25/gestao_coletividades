@@ -76,7 +76,7 @@ export default function ClubeEventosPage() {
     if (loading) {
         return (
             <div>
-                <SideMenu title={clube?.nome || "Clube"} subtitle="Eventos do Clube" logoHref="/menu" logoSrc="/logo.png" items={menuItems} />
+                <SideMenu title={clube?.nome || "Clube"} subtitle="Eventos do Clube" logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
                 <div className="container" style={{ paddingTop: 24 }}>
                     <p>A carregar...</p>
                 </div>
@@ -90,7 +90,7 @@ export default function ClubeEventosPage() {
                 title={clube?.nome || "Clube"}
                 subtitle="Eventos do Clube"
                 logoHref="/menu"
-                logoSrc="/logo.png"
+                logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
 

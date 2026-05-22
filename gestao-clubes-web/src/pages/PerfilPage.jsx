@@ -229,7 +229,7 @@ export default function PerfilPage() {
                 title="Gestão de Coletividades"
                 subtitle="Perfil"
                 logoHref="/menu"
-                logoSrc="/logo.png"
+                logoSrc="/LOGO_GCDC04.png"
                 items={[]}
                 showBurger={false}
             />

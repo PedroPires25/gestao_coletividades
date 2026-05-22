@@ -175,7 +175,7 @@ export default function ColetividadeStaffAtividadePage() {
 
     return (
         <>
-            <SideMenu title="Gestão de Coletividades" subtitle={coletividade?.nome || "Coletividade"} logoHref="/menu" logoSrc="/logo.png" items={menuItems} />
+            <SideMenu title="Gestão de Coletividades" subtitle={coletividade?.nome || "Coletividade"} logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
             <div className="container" style={{ paddingTop: 24 }}>
                 <div className="page-title page-title-with-icon">
                     <div className="page-title-main-wrap">

@@ -86,7 +86,7 @@ export default function AreaAcessoClubePage() {
     if (loading) {
         return (
             <div>
-                <SideMenu title={clube?.nome || "Clube"} subtitle="Área de Acesso" logoHref="/login" logoSrc="/logo.png" items={menuItems} />
+                <SideMenu title={clube?.nome || "Clube"} subtitle="Área de Acesso" logoHref="/login" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
                 <div className="container" style={{ paddingTop: 24 }}>
                     <p>A carregar...</p>
                 </div>
@@ -100,7 +100,7 @@ export default function AreaAcessoClubePage() {
                 title={clube?.nome || "Clube"}
                 subtitle="Área de Acesso"
                 logoHref={`/minha-area/clube/${clubeId}`}
-                logoSrc="/logo.png"
+                logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
 

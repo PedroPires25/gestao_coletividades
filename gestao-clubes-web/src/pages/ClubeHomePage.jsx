@@ -106,7 +106,7 @@ export default function ClubeHomePage() {
                 title="Gestão de Coletividades"
                 subtitle={subtitle}
                 logoHref="/menu"
-                logoSrc="/logo.png"
+                logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
 
