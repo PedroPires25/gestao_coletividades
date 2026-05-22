@@ -19,7 +19,7 @@ const EMPTY_FORM = {
 export default function AtletaFichaMedicaPage() {
     const { clubeId, atletaId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -32,11 +32,11 @@ export default function AtletaFichaMedicaPage() {
 
     const menuItems = useMemo(() => [
         { label: "Home", to: "/menu" },
-        { label: "Clubes", to: "/clubes" },
+        ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         { label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` },
         { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
-    ], [clubeId, isAdmin, logout, navigate]);
+    ], [clubeId, isAdmin, isSuperAdmin, logout, navigate]);
 
     useEffect(() => {
         async function carregar() {

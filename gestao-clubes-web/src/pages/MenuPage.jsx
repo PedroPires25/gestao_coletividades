@@ -18,7 +18,7 @@ const MENU_ACTIONS = {
 };
 
 export default function MenuPage() {
-    const { logout, isAdmin, role, clubeId } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, role, clubeId } = useAuth();
     const navigate = useNavigate();
     const [meusEventos, setMeusEventos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -60,9 +60,9 @@ export default function MenuPage() {
 
     const items = [
         { label: "Home", to: "/menu" },
-        { label: "Clubes", to: "/clubes" },
-        { label: "Coletividades", to: "/coletividades" },
-                        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+        ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+        ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
+        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         ...(canOpenGestaoEventos ? [{ label: "Eventos", to: "/gestao/eventos" }] : []),
         {
             label: "Logout",
@@ -87,23 +87,27 @@ export default function MenuPage() {
 
             <div className="menu-center-wrapper">
                 <div className="quick-actions-row">
-                    <Link to="/clubes" className="quick-action quick-action-cyan">
-                        <span className="quick-action-circle">
-                            <span className="quick-action-icon">
-                                <img src={MENU_ACTIONS.Clubes} alt="Clubes" />
-                            </span>
-                        </span>
-                        <span className="quick-action-label">Clubes</span>
-                    </Link>
+                        {isSuperAdmin && (
+                            <Link to="/clubes" className="quick-action quick-action-cyan">
+                                <span className="quick-action-circle">
+                                    <span className="quick-action-icon">
+                                        <img src={MENU_ACTIONS.Clubes} alt="Clubes" />
+                                    </span>
+                                </span>
+                                <span className="quick-action-label">Clubes</span>
+                            </Link>
+                        )}
 
-                    <Link to="/coletividades" className="quick-action quick-action-orange">
-                        <span className="quick-action-circle">
-                            <span className="quick-action-icon">
-                                <img src={MENU_ACTIONS.Coletividades} alt="Coletividades" />
-                            </span>
-                        </span>
-                        <span className="quick-action-label">Coletividades</span>
-                    </Link>
+                        {isSuperAdmin && (
+                            <Link to="/coletividades" className="quick-action quick-action-orange">
+                                <span className="quick-action-circle">
+                                    <span className="quick-action-icon">
+                                        <img src={MENU_ACTIONS.Coletividades} alt="Coletividades" />
+                                    </span>
+                                </span>
+                                <span className="quick-action-label">Coletividades</span>
+                            </Link>
+                        )}
 
                     {isAdmin && (
                         <Link to="/admin/users" className="quick-action quick-action-red">

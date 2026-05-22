@@ -1,9 +1,12 @@
 import SideMenu from "../components/SideMenu";
+import { useAuth } from "../auth/AuthContext";
 
 export default function TransferenciasPage() {
+  const { isSuperAdmin } = useAuth();
+
   const items = [
     { label: "Menu", to: "/menu" },
-    { label: "Clubes", to: "/clubes" },
+    ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
     { label: "Transferências", to: "/transferencias" },
     { label: "Logout", to: "#", disabled: false},
   ];

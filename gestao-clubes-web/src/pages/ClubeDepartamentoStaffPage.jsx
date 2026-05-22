@@ -103,7 +103,7 @@ function getOptionValue(item) {
 export default function ClubeDepartamentoStaffPage() {
     const { clubeId, tipo } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
 
     const config = DEPT_CONFIG[tipo];
 
@@ -154,8 +154,8 @@ export default function ClubeDepartamentoStaffPage() {
     const menuItems = useMemo(
         () => [
             { label: "Home", to: "/menu" },
-            { label: "Clubes", to: "/clubes" },
-            { label: "Coletividades", to: "/coletividades" },
+            ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+            ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
             { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
@@ -169,7 +169,7 @@ export default function ClubeDepartamentoStaffPage() {
                 },
             },
         ],
-        [clubeId, isAdmin, logout, navigate]
+        [clubeId, isAdmin, isSuperAdmin, logout, navigate]
     );
 
     useEffect(() => {
