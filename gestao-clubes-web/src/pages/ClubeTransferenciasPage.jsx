@@ -1,12 +1,14 @@
 import {Link, useParams} from "react-router-dom";
 import SideMenu from "../components/SideMenu";
+import { useAuth } from "../auth/AuthContext";
 
 export default function ClubeTransferenciasPage() {
     const { clubeId } = useParams();
+    const { isSuperAdmin } = useAuth();
 
     const items = [
         { label: "Menu", to: "/menu" },
-        { label: "Clubes", to: "/clubes" },
+        ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
         { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
         { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
         { label: "Staff", to: `/clubes/${clubeId}/staff` },

@@ -138,7 +138,7 @@ export default function ClubeAtletasModalidadePage() {
     const { clubeId, clubeModalidadeId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [modalidadeAtiva, setModalidadeAtiva] = useState(null);
@@ -197,8 +197,8 @@ export default function ClubeAtletasModalidadePage() {
     const menuItems= useMemo(
         () => [
             { label: "Home", to: "/menu" },
-            { label: "Clubes", to: "/clubes" },
-            { label: "Coletividades", to: "/coletividades" },
+            ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+            ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
             { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
@@ -213,7 +213,7 @@ export default function ClubeAtletasModalidadePage() {
                 },
             },
         ],
-        [clubeId, isAdmin, logout, navigate]
+        [clubeId, clubeModalidadeId, isAdmin, isSuperAdmin, logout, navigate]
     );
 
     async function carregar() {

@@ -150,7 +150,7 @@ function PendingNameCell() {
 export default function ClubeAtletasPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [atletasRows, setAtletasRows] = useState([]);
@@ -181,8 +181,8 @@ export default function ClubeAtletasPage() {
     const menuItems = useMemo(
         () => [
             { label: "Home", to: "/menu" },
-            { label: "Clubes", to: "/clubes" },
-            { label: "Coletividades", to: "/coletividades" },
+            ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+            ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
             { label: "Staff", to: `/clubes/${clubeId}/staff` },
@@ -195,7 +195,7 @@ export default function ClubeAtletasPage() {
                 },
             },
         ],
-        [clubeId, isAdmin, logout, navigate]
+        [clubeId, isAdmin, isSuperAdmin, logout, navigate]
     );
 
     const modalidadesByClubeModalidadeId = useMemo(() => {
