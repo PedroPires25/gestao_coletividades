@@ -79,7 +79,7 @@ export default function MenuPage() {
                 title="Gestão de Coletividades"
                 subtitle="Menu"
                 logoHref="/menu"
-                logoSrc="/logo.png"
+                logoSrc="/LOGO_GCDC04.png"
                 items={items}
                 showBurger={false}
                 eventoBadge={!loading && meusEventos.length > 0 ? `📅 ${meusEventos.length}` : null}

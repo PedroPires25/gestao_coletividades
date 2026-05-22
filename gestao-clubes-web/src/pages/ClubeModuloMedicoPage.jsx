@@ -92,7 +92,7 @@ export default function ClubeModuloMedicoPage() {
                 title="Gestão de Clubes"
                 subtitle={clube?.nome || "Clube"}
                 logoHref="/menu"
-                logoSrc="/logo.png"
+                logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
 

@@ -238,7 +238,7 @@ export default function EventosPage() {
           title="Gestão de Coletividades"
           subtitle="A carregar..."
           logoHref="/menu"
-          logoSrc="/logo.png"
+          logoSrc="/LOGO_GCDC04.png"
         />
         <div className="container" style={{ paddingTop: 24 }}>
           <p>Carregando...</p>
@@ -253,7 +253,7 @@ export default function EventosPage() {
         title="Gestão de Coletividades"
         subtitle={clube?.nome || "Clube"}
         logoHref="/menu"
-        logoSrc="/logo.png"
+        logoSrc="/LOGO_GCDC04.png"
       />
 
       <div className="container" style={{ paddingTop: 24 }}>

@@ -440,7 +440,7 @@ export default function GestaoEventosPage() {
                 title="Gestão de Eventos"
                 subtitle="Eventos"
                 logoHref="/menu"
-                logoSrc="/logo.png"
+                logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
 
