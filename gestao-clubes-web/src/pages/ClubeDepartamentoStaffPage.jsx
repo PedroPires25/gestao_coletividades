@@ -533,6 +533,7 @@ export default function ClubeDepartamentoStaffPage() {
                         </div>
 
                         {showForm ? (
+                            <div className="form-scroll">
                             <form onSubmit={onSubmit} className="row">
                                 <div className="row2">
                                     <div className="row">
@@ -621,6 +622,7 @@ export default function ClubeDepartamentoStaffPage() {
                                     </button>
                                 </div>
                             </form>
+                            </div>
                         ) : null}
                     </div>
                 </div>

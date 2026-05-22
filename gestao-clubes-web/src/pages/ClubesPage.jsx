@@ -384,6 +384,7 @@ export default function ClubesPage() {
                             {erro && <div className="alert error">{erro}</div>}
                             {msg && <div className="alert ok">{msg}</div>}
 
+                            <div className="form-scroll">
                             <form onSubmit={onSubmit} className="row">
                                 <input
                                     className="input"
@@ -504,6 +505,7 @@ export default function ClubesPage() {
                                     <button className="btn" type="button" onClick={carregar}>Recarregar</button>
                                 </div>
                             </form>
+                            </div>
                         </section>
                     )}
 

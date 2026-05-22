@@ -304,6 +304,7 @@ export default function ExamesMedicosPage() {
                             </button>
                         </div>
                         {showForm && (
+                            <div className="form-scroll">
                             <form onSubmit={onSubmit} className="row">
                                 <FormFields values={form} onChange={onChange} fileRef={fileInputRef} existingFile={null} />
                                 <div className="actions" style={{ marginTop: 8 }}>
@@ -312,6 +313,7 @@ export default function ExamesMedicosPage() {
                                     </button>
                                 </div>
                             </form>
+                            </div>
                         )}
                     </div>
                 </div>

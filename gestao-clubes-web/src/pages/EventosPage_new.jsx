@@ -342,6 +342,7 @@ export default function EventosPage() {
             <section className="card evento-form">
               <h2>{editingId ? "Editar Evento" : "Novo Evento"}</h2>
 
+              <div className="form-scroll">
               <form onSubmit={handleSubmit} className="row">
                 <div className="row2">
                   <div className="row">
@@ -450,6 +451,7 @@ export default function EventosPage() {
                   </button>
                 </div>
               </form>
+              </div>
             </section>
           )}
         </div>
