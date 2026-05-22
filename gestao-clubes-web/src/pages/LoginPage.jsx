@@ -373,7 +373,7 @@ export default function LoginPage() {
         <div className="login-page">
             <a href="/" className="login-brand" aria-label="Gestão de Coletividades">
                 <img
-                    src="/logo.png"
+                    src="/LOGO_GCDC.png"
                     alt="Gestão de Clubes Desportivos e Coletividades"
                     className="login-logo-fixed"
                 />
