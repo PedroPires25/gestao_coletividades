@@ -2031,10 +2031,14 @@ body.theme-light .badge {
     .modalidade-figuras-grid {
         gap: 20px;
         justify-content: center;
+        /* 700px overrides the base flex; ensure no overflow */
+        max-width: 100%;
+        overflow-x: hidden;
     }
 
     .modalidade-figura-btn {
-        min-width: 96px;
+        /* Anula o min-width que causava overflow no card */
+        min-width: 0;
     }
 
     .modalidades-toolbar {
@@ -2811,14 +2815,24 @@ img.avatar-circle-sm {
         overflow-x: hidden;
     }
 
-    /* Tabela base no mobile: deixa o wrapper controlar o tamanho */
+    /* Tabela base no mobile: min-width reduzido, scroll controlado pelo wrapper */
     table {
-        min-width: 650px;
+        min-width: 600px;
         width: max-content;
         max-width: none;
     }
 
-    /* Cartões: garantir que não excedem a largura do ecrã */
+    /* Tabelas que NÃO estão em wrapper: contêm-se sozinhas */
+    .card > table,
+    .panel > table {
+        width: 100%;
+        min-width: 0;
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Cartões: tamanho fixo ao ecrã, conteúdo largo scrolls internamente */
     .card,
     .panel,
     .glass-card,
@@ -2827,9 +2841,53 @@ img.avatar-circle-sm {
         max-width: 100%;
         box-sizing: border-box;
         border-radius: 16px;
+        overflow-x: hidden;
     }
 
-    /* Wrapper da tabela: ocupa exatamente a largura do ecrã, sem crescer para fora */
+    /* Stack sections ocupa sempre 100% do container */
+    .stack-sections {
+        width: 100%;
+        box-sizing: border-box;
+        gap: 12px;
+    }
+    /* Toolbar dentro dos cards: nunca ultrapassa o card */
+    .modalidades-toolbar,
+    .toolbar-title-group,
+    .page-title {
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    /* Badges e pills: nunca empurram o card para fora */
+    .badge,
+    .toolbar-count,
+    .chip {
+        flex-shrink: 1;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Textos longos dentro de qualquer card */
+    .card *,
+    .panel *,
+    .glass-card * {
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }
+
+    /* Exceção: elementos que devem manter white-space:nowrap (badges, botões) */
+    .badge,
+    .toolbar-count,
+    .btn,
+    .nowrap {
+        overflow-wrap: initial;
+        word-break: initial;
+    }
+
+    /* Wrapper da tabela: scroll horizontal interno, o card mantém largura fixa */
     .table-wrap,
     .mobile-scroll,
     .table-wrapper,
@@ -2844,9 +2902,11 @@ img.avatar-circle-sm {
         overflow-x: auto;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        /* Altura máxima: o conteúdo faz scroll vertical também */
+        /* Contém o scroll sem criar BFC que bloquearia o pai */
         max-height: 60vh;
         border-radius: 14px;
+        /* Isola o contexto de scroll para não interferir com overflow-x:hidden do card */
+        isolation: isolate;
     }
 
     /* Tabela: largura natural, scroll controlado pelo wrapper */
@@ -2900,10 +2960,6 @@ img.avatar-circle-sm {
     .searchbar input {
         width: 100%;
         flex: 1 1 100%;
-    }
-
-    .stack-sections {
-        gap: 12px;
     }
 
     /* ---- Icon grids (quick links, modalidades): grid automático no mobile ---- */
@@ -3051,11 +3107,18 @@ img.avatar-circle-sm {
         height: 28px;
     }
 
-    /* Card sem overflow em mobile pequeno, texto quebra linha */
-    .card {
-        padding: 14px;
+    /* Card sem overflow em mobile pequeno, texto quebra linha, nunca cresce horizontalmente */
+    .card,
+    .panel,
+    .glass-card,
+    .form-card {
+        padding: 12px;
+        overflow-x: hidden;
         overflow-wrap: break-word;
         word-break: break-word;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     /* Perfil save button full width */
