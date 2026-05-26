@@ -2806,6 +2806,14 @@ img.avatar-circle-sm {
         box-sizing: border-box;
         padding-left: 12px;
         padding-right: 12px;
+        overflow-x: hidden;
+    }
+
+    /* Tabela base no mobile: deixa o wrapper controlar o tamanho */
+    table {
+        min-width: 650px;
+        width: max-content;
+        max-width: none;
     }
 
     /* Cartões: garantir que não excedem a largura do ecrã */
@@ -2819,7 +2827,7 @@ img.avatar-circle-sm {
         border-radius: 16px;
     }
 
-    /* Zonas com scroll horizontal interno (tabelas) */
+    /* Wrapper da tabela: ocupa exatamente a largura do ecrã, sem crescer para fora */
     .table-wrap,
     .mobile-scroll,
     .table-wrapper,
@@ -2829,12 +2837,17 @@ img.avatar-circle-sm {
     .table-responsive {
         display: block;
         width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
         overflow-x: auto;
-        overflow-y: visible;
+        overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        /* Altura máxima: o conteúdo faz scroll vertical também */
+        max-height: 60vh;
+        border-radius: 14px;
     }
 
-    /* Tabelas: largura natural, scroll no wrapper */
+    /* Tabela: largura natural, scroll controlado pelo wrapper */
     .table-wrap table,
     .mobile-scroll table,
     .table-wrapper table,
@@ -2842,8 +2855,17 @@ img.avatar-circle-sm {
     .responsive-table table,
     .crud-table-wrapper table,
     .table-responsive table {
-        min-width: 700px;
+        min-width: 650px;
         width: max-content;
+        max-width: none;
+        font-size: 13px;
+    }
+
+    /* Células mais compactas no mobile */
+    .table-wrap thead th,
+    .table-wrap tbody td {
+        padding: 10px 12px;
+        white-space: nowrap;
     }
 
     /* .row2 colapsa para 1 coluna */
