@@ -2787,26 +2787,22 @@ img.avatar-circle-sm {
 ========================= */
 
 @media (max-width: 768px) {
-    /* Página nunca faz scroll horizontal */
+    /* Garantir que os elementos base não têm largura extra */
     html,
     body,
     #root {
         width: 100%;
         min-height: 100%;
-        overflow-x: hidden !important;
-        overflow-y: auto !important;
     }
 
-    /* Containers principais: sem overflow a cortar */
+    /* Containers principais: não ultrapassam o ecrã, mas permitem scroll interno */
     .container,
     .page,
     .content,
     .main-content,
     .dashboard-content {
         width: 100%;
-        max-width: 100vw;
-        overflow-x: hidden !important;
-        overflow-y: visible !important;
+        max-width: 100%;
         box-sizing: border-box;
         padding-left: 12px;
         padding-right: 12px;
@@ -2823,24 +2819,22 @@ img.avatar-circle-sm {
         border-radius: 16px;
     }
 
-    /* Zonas com scroll horizontal interno (tabelas e formulários) */
+    /* Zonas com scroll horizontal interno (tabelas) */
     .table-wrap,
     .mobile-scroll,
     .table-wrapper,
     .table-container,
     .responsive-table,
     .crud-table-wrapper,
-    .table-responsive,
-    .form-scroll {
+    .table-responsive {
         display: block;
         width: 100%;
-        max-width: 100%;
-        overflow-x: auto !important;
-        overflow-y: visible !important;
+        overflow-x: auto;
+        overflow-y: visible;
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Tabelas dentro dos wrappers */
+    /* Tabelas: largura natural, scroll no wrapper */
     .table-wrap table,
     .mobile-scroll table,
     .table-wrapper table,
@@ -2848,15 +2842,8 @@ img.avatar-circle-sm {
     .responsive-table table,
     .crud-table-wrapper table,
     .table-responsive table {
-        width: max-content;
         min-width: 700px;
-    }
-
-    /* Formulários dentro de form-scroll */
-    .form-scroll form {
-        min-width: 480px;
-        max-width: none;
-        width: 100%;
+        width: max-content;
     }
 
     /* .row2 colapsa para 1 coluna */
@@ -2873,7 +2860,7 @@ img.avatar-circle-sm {
         box-sizing: border-box;
     }
 
-    /* Barras de pesquisa em coluna */
+    /* Barras de pesquisa */
     .actions,
     .form-actions,
     .filters,
