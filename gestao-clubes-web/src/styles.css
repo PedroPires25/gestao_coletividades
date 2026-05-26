@@ -569,6 +569,8 @@ body.theme-light .appbar-logo img {
     padding: 20px;
     backdrop-filter: blur(12px);
     box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .card h2 {
@@ -2903,6 +2905,27 @@ img.avatar-circle-sm {
     .stack-sections {
         gap: 12px;
     }
+
+    /* ---- Icon grids (quick links, modalidades): grid automático no mobile ---- */
+    .icon-links-row,
+    .modalidade-figuras-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 16px;
+        width: 100%;
+        padding: 8px 0 4px;
+        margin-top: 16px;
+        /* sobrepõe justify-content:center do 900px */
+        justify-content: initial;
+    }
+
+    /* Cada ícone ocupa a sua célula, sem min-width fixo que causava overflow */
+    .icon-link-card,
+    .modalidade-figura-btn {
+        min-width: 0;
+        width: 100%;
+        align-items: center;
+    }
 }
 
 /* =========================
@@ -2996,31 +3019,43 @@ img.avatar-circle-sm {
     }
 
     .quick-action {
-        min-width: 90px;
+        min-width: 0;
         gap: 10px;
     }
 
     .quick-actions-row,
-    .icon-links-row {
-        gap: 16px;
+    .icon-links-row,
+    .modalidade-figuras-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+        gap: 12px;
+        width: 100%;
+    }
+
+    .icon-link-card,
+    .modalidade-figura-btn {
+        min-width: 0;
+        width: 100%;
     }
 
     /* Menu style circles menores */
     .menu-style-circle,
     .modalidade-figura-circle {
-        width: 80px;
-        height: 80px;
+        width: 64px;
+        height: 64px;
     }
 
     .menu-style-icon,
     .menu-style-icon img {
-        width: 34px;
-        height: 34px;
+        width: 28px;
+        height: 28px;
     }
 
-    /* Card sem overflow em mobile pequeno */
+    /* Card sem overflow em mobile pequeno, texto quebra linha */
     .card {
         padding: 14px;
+        overflow-wrap: break-word;
+        word-break: break-word;
     }
 
     /* Perfil save button full width */
