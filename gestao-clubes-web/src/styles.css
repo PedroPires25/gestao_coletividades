@@ -1032,6 +1032,30 @@ table td:last-child {
     backdrop-filter: blur(12px);
 }
 
+/* Layout com logo centrada e burger à esquerda */
+.appbar-logo-only {
+    position: relative;
+}
+
+.appbar-center-logo-wrap {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+}
+
+.appbar-logo-centered {
+    pointer-events: auto;
+}
+
+.burger-placeholder {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+}
+
 .burger {
     width: 48px;
     height: 48px;
@@ -1136,6 +1160,9 @@ table td:last-child {
     z-index: 70;
     padding: 14px;
     box-shadow: 0 30px 90px rgba(0,0,0,0.65);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .drawer.open {
@@ -1169,6 +1196,9 @@ table td:last-child {
     display: grid;
     gap: 10px;
     padding-top: 12px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
 
 .drawer-link {
@@ -2032,6 +2062,64 @@ body.theme-light .badge {
         width: 26px;
         height: 26px;
     }
+
+    /* Appbar mobile */
+    .appbar {
+        min-height: 64px;
+        padding: 8px 12px;
+        gap: 10px;
+    }
+
+    .appbar-logo img {
+        height: 54px;
+    }
+
+    /* Page title font size */
+    .page-title h1 {
+        font-size: 24px;
+    }
+
+    /* Toolbar search full width */
+    .toolbar-search {
+        max-width: 100%;
+    }
+
+    /* Table actions allow wrapping */
+    .table-actions {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .table-actions .btn {
+        min-width: 80px;
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+
+    /* Searchbar full width items */
+    .searchbar {
+        flex-wrap: wrap;
+    }
+
+    .searchbar > * {
+        flex: 1 1 100%;
+    }
+
+    /* Modal footer stack on mobile */
+    .modal-footer {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Form section padding */
+    .form-section {
+        padding: 16px;
+    }
 }
 
 /* =========================
@@ -2108,6 +2196,78 @@ body.theme-light .badge {
     background: var(--bg-input-focus);
     border-color: rgba(91, 140, 255, 0.45);
     transform: translateY(-1px);
+}
+
+/* =========================
+   Form Grid e Form Group (GestaoEventosPage etc.)
+========================= */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 700px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-grid > [style*="gridColumn"] {
+        grid-column: 1 !important;
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* =========================
+   Botões variantes
+========================= */
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 12px;
+}
+
+.btn-secondary {
+    background: var(--bg-btn);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-btn-hover);
+}
+
+.btn-success {
+    background: rgba(40,199,111,0.22);
+    border-color: rgba(40,199,111,0.40);
+    color: var(--text);
+}
+
+.btn-success:hover {
+    background: rgba(40,199,111,0.32);
+}
+
+.btn-warning {
+    background: rgba(243,163,45,0.22);
+    border-color: rgba(243,163,45,0.40);
+    color: var(--text);
+}
+
+.btn-warning:hover {
+    background: rgba(243,163,45,0.32);
 }
 
 .atleta-list-item.selected {
@@ -2652,14 +2812,13 @@ img.avatar-circle-sm {
         padding-right: 12px;
     }
 
-    /* Cartões: clip de overflow — o scroll fica dentro deles */
+    /* Cartões: garantir que não excedem a largura do ecrã */
     .card,
     .panel,
     .glass-card,
     .form-card {
         width: 100%;
         max-width: 100%;
-        overflow: hidden !important;
         box-sizing: border-box;
         border-radius: 16px;
     }
@@ -2734,5 +2893,161 @@ img.avatar-circle-sm {
 
     .stack-sections {
         gap: 12px;
+    }
+}
+
+/* =========================
+   RESPONSIVE — 480px (telemóveis pequenos)
+========================= */
+
+@media (max-width: 480px) {
+    /* Container com menos padding */
+    .container {
+        padding: 12px 10px 40px;
+    }
+
+    /* Título ainda mais pequeno */
+    .page-title h1 {
+        font-size: 20px;
+    }
+
+    /* Appbar muito compacto */
+    .appbar {
+        min-height: 56px;
+        padding: 6px 10px;
+        gap: 8px;
+    }
+
+    .appbar-logo img {
+        height: 42px;
+    }
+
+    /* Burger menor */
+    .burger {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+    }
+
+    /* Modal menos padding */
+    .modal {
+        padding: 14px 12px;
+        border-radius: 16px;
+    }
+
+    .modal-box {
+        padding: 14px 12px;
+        border-radius: 16px;
+    }
+
+    /* Login card compacto */
+    .login-card {
+        padding: 18px 14px;
+        border-radius: 18px;
+    }
+
+    .login-title {
+        font-size: 24px;
+    }
+
+    /* Botões full width em páginas de login */
+    .login-actions .btn {
+        width: 100%;
+    }
+
+    /* Ações sempre em coluna */
+    .actions {
+        flex-direction: column;
+    }
+
+    /* Botões de tabela ainda mais compactos */
+    .table-actions .btn {
+        min-width: 70px;
+        font-size: 11px;
+        padding: 5px 8px;
+    }
+
+    /* Quick action circles menores */
+    .quick-action-circle {
+        width: 76px;
+        height: 76px;
+    }
+
+    .quick-action-icon,
+    .quick-action-icon img {
+        width: 34px;
+        height: 34px;
+    }
+
+    .quick-action-label,
+    .icon-link-card .modalidade-figura-label,
+    .modalidade-figura-label {
+        font-size: 12px;
+        max-width: 90px;
+    }
+
+    .quick-action {
+        min-width: 90px;
+        gap: 10px;
+    }
+
+    .quick-actions-row,
+    .icon-links-row {
+        gap: 16px;
+    }
+
+    /* Menu style circles menores */
+    .menu-style-circle,
+    .modalidade-figura-circle {
+        width: 80px;
+        height: 80px;
+    }
+
+    .menu-style-icon,
+    .menu-style-icon img {
+        width: 34px;
+        height: 34px;
+    }
+
+    /* Card sem overflow em mobile pequeno */
+    .card {
+        padding: 14px;
+    }
+
+    /* Perfil save button full width */
+    .perfil-save-btn {
+        width: 100%;
+        align-self: stretch;
+    }
+
+    .perfil-form-actions {
+        flex-direction: column;
+    }
+
+    .perfil-form-actions .btn,
+    .perfil-form-actions .perfil-cancel-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Seletor de tema login: esconder em mobile muito pequeno se causar problema */
+    .login-theme-floating-wrap {
+        min-width: 120px;
+    }
+
+    /* Toolbar title wrap em coluna */
+    .toolbar-title-group {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Searchbar completamente em coluna */
+    .searchbar {
+        flex-direction: column;
+    }
+
+    /* Drawer mais estreito */
+    .drawer {
+        width: min(300px, 92vw);
     }
 }
