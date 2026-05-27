@@ -183,14 +183,23 @@ body.theme-dark {
     box-sizing: border-box;
 }
 
+html {
+    overflow-x: hidden;
+}
+
 html,
 body,
 #root {
     min-height: 100%;
 }
 
+#root {
+    overflow-x: hidden;
+}
+
 body {
     margin: 0;
+    overflow-x: hidden;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     color: var(--text);
     transition: color 0.2s ease, background 0.2s ease;
@@ -254,9 +263,12 @@ body.theme-dark::after {
 ========================= */
 
 .container {
+    width: 100%;
     max-width: 1400px;
     margin: 0 auto;
     padding: 18px 16px 60px;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .stack-sections {
@@ -569,6 +581,7 @@ body.theme-light .appbar-logo img {
     padding: 20px;
     backdrop-filter: blur(12px);
     box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+    width: 100%;
     max-width: 100%;
     box-sizing: border-box;
 }
@@ -600,6 +613,8 @@ body.theme-light .appbar-logo img {
 .row {
     display: grid;
     gap: 14px;
+    width: 100%;
+    max-width: 100%;
 }
 
 .row2 {
@@ -614,10 +629,17 @@ body.theme-light .appbar-logo img {
     }
 }
 
+.form-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 .input,
 select,
 textarea {
     width: 100%;
+    max-width: 100%;
     padding: 16px 18px;
     border-radius: 18px;
     border: 2px solid var(--border);
@@ -627,6 +649,13 @@ textarea {
     transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease;
     font-size: 16px;
     font-weight: 500;
+    box-sizing: border-box;
+}
+
+input[type="file"] {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .input::placeholder,
@@ -779,20 +808,31 @@ body.theme-light textarea::placeholder {
    Tabelas
 ========================= */
 
+/* Legacy wrapper — kept for backward compat */
 .table-wrap {
     width: 100%;
+    max-width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border-radius: 18px;
     border: 1px solid var(--border);
     background: var(--bg-table);
     max-height: 62vh;
 }
 
+/* Preferred wrapper — scroll inside card, no page overflow */
+.table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    min-width: 1000px;
+    min-width: 700px;
     table-layout: auto;
 }
 
@@ -1555,7 +1595,8 @@ body.theme-light .menu-icon-purple {
 
 .event-carousel-wrap {
     width: 100%;
-    overflow: hidden;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .event-carousel {
@@ -1563,7 +1604,7 @@ body.theme-light .menu-icon-purple {
     gap: 16px;
     overflow-x: auto;
     overflow-y: visible;
-    padding: 4px 2px 12px;
+    padding: 4px 2px 14px;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     align-items: stretch;
@@ -1696,16 +1737,16 @@ body.theme-light .menu-icon-purple {
 @media (max-width: 700px) {
     .event-carousel-card {
         width: calc(100vw - 80px);
-        min-width: 240px;
+        min-width: 0;
         max-width: calc(100vw - 80px);
     }
 }
 
 @media (max-width: 480px) {
     .event-carousel-card {
-        width: calc(100vw - 48px);
-        min-width: 220px;
-        max-width: calc(100vw - 48px);
+        width: calc(100vw - 80px);
+        min-width: 0;
+        max-width: calc(100vw - 80px);
     }
 }
 
@@ -2688,6 +2729,17 @@ body.theme-light .badge {
     /* Form section padding */
     .form-section {
         padding: 16px;
+    }
+
+    /* Reduce container padding on small screens */
+    .container {
+        padding: 14px 10px 48px;
+    }
+
+    /* Reduce card padding on small screens */
+    .card {
+        padding: 14px 12px;
+        border-radius: 16px;
     }
 }
 
