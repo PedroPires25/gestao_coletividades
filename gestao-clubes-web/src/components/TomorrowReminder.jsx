@@ -1,8 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import * as eventosService from "../services/eventos";
 
 const REMINDER_KEY = "gc-tomorrow-reminder-dismissed";
+
+// Never show on these paths (public/unauthenticated pages)
+const PUBLIC_PREFIXES = [
+    "/login",
+    "/forgot-password",
+    "/reset-password",
+    "/recuperar-password",
+    "/pending-approval",
+    "/politica-privacidade",
+    "/acesso-negado",
+    "/",          // root redirect
+];
 
 function isTomorrow(val) {
     if (!val) return false;
@@ -26,15 +39,35 @@ function formatHora(val) {
 
 export default function TomorrowReminder() {
     const { isAuthenticated, isSuperAdmin, clubeId } = useAuth();
+    const { pathname } = useLocation();
 
-    const [eventos, setEventos] = useState([]);
+    // Do not render on public pages at all
+    const isPublicPage =
+        pathname === "/" ||
+        PUBLIC_PREFIXES.some((p) => p !== "/" && pathname.startsWith(p));
+
+    // dismissed reads sessionStorage on mount; reset when user logs out
     const [dismissed, setDismissed] = useState(
         () => sessionStorage.getItem(REMINDER_KEY) === "1"
     );
+    const [eventos, setEventos] = useState([]);
     const [idx, setIdx] = useState(0);
 
+    // On logout: clear sessionStorage + reset all state so next login shows again
     useEffect(() => {
-        if (!isAuthenticated || isSuperAdmin || !clubeId || dismissed) return;
+        if (!isAuthenticated) {
+            sessionStorage.removeItem(REMINDER_KEY);
+            setDismissed(false);
+            setEventos([]);
+            setIdx(0);
+        }
+    }, [isAuthenticated]);
+
+    // Fetch once conditions are met
+    useEffect(() => {
+        if (!isAuthenticated || isSuperAdmin || !clubeId || dismissed || isPublicPage) {
+            return;
+        }
 
         let active = true;
         eventosService
@@ -49,14 +82,18 @@ export default function TomorrowReminder() {
         return () => {
             active = false;
         };
-    }, [isAuthenticated, isSuperAdmin, clubeId, dismissed]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, isSuperAdmin, clubeId, isPublicPage]);
+    // Note: `dismissed` intentionally excluded — we only fetch once per session login,
+    // not every time the user opens/closes the popup.
 
     const eventosAmanha = useMemo(
         () => eventos.filter((e) => isTomorrow(e.dataHora)),
         [eventos]
     );
 
-    if (!isAuthenticated || isSuperAdmin || dismissed || eventosAmanha.length === 0) {
+    // Guard: never show on public pages, unauthenticated, super admin, dismissed, or no events
+    if (isPublicPage || !isAuthenticated || isSuperAdmin || dismissed || eventosAmanha.length === 0) {
         return null;
     }
 
