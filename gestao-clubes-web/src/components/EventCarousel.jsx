@@ -2,6 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 const AUTO_ADVANCE_MS = 30000;
 
+function getCardsPerPage(containerWidth) {
+    if (containerWidth <= 0) return 1;
+    if (containerWidth <= 600) return 1;
+    if (containerWidth <= 960) return 2;
+    return 3;
+}
+
 function formatDataHora(val) {
     if (!val) return "-";
     const d = new Date(String(val).replace(" ", "T"));
@@ -55,27 +62,40 @@ export default function EventCarousel({
         });
     }, [eventos]);
 
-    const [activeIdx, setActiveIdx] = useState(0);
-    const [detalhes, setDetalhes] = useState(null); // evento being viewed in detail modal
-    const carouselRef = useRef(null);
-    const cardRefs = useRef([]);
+    const [pageIdx, setPageIdx] = useState(0);
+    const [cardsPerPage, setCardsPerPage] = useState(1);
+    const [detalhes, setDetalhes] = useState(null);
+    const wrapRef = useRef(null);
 
-    const safeIdx = sorted.length > 0 ? Math.min(activeIdx, sorted.length - 1) : 0;
-
+    // Observe container width to recalculate cardsPerPage responsively
     useEffect(() => {
-        if (sorted.length <= 1) return;
+        const el = wrapRef.current;
+        if (!el) return;
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const w = entry.contentRect.width;
+                const cpp = getCardsPerPage(w);
+                setCardsPerPage((prev) => {
+                    if (prev !== cpp) setPageIdx(0);
+                    return cpp;
+                });
+            }
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+
+    const totalPages = sorted.length > 0 ? Math.ceil(sorted.length / cardsPerPage) : 0;
+    const safePage = totalPages > 0 ? Math.min(pageIdx, totalPages - 1) : 0;
+
+    // Auto-advance by full page
+    useEffect(() => {
+        if (totalPages <= 1) return;
         const interval = setInterval(() => {
-            setActiveIdx((prev) => (prev + 1) % sorted.length);
+            setPageIdx((prev) => (prev + 1) % totalPages);
         }, AUTO_ADVANCE_MS);
         return () => clearInterval(interval);
-    }, [sorted.length]);
-
-    useEffect(() => {
-        const card = cardRefs.current[safeIdx];
-        if (card) {
-            card.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
-        }
-    }, [safeIdx]);
+    }, [totalPages]);
 
     // Close detail modal on Escape
     useEffect(() => {
@@ -89,11 +109,18 @@ export default function EventCarousel({
         return <p className="subtle">{emptyMessage}</p>;
     }
 
+    // Only render the cards for the current page — no partial cards ever visible
+    const pageCards = sorted.slice(safePage * cardsPerPage, (safePage + 1) * cardsPerPage);
+
     return (
         <>
-            <div className="event-carousel-wrap">
-                <div className="event-carousel" ref={carouselRef} aria-label="Carrossel de eventos">
-                    {sorted.map((evento, i) => {
+            <div className="event-carousel-wrap" ref={wrapRef}>
+                <div
+                    className="event-carousel"
+                    style={{ gridTemplateColumns: `repeat(${cardsPerPage}, 1fr)` }}
+                    aria-label="Carrossel de eventos"
+                >
+                    {pageCards.map((evento) => {
                         const isMinhaModalidade =
                             activeModalidadeId != null &&
                             evento.clubeModalidadeId != null &&
@@ -113,7 +140,6 @@ export default function EventCarousel({
                         return (
                             <article
                                 key={evento.id}
-                                ref={(el) => { cardRefs.current[i] = el; }}
                                 className={`event-carousel-card card${isMinhaModalidade ? " event-card-highlight" : ""}${amanha ? " event-card-tomorrow" : ""}`}
                                 role="button"
                                 tabIndex={0}
@@ -122,12 +148,10 @@ export default function EventCarousel({
                                 aria-label={`Ver detalhes: ${evento.titulo}`}
                                 style={{ cursor: "pointer" }}
                             >
-                                {/* Tomorrow badge */}
                                 {amanha && (
                                     <div className="event-card-tomorrow-badge">🔔 AMANHÃ</div>
                                 )}
 
-                                {/* Modalidade badge */}
                                 {showModalidade && (
                                     <div className="event-card-badge">
                                         {isMinhaModalidade ? (
@@ -164,7 +188,6 @@ export default function EventCarousel({
                                     )}
                                 </div>
 
-                                {/* Quick actions (stop propagation so card click doesn't also open detail) */}
                                 {(onVerConvocados || (onVerMapa && hasMap)) && (
                                     <div className="event-card-actions" onClick={(e) => e.stopPropagation()}>
                                         {onVerConvocados && isMinhaModalidade && (
@@ -194,15 +217,15 @@ export default function EventCarousel({
                     })}
                 </div>
 
-                {sorted.length > 1 && (
+                {totalPages > 1 && (
                     <div className="event-carousel-dots" aria-hidden="true">
-                        {sorted.map((_, i) => (
+                        {Array.from({ length: totalPages }, (_, i) => (
                             <button
                                 key={i}
                                 type="button"
-                                className={`event-carousel-dot${i === safeIdx ? " active" : ""}`}
-                                onClick={() => setActiveIdx(i)}
-                                aria-label={`Evento ${i + 1}`}
+                                className={`event-carousel-dot${i === safePage ? " active" : ""}`}
+                                onClick={() => setPageIdx(i)}
+                                aria-label={`Página ${i + 1}`}
                             />
                         ))}
                     </div>
