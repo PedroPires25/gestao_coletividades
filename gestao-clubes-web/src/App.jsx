@@ -1,68 +1,52 @@
+import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AuthProvider } from "./auth/AuthContext";
 import RequireAdmin from "./auth/RequireAdmin";
 import RequireSuperAdmin from "./auth/RequireSuperAdmin";
 
 // páginas base
 import LoginPage from "./pages/LoginPage";
-import MenuPage from "./pages/MenuPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import EmailFeedbackPage from "./pages/EmailFeedbackPage";
-import ResetSuccessPage from "./pages/ResetSuccessPage";
-import PendingApprovalPage from "./pages/PendingApprovalPage";
-import AcessoNegadoPage from "./pages/AcessoNegadoPage";
-
-// admin
-import AdminUsersPage from "./pages/AdminUsersPage";
-import AdminPendingUsersPage from "./pages/AdminPendingUsersPage";
-import AdminApprovedUsersPage from "./pages/AdminApprovedUsersPage";
-
-// clubes
-import ClubesPage from "./pages/ClubesPage";
-import ClubeHomePage from "./pages/ClubeHomePage";
-import ClubeEditPage from "./pages/ClubeEditPage";
-import ClubeAtletasPage from "./pages/ClubeAtletasPage";
-import ClubeAtletasModalidadePage from "./pages/ClubeAtletasModalidadePage";
-import ClubeStaffPage from "./pages/ClubeStaffPage";
-import ClubeStaffModalidadePage from "./pages/ClubeStaffModalidadePage";
-import ClubeDepartamentoStaffPage from "./pages/ClubeDepartamentoStaffPage";
-import ClubeModalidadesPage from "./pages/ClubeModalidadesPage";
-import ClubeEventosPage from "./pages/ClubeEventosPage";
-import EventosPage from "./pages/EventosPage";
-import GestaoEventosPage from "./pages/GestaoEventosPage";
-import ModalidadeEventosPage from "./pages/ModalidadeEventosPage";
-
-// coletividades
-import ColetividadesPage from "./pages/ColetividadesPage";
-import ColetividadeHomePage from "./pages/ColetividadeHomePage";
-import ColetividadeEditPage from "./pages/ColetividadeEditPage";
-
-// novas páginas das coletividades
-import ColetividadeAtividadesPage from "./pages/ColetividadeAtividadesPage";
-import ColetividadeUtentesPage from "./pages/ColetividadeUtentesPage";
-import ColetividadeUtentesAtividadePage from "./pages/ColetividadeUtentesAtividadePage";
-import ColetividadeStaffPage from "./pages/ColetividadeStaffPage";
-import ColetividadeStaffAtividadePage from "./pages/ColetividadeStaffAtividadePage";
-
-// área de acesso (utilizador)
-import AreaAcessoClubePage from "./pages/AreaAcessoClubePage";
-import AreaAcessoColetividadePage from "./pages/AreaAcessoColetividadePage";
-
-// módulo clínico
-import ClubeModuloMedicoPage from "./pages/ClubeModuloMedicoPage";
-import RegistosLesaoPage from "./pages/RegistosLesaoPage";
-import ConsultasMedicasPage from "./pages/ConsultasMedicasPage";
-import ExamesMedicosPage from "./pages/ExamesMedicosPage";
-import PrescricoesPage from "./pages/PrescricoesPage";
-import RelatoriosMedicosPage from "./pages/RelatoriosMedicosPage";
-import AtletaFichaMedicaPage from "./pages/AtletaFichaMedicaPage";
-
-// perfil
-import PerfilPage from "./pages/PerfilPage";
-
-// política de privacidade
-import PoliticaPrivacidadePage from "./pages/PoliticaPrivacidadePage";
+const MenuPage = lazy(() => import("./pages/MenuPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const EmailFeedbackPage = lazy(() => import("./pages/EmailFeedbackPage"));
+const ResetSuccessPage = lazy(() => import("./pages/ResetSuccessPage"));
+const PendingApprovalPage = lazy(() => import("./pages/PendingApprovalPage"));
+const AcessoNegadoPage = lazy(() => import("./pages/AcessoNegadoPage"));
+const AdminUsersPage = lazy(() => import("./pages/AdminUsersPage"));
+const AdminPendingUsersPage = lazy(() => import("./pages/AdminPendingUsersPage"));
+const AdminApprovedUsersPage = lazy(() => import("./pages/AdminApprovedUsersPage"));
+const ClubesPage = lazy(() => import("./pages/ClubesPage"));
+const ClubeHomePage = lazy(() => import("./pages/ClubeHomePage"));
+const ClubeEditPage = lazy(() => import("./pages/ClubeEditPage"));
+const ClubeAtletasPage = lazy(() => import("./pages/ClubeAtletasPage"));
+const ClubeAtletasModalidadePage = lazy(() => import("./pages/ClubeAtletasModalidadePage"));
+const ClubeStaffPage = lazy(() => import("./pages/ClubeStaffPage"));
+const ClubeStaffModalidadePage = lazy(() => import("./pages/ClubeStaffModalidadePage"));
+const ClubeDepartamentoStaffPage = lazy(() => import("./pages/ClubeDepartamentoStaffPage"));
+const ClubeModalidadesPage = lazy(() => import("./pages/ClubeModalidadesPage"));
+const ClubeEventosPage = lazy(() => import("./pages/ClubeEventosPage"));
+const EventosPage = lazy(() => import("./pages/EventosPage"));
+const GestaoEventosPage = lazy(() => import("./pages/GestaoEventosPage"));
+const ModalidadeEventosPage = lazy(() => import("./pages/ModalidadeEventosPage"));
+const ColetividadesPage = lazy(() => import("./pages/ColetividadesPage"));
+const ColetividadeHomePage = lazy(() => import("./pages/ColetividadeHomePage"));
+const ColetividadeEditPage = lazy(() => import("./pages/ColetividadeEditPage"));
+const ColetividadeAtividadesPage = lazy(() => import("./pages/ColetividadeAtividadesPage"));
+const ColetividadeUtentesPage = lazy(() => import("./pages/ColetividadeUtentesPage"));
+const ColetividadeUtentesAtividadePage = lazy(() => import("./pages/ColetividadeUtentesAtividadePage"));
+const ColetividadeStaffPage = lazy(() => import("./pages/ColetividadeStaffPage"));
+const ColetividadeStaffAtividadePage = lazy(() => import("./pages/ColetividadeStaffAtividadePage"));
+const AreaAcessoClubePage = lazy(() => import("./pages/AreaAcessoClubePage"));
+const AreaAcessoColetividadePage = lazy(() => import("./pages/AreaAcessoColetividadePage"));
+const ClubeModuloMedicoPage = lazy(() => import("./pages/ClubeModuloMedicoPage"));
+const RegistosLesaoPage = lazy(() => import("./pages/RegistosLesaoPage"));
+const ConsultasMedicasPage = lazy(() => import("./pages/ConsultasMedicasPage"));
+const ExamesMedicosPage = lazy(() => import("./pages/ExamesMedicosPage"));
+const PrescricoesPage = lazy(() => import("./pages/PrescricoesPage"));
+const RelatoriosMedicosPage = lazy(() => import("./pages/RelatoriosMedicosPage"));
+const AtletaFichaMedicaPage = lazy(() => import("./pages/AtletaFichaMedicaPage"));
+const PerfilPage = lazy(() => import("./pages/PerfilPage"));
+const PoliticaPrivacidadePage = lazy(() => import("./pages/PoliticaPrivacidadePage"));
 
 function NotFoundPage() {
     return (
@@ -90,9 +74,17 @@ function RequireAuth({ children }) {
     return children;
 }
 
+function RouteLoadingFallback() {
+    return (
+        <div style={{ padding: 24 }}>
+            <h1>A carregar...</h1>
+        </div>
+    );
+}
+
 export default function App() {
     return (
-        <AuthProvider>
+        <Suspense fallback={<RouteLoadingFallback />}>
             <Routes>
                 {/* rotas públicas */}
                 <Route path="/" element={<LoginPage />} />
@@ -387,6 +379,6 @@ export default function App() {
 
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
-        </AuthProvider>
+        </Suspense>
     );
 }
