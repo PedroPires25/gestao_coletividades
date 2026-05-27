@@ -1829,6 +1829,25 @@ body.theme-light .menu-icon-purple {
     letter-spacing: 0.05em;
 }
 
+.event-reminder-subtitle {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin: 4px 0 6px;
+    font-weight: 500;
+}
+
+.event-reminder-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0 4px;
+}
+
+.event-reminder-nav-count {
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
 .event-reminder-close {
     background: none;
     border: none;
