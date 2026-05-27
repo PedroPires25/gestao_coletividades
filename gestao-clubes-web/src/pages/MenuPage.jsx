@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import * as eventosService from "../services/eventos";
+import EventCarousel from "../components/EventCarousel";
 
 import clubesIcon from "../assets/clubes.svg";
 import coletividadesIcon from "../assets/coletividades.svg";
@@ -46,17 +47,6 @@ export default function MenuPage() {
             carregarMeusEventos();
         }
     }, [clubeId, carregarMeusEventos]);
-
-    function formatarDataHora(timestamp) {
-        if (!timestamp) return "";
-        const data = new Date(timestamp);
-        const dia = String(data.getDate()).padStart(2, "0");
-        const mes = String(data.getMonth() + 1).padStart(2, "0");
-        const ano = data.getFullYear();
-        const hora = String(data.getHours()).padStart(2, "0");
-        const minuto = String(data.getMinutes()).padStart(2, "0");
-        return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
-    }
 
     const items = [
         { label: "Home", to: "/menu" },
@@ -191,27 +181,12 @@ export default function MenuPage() {
                                 Consulta rapidamente os próximos eventos convocados.
                             </p>
                         </div>
-
-                        <div className="eventos-carousel" aria-label="Meus eventos convocados">
-                            {meusEventos.map((evento) => (
-                                <article key={evento.id} className="evento-card card">
-                                    <div className="evento-header">
-                                        <h3 className="evento-titulo">{evento.titulo}</h3>
-                                        <span className="evento-atletas">👥 {evento.totalAtletas}</span>
-                                    </div>
-                                    <div className="evento-info">
-                                        <p className="evento-datetime">
-                                            <strong>📅 Data/Hora:</strong> {formatarDataHora(evento.dataHora)}
-                                        </p>
-                                        {evento.local && (
-                                            <p className="evento-local">
-                                                <strong>📍 Local:</strong> {evento.local}
-                                            </p>
-                                        )}
-                                    </div>
-                                </article>
-                            ))}
-                        </div>
+                        <EventCarousel
+                            eventos={meusEventos}
+                            showModalidade={true}
+                            showAtletas={true}
+                            emptyMessage="Não tens eventos convocados de momento."
+                        />
                     </section>
                 )}
             </main>
