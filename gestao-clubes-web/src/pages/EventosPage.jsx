@@ -261,7 +261,17 @@ export default function EventosPage() {
         logoSrc="/LOGO_GCDC04.png"
       />
 
-      <div className="container" style={{ paddingTop: 24 }}>
+      <div
+        className="container"
+        style={{
+          paddingTop: 24,
+          minHeight: "100dvh",
+          overflowY: "auto",
+          overflowX: "hidden",
+          boxSizing: "border-box",
+          maxWidth: "100%",
+        }}
+      >
         <div className="page-title page-title-with-icon">
           <div className="page-title-main-wrap">
             <span className="page-title-icon-circle">
@@ -463,6 +473,16 @@ export default function EventosPage() {
       </div>
 
       <style>{`
+        .atleta-list-container {
+          max-height: 300px;
+          overflow-y: auto;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          padding: 4px;
+          background: white;
+          margin: 10px 0;
+        }
+
         .table-responsive {
           overflow-x: auto;
         }
