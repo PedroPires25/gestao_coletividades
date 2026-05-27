@@ -15,6 +15,8 @@ import transferenciasIcon from "../assets/transferencias.svg";
 import utilizadoresAprovarIcon from "../assets/utilizadores-por-aprovar.svg";
 import utilizadoresAutorizadosIcon from "../assets/utilizadores-autorizados.svg";
 import eventosIcon from "../assets/eventos.svg";
+import departamentoMedicoIcon from "../assets/departamento-medico.svg";
+import direcaoIcon from "../assets/direcao.svg";
 
 
 const MENU_ICONS = {
@@ -30,7 +32,11 @@ const MENU_ICONS = {
     utilizadoresAprovar: utilizadoresAprovarIcon,
     utilizadoresAutorizados: utilizadoresAutorizadosIcon,
     Eventos: eventosIcon,
-
+    "Módulo Clínico": departamentoMedicoIcon,
+    "Eventos do Clube": eventosIcon,
+    "Voltar ao Clube": clubesIcon,
+    "Voltar": homeIcon,
+    "Direção": direcaoIcon,
 };
 
 const MENU_ICON_COLORS = [
