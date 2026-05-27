@@ -88,6 +88,8 @@ export default function LoginPage() {
     const [coletividades, setColetividades] = useState([]);
     const [modalidades, setModalidades] = useState([]);
     const [atividades, setAtividades] = useState([]);
+    const [registerBaseDataLoaded, setRegisterBaseDataLoaded] = useState(false);
+    const [registerBaseDataLoading, setRegisterBaseDataLoading] = useState(false);
 
     const [showRPass, setShowRPass] = useState(false);
     const [showRPass2, setShowRPass2] = useState(false);
@@ -105,9 +107,14 @@ export default function LoginPage() {
     const registerPasswordState = evaluatePassword(rPass);
 
     useEffect(() => {
+        if (!open || registerBaseDataLoaded || registerBaseDataLoading) {
+            return undefined;
+        }
+
         let ignore = false;
 
         async function loadBaseData() {
+            setRegisterBaseDataLoading(true);
             try {
                 const [profilesData, clubesData, coletividadesData] = await Promise.all([
                     getRegisterProfiles(),
@@ -123,8 +130,13 @@ export default function LoginPage() {
 
                 setClubes(Array.isArray(clubesData) ? clubesData : []);
                 setColetividades(Array.isArray(coletividadesData) ? coletividadesData : []);
+                setRegisterBaseDataLoaded(true);
             } catch {
                 // sem ação
+            } finally {
+                if (!ignore) {
+                    setRegisterBaseDataLoading(false);
+                }
             }
         }
 
@@ -132,7 +144,7 @@ export default function LoginPage() {
         return () => {
             ignore = true;
         };
-    }, []);
+    }, [open, registerBaseDataLoaded, registerBaseDataLoading]);
 
     useEffect(() => {
         if (PERFIS_CLUBE.includes(rPerfil)) {
@@ -495,6 +507,7 @@ export default function LoginPage() {
                         <div className="modal-body">
                         {rErro && <div className="alert error">{rErro}</div>}
                         {rOk && <div className="alert ok">{rOk}</div>}
+                        {registerBaseDataLoading && <div className="hint">A carregar dados do registo...</div>}
 
                         <div className="row">
                             <input
