@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import * as eventosService from "../services/eventos";
@@ -18,11 +18,36 @@ const MENU_ACTIONS = {
     Logout: logoutIcon,
 };
 
+const REMINDER_KEY = "home-tomorrow-reminder-dismissed";
+
+function isTomorrow(val) {
+    if (!val) return false;
+    const d = new Date(String(val).replace(" ", "T"));
+    if (Number.isNaN(d.getTime())) return false;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return (
+        d.getFullYear() === tomorrow.getFullYear() &&
+        d.getMonth() === tomorrow.getMonth() &&
+        d.getDate() === tomorrow.getDate()
+    );
+}
+
+function formatHora(val) {
+    if (!val) return "";
+    const d = new Date(String(val).replace(" ", "T"));
+    if (Number.isNaN(d.getTime())) return "";
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 export default function MenuPage() {
     const { logout, isAdmin, isSuperAdmin, role, clubeId } = useAuth();
     const navigate = useNavigate();
     const [meusEventos, setMeusEventos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [reminderDismissed, setReminderDismissed] = useState(
+        () => sessionStorage.getItem(REMINDER_KEY) === "1"
+    );
     const canOpenGestaoEventos =
         isAdmin ||
         role === "SECRETARIO" ||
@@ -47,6 +72,17 @@ export default function MenuPage() {
             carregarMeusEventos();
         }
     }, [clubeId, carregarMeusEventos]);
+
+    // First event happening tomorrow (for reminder popup)
+    const eventoAmanha = useMemo(() => {
+        if (!Array.isArray(meusEventos) || meusEventos.length === 0) return null;
+        return meusEventos.find((e) => isTomorrow(e.dataHora)) || null;
+    }, [meusEventos]);
+
+    function dismissReminder() {
+        sessionStorage.setItem(REMINDER_KEY, "1");
+        setReminderDismissed(true);
+    }
 
     const items = [
         { label: "Home", to: "/menu" },
@@ -190,6 +226,51 @@ export default function MenuPage() {
                     </section>
                 )}
             </main>
+
+            {/* Tomorrow reminder popup */}
+            {!loading && eventoAmanha && !reminderDismissed && (
+                <div className="event-reminder-overlay">
+                    <div className="event-reminder-card">
+                        <div className="event-reminder-header">
+                            <span className="event-reminder-title">🔔 Tens evento amanhã</span>
+                            <button
+                                type="button"
+                                className="event-reminder-close"
+                                onClick={dismissReminder}
+                                aria-label="Fechar lembrete"
+                            >✕</button>
+                        </div>
+                        <p className="event-reminder-event-name">{eventoAmanha.titulo}</p>
+                        <div className="event-reminder-meta">
+                            {eventoAmanha.dataHora && (
+                                <span>🕐 {formatHora(eventoAmanha.dataHora)}</span>
+                            )}
+                            {eventoAmanha.local && (
+                                <span>📍 {eventoAmanha.local}</span>
+                            )}
+                            {(eventoAmanha.modalidadeNome || eventoAmanha.atividadeNome) && (
+                                <span>🏅 {eventoAmanha.modalidadeNome || eventoAmanha.atividadeNome}</span>
+                            )}
+                        </div>
+                        <div className="event-reminder-actions">
+                            <button
+                                type="button"
+                                className="btn btn-primary btn-sm"
+                                onClick={dismissReminder}
+                            >
+                                Ver detalhes
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={dismissReminder}
+                            >
+                                Fechar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
