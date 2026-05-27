@@ -650,6 +650,17 @@ textarea {
     font-size: 16px;
     font-weight: 500;
     box-sizing: border-box;
+    /* Ensure input is never clipped by a parent's overflow+border-radius */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+textarea {
+    overflow: auto;
+    text-overflow: unset;
+    resize: vertical;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 input[type="file"] {
@@ -2717,11 +2728,31 @@ body.theme-light .badge {
         padding: 11px 13px;
         font-size: 15px;
         border-radius: 14px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    textarea {
+        overflow: auto;
     }
 
     /* Collapse 2-col form grids to single column */
     .row2 {
         grid-template-columns: 1fr;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Row (form container) must not overflow */
+    .row,
+    form.row {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow: visible;
     }
 
     /* Form scroll container: clip overflow */
@@ -3434,7 +3465,7 @@ img.avatar-circle-sm {
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Cartões: tamanho fixo ao ecrã, conteúdo largo scrolls internamente */
+    /* Cartões: tamanho fixo ao ecrã — sem overflow-x:hidden para não cortar inputs */
     .card,
     .panel,
     .glass-card,
@@ -3443,7 +3474,6 @@ img.avatar-circle-sm {
         max-width: 100%;
         box-sizing: border-box;
         border-radius: 16px;
-        overflow-x: hidden;
     }
 
     /* Stack sections ocupa sempre 100% do container */
@@ -3487,6 +3517,15 @@ img.avatar-circle-sm {
     .nowrap {
         overflow-wrap: initial;
         word-break: initial;
+    }
+
+    /* Exceção: campos de formulário não devem herdar overflow-wrap */
+    input,
+    select,
+    textarea,
+    .input {
+        overflow-wrap: normal;
+        word-break: normal;
     }
 
     /* Wrapper da tabela: scroll horizontal interno, o card mantém largura fixa */
