@@ -632,7 +632,7 @@ body.theme-light .appbar-logo img {
 .form-scroll {
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 .input,
@@ -1596,39 +1596,23 @@ body.theme-light .menu-icon-purple {
 .event-carousel-wrap {
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .event-carousel {
-    display: flex;
+    display: grid;
+    /* grid-template-columns set via inline style in JSX based on cardsPerPage */
     gap: 16px;
-    overflow-x: auto;
-    overflow-y: visible;
-    padding: 4px 2px 14px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    align-items: stretch;
-}
-
-.event-carousel::-webkit-scrollbar {
-    height: 6px;
-}
-
-.event-carousel::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.event-carousel::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 3px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 0 8px;
 }
 
 .event-carousel-card {
-    min-width: 300px;
-    max-width: 420px;
-    width: clamp(280px, 72vw, 420px);
-    flex: 0 0 auto;
-    scroll-snap-align: start;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
     padding: 20px;
     border-radius: 16px;
     background: var(--bg-card-soft);
@@ -1732,22 +1716,6 @@ body.theme-light .menu-icon-purple {
 .event-carousel-dot.active {
     background: var(--accent);
     transform: scale(1.3);
-}
-
-@media (max-width: 700px) {
-    .event-carousel-card {
-        width: calc(100vw - 80px);
-        min-width: 0;
-        max-width: calc(100vw - 80px);
-    }
-}
-
-@media (max-width: 480px) {
-    .event-carousel-card {
-        width: calc(100vw - 80px);
-        min-width: 0;
-        max-width: calc(100vw - 80px);
-    }
 }
 
 /* =========================
@@ -2740,6 +2708,25 @@ body.theme-light .badge {
     .card {
         padding: 14px 12px;
         border-radius: 16px;
+    }
+
+    /* Reduce input/select/textarea padding on mobile so they fit inside cards */
+    .input,
+    select,
+    textarea {
+        padding: 11px 13px;
+        font-size: 15px;
+        border-radius: 14px;
+    }
+
+    /* Collapse 2-col form grids to single column */
+    .row2 {
+        grid-template-columns: 1fr;
+    }
+
+    /* Form scroll container: clip overflow */
+    .form-scroll {
+        overflow: hidden;
     }
 }
 
