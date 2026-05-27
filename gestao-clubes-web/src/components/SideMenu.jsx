@@ -63,6 +63,12 @@ export default function SideMenu({
     const [open, setOpen] = useState(false);
     const { theme, setTheme } = useTheme();
 
+    // Em temas escuros usa versão do logo com texto branco
+    const resolvedLogoSrc =
+        (theme === "theme-dark" || theme === "theme-normal") && logoSrc === "/LOGO_GCDC04.png"
+            ? "/LOGO_GCDC04_dark.png"
+            : logoSrc;
+
     function closeMenu() {
         setOpen(false);
     }
@@ -103,7 +109,7 @@ export default function SideMenu({
                         title="Voltar"
                         onClick={closeMenu}
                     >
-                        <img src={logoSrc} alt="Logo" />
+                        <img src={resolvedLogoSrc} alt="Logo" />
                     </Link>
                 </div>
 
