@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import RequireAdmin from "./auth/RequireAdmin";
 import RequireSuperAdmin from "./auth/RequireSuperAdmin";
+import TomorrowReminder from "./components/TomorrowReminder";
 
 // páginas base
 import LoginPage from "./pages/LoginPage";
@@ -85,6 +86,7 @@ function RouteLoadingFallback() {
 export default function App() {
     return (
         <Suspense fallback={<RouteLoadingFallback />}>
+            <TomorrowReminder />
             <Routes>
                 {/* rotas públicas */}
                 <Route path="/" element={<LoginPage />} />
