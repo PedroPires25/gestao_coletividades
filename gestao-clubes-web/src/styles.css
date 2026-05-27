@@ -563,7 +563,20 @@ body.theme-light .login-theme-floating-select option {
     text-decoration: underline;
 }
 
-/* logo mantém definição no white */
+/* Logo em fundos escuros: inverter para letras pretas ficarem brancas */
+body.theme-normal .appbar-logo img,
+body.theme-dark .appbar-logo img {
+    filter: invert(1) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+}
+
+body.theme-normal .login-logo-fixed,
+body.theme-normal .login-logo,
+body.theme-dark .login-logo-fixed,
+body.theme-dark .login-logo {
+    filter: invert(1);
+}
+
+/* Logo em fundo claro: sem filtro, letras pretas já são visíveis */
 body.theme-light .login-logo-fixed,
 body.theme-light .login-logo,
 body.theme-light .appbar-logo img {
