@@ -73,6 +73,54 @@ export default function MenuPage() {
         },
     ];
 
+    const quickActions = [
+        ...(isSuperAdmin
+            ? [
+                  {
+                      label: "Clubes",
+                      to: "/clubes",
+                      icon: MENU_ACTIONS.Clubes,
+                      colorClass: "quick-action-cyan",
+                  },
+                  {
+                      label: "Coletividades",
+                      to: "/coletividades",
+                      icon: MENU_ACTIONS.Coletividades,
+                      colorClass: "quick-action-orange",
+                  },
+              ]
+            : []),
+        ...(isAdmin
+            ? [
+                  {
+                      label: "Perfis",
+                      to: "/admin/users",
+                      icon: MENU_ACTIONS.Perfis,
+                      colorClass: "quick-action-red",
+                  },
+              ]
+            : []),
+        ...(canOpenGestaoEventos
+            ? [
+                  {
+                      label: "Eventos",
+                      to: "/gestao/eventos",
+                      icon: eventosIcon,
+                      colorClass: "quick-action-purple",
+                  },
+              ]
+            : []),
+        {
+            label: "Logout",
+            icon: MENU_ACTIONS.Logout,
+            colorClass: "quick-action-green",
+            onClick: () => {
+                logout();
+                navigate("/login", { replace: true });
+            },
+        },
+    ];
+
     return (
         <>
             <SideMenu
@@ -85,75 +133,68 @@ export default function MenuPage() {
                 eventoBadge={!loading && meusEventos.length > 0 ? `📅 ${meusEventos.length}` : null}
             />
 
-            <div className="menu-center-wrapper">
-                <div className="quick-actions-row">
-                        {isSuperAdmin && (
-                            <Link to="/clubes" className="quick-action quick-action-cyan">
-                                <span className="quick-action-circle">
-                                    <span className="quick-action-icon">
-                                        <img src={MENU_ACTIONS.Clubes} alt="Clubes" />
+            <main className="container menu-home" style={{ paddingTop: 24 }}>
+                <section className="menu-home-section menu-home-actions-section card">
+                    <div className="menu-home-section-head">
+                        <div>
+                            <h1 className="menu-home-title">Home</h1>
+                            <p className="menu-home-subtitle">
+                                Acede rapidamente às principais áreas da plataforma.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="menu-home-actions-grid">
+                        {quickActions.map((action) => {
+                            const content = (
+                                <>
+                                    <span className="quick-action-circle">
+                                        <span className="quick-action-icon">
+                                            <img src={action.icon} alt={action.label} />
+                                        </span>
                                     </span>
-                                </span>
-                                <span className="quick-action-label">Clubes</span>
-                            </Link>
-                        )}
+                                    <span className="quick-action-label">{action.label}</span>
+                                </>
+                            );
 
-                        {isSuperAdmin && (
-                            <Link to="/coletividades" className="quick-action quick-action-orange">
-                                <span className="quick-action-circle">
-                                    <span className="quick-action-icon">
-                                        <img src={MENU_ACTIONS.Coletividades} alt="Coletividades" />
-                                    </span>
-                                </span>
-                                <span className="quick-action-label">Coletividades</span>
-                            </Link>
-                        )}
+                            if (action.onClick) {
+                                return (
+                                    <button
+                                        key={action.label}
+                                        className={`quick-action quick-action-button ${action.colorClass}`}
+                                        type="button"
+                                        onClick={action.onClick}
+                                    >
+                                        {content}
+                                    </button>
+                                );
+                            }
 
-                    {isAdmin && (
-                        <Link to="/admin/users" className="quick-action quick-action-red">
-                            <span className="quick-action-circle">
-                                <span className="quick-action-icon">
-                                    <img src={MENU_ACTIONS.Perfis} alt="Perfis" />
-                                </span>
-                            </span>
-                            <span className="quick-action-label">Perfis</span>
-                        </Link>
-                    )}
-
-                    {canOpenGestaoEventos && (
-                        <Link to="/gestao/eventos" className="quick-action quick-action-purple">
-                            <span className="quick-action-circle">
-                                <span className="quick-action-icon">
-                                    <img src={eventosIcon} alt="Eventos" />
-                                </span>
-                            </span>
-                            <span className="quick-action-label">Eventos</span>
-                        </Link>
-                    )}
-
-                    <button
-                        className="quick-action quick-action-green quick-action-button"
-                        type="button"
-                        onClick={() => {
-                            logout();
-                            navigate("/login", { replace: true });
-                        }}
-                    >
-                        <span className="quick-action-circle">
-                            <span className="quick-action-icon">
-                                <img src={MENU_ACTIONS.Logout} alt="Logout" />
-                            </span>
-                        </span>
-                        <span className="quick-action-label">Logout</span>
-                    </button>
-                </div>
+                            return (
+                                <Link
+                                    key={action.label}
+                                    to={action.to}
+                                    className={`quick-action ${action.colorClass}`}
+                                >
+                                    {content}
+                                </Link>
+                            );
+                        })}
+                    </div>
+                </section>
 
                 {!loading && meusEventos.length > 0 && (
-                    <div className="eventos-section">
-                        <h2 className="page-title">📅 Meus Eventos Convocados</h2>
-                        <div className="eventos-list">
+                    <section className="menu-home-section menu-home-events-section card">
+                        <div className="menu-home-section-head menu-home-section-head-stack">
+                            <h2 className="menu-home-section-title">Meus Eventos Convocados</h2>
+                            <p className="menu-home-section-subtitle">
+                                Consulta rapidamente os próximos eventos convocados.
+                            </p>
+                        </div>
+
+                        <div className="eventos-carousel" aria-label="Meus eventos convocados">
                             {meusEventos.map((evento) => (
-                                <div key={evento.id} className="evento-card card">
+                                <article key={evento.id} className="evento-card card">
                                     <div className="evento-header">
                                         <h3 className="evento-titulo">{evento.titulo}</h3>
                                         <span className="evento-atletas">👥 {evento.totalAtletas}</span>
@@ -168,12 +209,12 @@ export default function MenuPage() {
                                             </p>
                                         )}
                                     </div>
-                                </div>
+                                </article>
                             ))}
                         </div>
-                    </div>
+                    </section>
                 )}
-            </div>
+            </main>
         </>
     );
 }

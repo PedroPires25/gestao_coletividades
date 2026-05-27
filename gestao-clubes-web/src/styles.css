@@ -1387,6 +1387,168 @@ body.theme-light .menu-icon-purple {
    Menu principal
 ========================= */
 
+.menu-home {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-items: stretch;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.menu-home-section {
+    width: 100%;
+}
+
+.menu-home-actions-section,
+.menu-home-events-section {
+    padding: 28px;
+}
+
+.menu-home-actions-section {
+    text-align: center;
+}
+
+.menu-home-section-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.menu-home-section-head-stack {
+    margin-bottom: 20px;
+}
+
+.menu-home-title,
+.menu-home-section-title {
+    margin: 0;
+    font-size: clamp(22px, 3vw, 32px);
+    line-height: 1.1;
+    letter-spacing: 0.2px;
+}
+
+.menu-home-section-title {
+    font-size: clamp(18px, 2.5vw, 26px);
+}
+
+.menu-home-subtitle,
+.menu-home-section-subtitle {
+    margin: 8px auto 0;
+    max-width: 600px;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* Icons grid — compact, centered */
+.menu-home-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 150px));
+    justify-content: center;
+    gap: 18px;
+    width: 100%;
+    max-width: 740px;
+    margin: 0 auto;
+}
+
+.menu-home .quick-action {
+    width: 100%;
+    min-width: 0;
+    min-height: 140px;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-card-soft);
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.menu-home .quick-action:hover {
+    transform: translateY(-3px);
+    background: var(--bg-btn-hover);
+    box-shadow: 0 14px 32px rgba(0,0,0,0.18);
+}
+
+.menu-home .quick-action:focus-visible {
+    outline: 3px solid rgba(91, 140, 255, 0.45);
+    outline-offset: 3px;
+}
+
+.menu-home .quick-action-label {
+    max-width: 130px;
+    font-size: 14px;
+}
+
+/* Scale down icon circles in the Home page */
+.menu-home .quick-action-circle {
+    width: 72px;
+    height: 72px;
+}
+
+.menu-home .quick-action-icon,
+.menu-home .quick-action-icon img {
+    width: 34px;
+    height: 34px;
+}
+
+/* Events section */
+.menu-home-events-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Horizontal scroll carousel */
+.eventos-carousel {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    align-items: stretch;
+}
+
+.eventos-carousel::-webkit-scrollbar {
+    height: 6px;
+}
+
+.eventos-carousel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.eventos-carousel::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+.menu-home .evento-card {
+    min-width: 260px;
+    max-width: 320px;
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    padding: 20px;
+    border-radius: 16px;
+    background: var(--bg-card-soft);
+    box-shadow: none;
+    height: auto;
+}
+
+.menu-home .evento-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(0,0,0,0.16);
+}
+
 .menu-center-wrapper {
     min-height: calc(100vh - 78px);
     display: flex;
@@ -1973,6 +2135,58 @@ body.theme-light .badge {
 }
 
 @media (max-width: 700px) {
+    .menu-home {
+        gap: 18px;
+    }
+
+    .menu-home-actions-section,
+    .menu-home-events-section {
+        padding: 22px 18px;
+    }
+
+    .menu-home-title {
+        font-size: 30px;
+    }
+
+    .menu-home-section-title {
+        font-size: 24px;
+    }
+
+    .menu-home-subtitle,
+    .menu-home-section-subtitle {
+        font-size: 14px;
+    }
+
+    .menu-home-actions-grid {
+        grid-template-columns: repeat(auto-fit, minmax(110px, 140px));
+        gap: 14px;
+    }
+
+    .menu-home .quick-action {
+        min-height: 130px;
+        padding: 14px 10px;
+    }
+
+    .menu-home .quick-action-circle {
+        width: 60px;
+        height: 60px;
+    }
+
+    .menu-home .quick-action-icon,
+    .menu-home .quick-action-icon img {
+        width: 28px;
+        height: 28px;
+    }
+
+    .eventos-carousel {
+        gap: 14px;
+    }
+
+    .menu-home .evento-card {
+        min-width: 240px;
+        max-width: 280px;
+    }
+
     .login-page {
         padding: 96px 14px 24px;
     }
@@ -2989,6 +3203,39 @@ img.avatar-circle-sm {
 ========================= */
 
 @media (max-width: 480px) {
+    .menu-home-actions-section,
+    .menu-home-events-section {
+        padding: 18px 14px;
+    }
+
+    .menu-home-actions-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .menu-home .quick-action {
+        min-height: 120px;
+        border-radius: 18px;
+        padding: 14px 10px;
+        gap: 10px;
+    }
+
+    .menu-home .quick-action-circle {
+        width: 54px;
+        height: 54px;
+    }
+
+    .menu-home .quick-action-icon,
+    .menu-home .quick-action-icon img {
+        width: 26px;
+        height: 26px;
+    }
+
+    .menu-home .evento-card {
+        min-width: 210px;
+        max-width: 260px;
+    }
+
     /* Container com menos padding */
     .container {
         padding: 12px 10px 40px;
