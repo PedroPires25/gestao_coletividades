@@ -1713,6 +1713,172 @@ body.theme-light .menu-icon-purple {
    (end EventCarousel)
 ========================= */
 
+/* Tomorrow highlight */
+.event-card-tomorrow {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+
+.event-card-tomorrow-badge {
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    background: #f59e0b;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    z-index: 2;
+}
+
+.event-carousel-card {
+    position: relative; /* needed for absolute tomorrow badge */
+}
+
+/* Subtle "click for details" hint */
+.event-card-hint-click {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: auto;
+    padding-top: 6px;
+    text-align: right;
+    opacity: 0.6;
+}
+
+/* Detail modal */
+.event-detail-modal {
+    max-width: 560px;
+    width: 92vw;
+}
+
+.event-detail-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.event-detail-info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.event-detail-info-row {
+    display: flex;
+    gap: 12px;
+    font-size: 0.9rem;
+    align-items: flex-start;
+    line-height: 1.5;
+}
+
+.event-detail-info-label {
+    min-width: 160px;
+    font-weight: 600;
+    color: var(--muted);
+    flex-shrink: 0;
+}
+
+/* Reminder popup (Home page) */
+.event-reminder-overlay {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1200;
+    animation: slideUpIn 0.3s ease;
+}
+
+@keyframes slideUpIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.event-reminder-card {
+    background: var(--bg-card-soft);
+    border: 1px solid #f59e0b;
+    border-left: 4px solid #f59e0b;
+    border-radius: 14px;
+    padding: 18px 20px;
+    max-width: 340px;
+    width: calc(100vw - 48px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.event-reminder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.event-reminder-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #f59e0b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.event-reminder-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.event-reminder-event-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.event-reminder-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.event-reminder-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+@media (max-width: 480px) {
+    .event-reminder-overlay {
+        bottom: 12px;
+        right: 12px;
+        left: 12px;
+    }
+
+    .event-reminder-card {
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .event-detail-info-label {
+        min-width: 130px;
+    }
+}
+
+
+
 .menu-center-wrapper {
     min-height: calc(100vh - 78px);
     display: flex;
