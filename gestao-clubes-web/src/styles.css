@@ -359,8 +359,8 @@ body.theme-dark::after {
 
 .login-brand {
     position: fixed;
-    top: 26px;
-    left: 28px;
+    top: 40px;
+    left: 60px;
     z-index: 12;
     display: inline-flex;
     align-items: center;
@@ -369,7 +369,7 @@ body.theme-dark::after {
 }
 
 .login-logo-fixed {
-    width: clamp(100px, 9vw, 135px);
+    width: 130px;
     max-width: 18vw;
     height: auto;
     display: block;
@@ -463,8 +463,8 @@ body.theme-dark::after {
 /* seletor flutuante no canto superior direito */
 .login-theme-floating {
     position: fixed;
-    top: 26px;
-    right: 28px;
+    top: 40px;
+    right: 60px;
     z-index: 20;
     display: flex;
     align-items: center;
@@ -474,23 +474,21 @@ body.theme-dark::after {
 
 .login-theme-floating-wrap {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-items: stretch;
-    padding: 7px 10px;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 10px;
     border-radius: 13px;
     border: 1px solid var(--border);
     background: var(--bg-appbar);
     backdrop-filter: blur(12px);
-    min-width: 130px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.18);
     pointer-events: auto;
 }
 
 .login-theme-floating-label {
     display: block;
-    width: 100%;
-    text-align: center;
+    white-space: nowrap;
     font-size: 11px;
     font-weight: 700;
     color: var(--muted);
@@ -499,8 +497,6 @@ body.theme-dark::after {
 }
 
 .login-theme-floating-select {
-    width: 100%;
-    min-width: 110px;
     padding: 5px 8px;
     font-size: 14px;
     border-radius: 10px;
@@ -2451,8 +2447,19 @@ body.theme-light .badge {
     }
 
     .login-theme-floating-wrap {
+        flex-direction: column;
         min-width: 115px;
         align-items: stretch;
+        gap: 4px;
+    }
+
+    .login-theme-floating-label {
+        width: 100%;
+        text-align: center;
+    }
+
+    .login-theme-floating-select {
+        width: 100%;
     }
 
     .quick-actions-row,
@@ -2577,6 +2584,7 @@ body.theme-light .badge {
     }
 
     .login-theme-floating-wrap {
+        flex-direction: column;
         min-width: 105px;
         padding: 5px 8px;
         gap: 3px;
@@ -2586,9 +2594,11 @@ body.theme-light .badge {
     .login-theme-floating-label {
         font-size: 10px;
         text-align: center;
+        width: 100%;
     }
 
     .login-theme-floating-select {
+        width: 100%;
         min-width: 88px;
         padding: 6px 8px;
         font-size: 14px;
