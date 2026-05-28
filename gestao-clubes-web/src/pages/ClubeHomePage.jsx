@@ -13,6 +13,8 @@ import transferenciasIcon from "../assets/transferencias.svg";
 import eventosIcon from "../assets/eventos.svg";
 import perfisIcon from "../assets/perfis.svg";
 import definicoesIcon from "../assets/direcao.svg";
+// Importar o ícone do módulo médico, se o do treinador não existir usamos o de staff como fallback
+import deptMedicoIcon from "../assets/departamento-medico.svg";
 
 const QUICK_ICONS = {
     "Modalidades do Clube": modalidadesIcon,
@@ -22,6 +24,8 @@ const QUICK_ICONS = {
     "Eventos": eventosIcon,
     "Perfis": perfisIcon,
     "Definições do Clube": definicoesIcon,
+    "Módulo Clínico": deptMedicoIcon,
+    "Módulo Treinador": staffIcon, // Placeholder até criarem o ícone svg próprio
 };
 
 export default function ClubeHomePage() {
@@ -73,6 +77,8 @@ export default function ClubeHomePage() {
             ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
             ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+            { label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` },
+            { label: "Módulo Treinador", to: `/clubes/${clubeId}/treinador` },
             { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
             ...(canManageClube(Number(clubeId)) ? [{ label: "Definições do Clube", to: `/clubes/${clubeId}/editar` }] : []),
             {
@@ -90,6 +96,8 @@ export default function ClubeHomePage() {
         { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
         { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
         { label: "Staff", to: `/clubes/${clubeId}/staff` },
+        { label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` },
+        { label: "Módulo Treinador", to: `/clubes/${clubeId}/treinador` },
         { label: "Eventos", to: `/clubes/${clubeId}/eventos` },
         { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
