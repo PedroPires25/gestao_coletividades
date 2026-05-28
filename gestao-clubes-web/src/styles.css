@@ -369,12 +369,12 @@ body.theme-dark::after {
 }
 
 .login-logo-fixed {
-    width: 185px;
-    max-width: 28vw;
+    width: clamp(100px, 9vw, 135px);
+    max-width: 18vw;
     height: auto;
     display: block;
     object-fit: contain;
-    filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.42));
+    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.30));
     transition: transform 160ms ease, opacity 160ms ease;
 }
 
@@ -475,15 +475,15 @@ body.theme-dark::after {
 .login-theme-floating-wrap {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     align-items: stretch;
-    padding: 9px 11px;
+    padding: 7px 10px;
     border-radius: 13px;
     border: 1px solid var(--border);
     background: var(--bg-appbar);
     backdrop-filter: blur(12px);
-    min-width: 172px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+    min-width: 130px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.18);
     pointer-events: auto;
 }
 
@@ -491,7 +491,7 @@ body.theme-dark::after {
     display: block;
     width: 100%;
     text-align: center;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--muted);
     line-height: 1.2;
@@ -500,8 +500,9 @@ body.theme-dark::after {
 
 .login-theme-floating-select {
     width: 100%;
-    min-width: 118px;
-    padding: 7px 10px;
+    min-width: 110px;
+    padding: 5px 8px;
+    font-size: 14px;
     border-radius: 10px;
     border: 1px solid var(--border);
     background: var(--bg-input);
@@ -2440,8 +2441,8 @@ body.theme-light .badge {
     }
 
     .login-logo-fixed {
-        width: 185px;
-        max-width: 38vw;
+        width: clamp(90px, 11vw, 120px);
+        max-width: 20vw;
     }
 
     .login-theme-floating {
@@ -2450,7 +2451,7 @@ body.theme-light .badge {
     }
 
     .login-theme-floating-wrap {
-        min-width: 150px;
+        min-width: 115px;
         align-items: stretch;
     }
 
@@ -2557,7 +2558,7 @@ body.theme-light .badge {
     }
 
     .login-page {
-        padding: 96px 14px 24px;
+        padding: 84px 14px 24px;
     }
 
     .login-brand {
@@ -2566,8 +2567,8 @@ body.theme-light .badge {
     }
 
     .login-logo-fixed {
-        width: 155px;
-        max-width: 45vw;
+        width: clamp(80px, 16vw, 96px);
+        max-width: 26vw;
     }
 
     .login-theme-floating {
@@ -2576,18 +2577,21 @@ body.theme-light .badge {
     }
 
     .login-theme-floating-wrap {
-        min-width: 138px;
-        padding: 8px 10px;
+        min-width: 105px;
+        padding: 5px 8px;
+        gap: 3px;
         align-items: stretch;
     }
 
     .login-theme-floating-label {
+        font-size: 10px;
         text-align: center;
     }
 
     .login-theme-floating-select {
-        min-width: 118px;
-        padding: 8px 10px;
+        min-width: 88px;
+        padding: 6px 8px;
+        font-size: 14px;
     }
 
     .login-card {
@@ -3835,7 +3839,7 @@ img.avatar-circle-sm {
 
     /* Seletor de tema login: esconder em mobile muito pequeno se causar problema */
     .login-theme-floating-wrap {
-        min-width: 120px;
+        min-width: 95px;
     }
 
     /* Toolbar title wrap em coluna */
