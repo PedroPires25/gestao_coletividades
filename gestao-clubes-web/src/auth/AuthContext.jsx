@@ -35,8 +35,9 @@ function calcularRedirectUrl(user) {
             return null;
 
         case "TREINADOR_PRINCIPAL":
-            if (clubeId && modalidadeId) {
-                return `/clubes/${clubeId}/staff/modalidades/${modalidadeId}`;
+            if (clubeId) {
+                // Redireciona diretamente para o Módulo de Treinador
+                return `/clubes/${clubeId}/treinador`;
             }
             return null;
 
