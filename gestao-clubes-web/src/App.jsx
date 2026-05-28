@@ -39,6 +39,10 @@ const ColetividadeStaffPage = lazy(() => import("./pages/ColetividadeStaffPage")
 const ColetividadeStaffAtividadePage = lazy(() => import("./pages/ColetividadeStaffAtividadePage"));
 const AreaAcessoClubePage = lazy(() => import("./pages/AreaAcessoClubePage"));
 const AreaAcessoColetividadePage = lazy(() => import("./pages/AreaAcessoColetividadePage"));
+const PerfilPage = lazy(() => import("./pages/PerfilPage"));
+const PoliticaPrivacidadePage = lazy(() => import("./pages/PoliticaPrivacidadePage"));
+
+// Módulo Médico
 const ClubeModuloMedicoPage = lazy(() => import("./pages/ClubeModuloMedicoPage"));
 const RegistosLesaoPage = lazy(() => import("./pages/RegistosLesaoPage"));
 const ConsultasMedicasPage = lazy(() => import("./pages/ConsultasMedicasPage"));
@@ -46,8 +50,13 @@ const ExamesMedicosPage = lazy(() => import("./pages/ExamesMedicosPage"));
 const PrescricoesPage = lazy(() => import("./pages/PrescricoesPage"));
 const RelatoriosMedicosPage = lazy(() => import("./pages/RelatoriosMedicosPage"));
 const AtletaFichaMedicaPage = lazy(() => import("./pages/AtletaFichaMedicaPage"));
-const PerfilPage = lazy(() => import("./pages/PerfilPage"));
-const PoliticaPrivacidadePage = lazy(() => import("./pages/PoliticaPrivacidadePage"));
+
+// Módulo Treinador (NOVAS PÁGINAS)
+const ClubeModuloTreinadorPage = lazy(() => import("./pages/ClubeModuloTreinadorPage"));
+const SessoesTreinoPage = lazy(() => import("./pages/SessoesTreinoPage"));
+const AssiduidadePage = lazy(() => import("./pages/AssiduidadePage"));
+const PlanoTreinoPage = lazy(() => import("./pages/PlanoTreinoPage"));
+
 
 function NotFoundPage() {
     return (
@@ -378,6 +387,12 @@ export default function App() {
                 <Route path="/clubes/:clubeId/medico/prescricoes" element={<RequireAuth><PrescricoesPage /></RequireAuth>} />
                 <Route path="/clubes/:clubeId/medico/relatorios" element={<RequireAuth><RelatoriosMedicosPage /></RequireAuth>} />
                 <Route path="/clubes/:clubeId/medico/atletas/:atletaId/ficha" element={<RequireAuth><AtletaFichaMedicaPage /></RequireAuth>} />
+
+                {/* MÓDULO TREINADOR */}
+                <Route path="/clubes/:clubeId/treinador" element={<RequireAuth><ClubeModuloTreinadorPage /></RequireAuth>} />
+                <Route path="/clubes/:clubeId/treinador/sessoes" element={<RequireAuth><SessoesTreinoPage /></RequireAuth>} />
+                <Route path="/clubes/:clubeId/treinador/assiduidade" element={<RequireAuth><AssiduidadePage /></RequireAuth>} />
+                <Route path="/clubes/:clubeId/treinador/planos" element={<RequireAuth><PlanoTreinoPage /></RequireAuth>} />
 
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>

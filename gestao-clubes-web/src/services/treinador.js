@@ -1,0 +1,95 @@
+const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "")}/api`;
+const LS_KEY = "gc_user";
+
+function getStoredToken() {
+    try {
+        const raw = localStorage.getItem(LS_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return parsed?.token ?? null;
+    } catch {
+        return null;
+    }
+}
+
+async function authFetch(path, options = {}) {
+    const token = getStoredToken();
+
+    const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+    };
+
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_URL}${path}`, {
+        ...options,
+        headers,
+    });
+
+    if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        throw new Error(text || `Erro HTTP ${response.status}`);
+    }
+
+    const ct = response.headers.get("content-type") || "";
+    if (ct.includes("application/json")) return response.json();
+    return response.text();
+}
+
+// =======================
+// ATLETAS
+// =======================
+
+export async function getAtletasTreinador(clubeId) {
+    return authFetch(`/clubes/${clubeId}/treinador/atletas`);
+}
+
+// =======================
+// SESSÕES DE TREINO
+// =======================
+
+export async function getSessoesTreino(clubeId) {
+    // Ex: GET /api/clubes/:id/treinador/sessoes
+    return authFetch(`/clubes/${clubeId}/treinador/sessoes`);
+}
+
+export async function createSessaoTreino(clubeId, payload) {
+    // Ex: POST /api/clubes/:id/treinador/sessoes
+    return authFetch(`/clubes/${clubeId}/treinador/sessoes`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function updateSessaoTreino(clubeId, sessaoId, payload) {
+    // Ex: PUT /api/clubes/:id/treinador/sessoes/:sessaoId
+    return authFetch(`/clubes/${clubeId}/treinador/sessoes/${sessaoId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+    });
+}
+
+// =======================
+// ASSIDUIDADE
+// =======================
+
+export async function getAssiduidade(clubeId, startDate, endDate) {
+    // Ex: GET /api/clubes/:id/treinador/assiduidade?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+    const params = new URLSearchParams({ startDate, endDate });
+    return authFetch(`/clubes/${clubeId}/treinador/assiduidade?${params.toString()}`);
+}
+
+// =======================
+// PLANOS DE TREINO
+// =======================
+
+export async function enviarPlanoTreino(clubeId, payload) {
+    // Ex: POST /api/clubes/:id/treinador/planos
+    return authFetch(`/clubes/${clubeId}/treinador/planos`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+}
