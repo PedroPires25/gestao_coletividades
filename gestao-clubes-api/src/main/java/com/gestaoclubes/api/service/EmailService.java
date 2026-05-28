@@ -55,4 +55,20 @@ public class EmailService {
 
         mailSender.send(mensagem);
     }
+
+    public void enviarPlanoTreino(String emailDestino, String nomeAtleta, String conteudoPlano) {
+        SimpleMailMessage mensagem = new SimpleMailMessage();
+        mensagem.setTo(emailDestino);
+        mensagem.setSubject("O seu novo Plano de Treino Individual");
+        mensagem.setText("Olá " + nomeAtleta + ",\n\n" +
+                "O seu treinador enviou-lhe um novo plano de treino individual.\n\n" +
+                "--------------------------------------------------\n" +
+                conteudoPlano + "\n" +
+                "--------------------------------------------------\n\n" +
+                "Bons treinos!\n\n" +
+                "Cumprimentos,\n" +
+                "A sua Equipa Técnica");
+
+        mailSender.send(mensagem);
+    }
 }
