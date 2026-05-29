@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import RequireAdmin from "./auth/RequireAdmin";
 import RequireSuperAdmin from "./auth/RequireSuperAdmin";
+import RequireNotMedico from "./auth/RequireNotMedico";
 import TomorrowReminder from "./components/TomorrowReminder";
 
 // páginas base
@@ -107,7 +108,9 @@ export default function App() {
                     path="/menu"
                     element={
                         <RequireAuth>
-                            <MenuPage />
+                            <RequireNotMedico>
+                                <MenuPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -164,7 +167,9 @@ export default function App() {
                     path="/clubes/:clubeId"
                     element={
                         <RequireAuth>
-                            <ClubeHomePage />
+                            <RequireNotMedico>
+                                <ClubeHomePage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -174,7 +179,9 @@ export default function App() {
                     path="/clubes/:clubeId/editar"
                     element={
                         <RequireAuth>
-                            <ClubeEditPage />
+                            <RequireNotMedico>
+                                <ClubeEditPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -183,7 +190,9 @@ export default function App() {
                     path="/clubes/:clubeId/modalidades"
                     element={
                         <RequireAuth>
-                            <ClubeModalidadesPage />
+                            <RequireNotMedico>
+                                <ClubeModalidadesPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -192,7 +201,9 @@ export default function App() {
                     path="/clubes/:clubeId/atletas"
                     element={
                         <RequireAuth>
-                            <ClubeAtletasPage />
+                            <RequireNotMedico>
+                                <ClubeAtletasPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -201,7 +212,9 @@ export default function App() {
                     path="/clubes/:clubeId/atletas/modalidades/:clubeModalidadeId"
                     element={
                         <RequireAuth>
-                            <ClubeAtletasModalidadePage />
+                            <RequireNotMedico>
+                                <ClubeAtletasModalidadePage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -210,7 +223,9 @@ export default function App() {
                     path="/clubes/:clubeId/staff"
                     element={
                         <RequireAuth>
-                            <ClubeStaffPage />
+                            <RequireNotMedico>
+                                <ClubeStaffPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -219,7 +234,9 @@ export default function App() {
                     path="/clubes/:clubeId/staff/modalidades/:clubeModalidadeId"
                     element={
                         <RequireAuth>
-                            <ClubeStaffModalidadePage />
+                            <RequireNotMedico>
+                                <ClubeStaffModalidadePage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -246,7 +263,9 @@ export default function App() {
                     path="/eventos"
                     element={
                         <RequireAuth>
-                            <EventosPage />
+                            <RequireNotMedico>
+                                <EventosPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -255,7 +274,9 @@ export default function App() {
                     path="/clubes/:clubeId/clube-modalidade/:clubeModalidadeId/eventos"
                     element={
                         <RequireAuth>
-                            <EventosPage />
+                            <RequireNotMedico>
+                                <EventosPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -274,7 +295,9 @@ export default function App() {
                     path="/coletividades/:id"
                     element={
                         <RequireAuth>
-                            <ColetividadeHomePage />
+                            <RequireNotMedico>
+                                <ColetividadeHomePage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -284,7 +307,9 @@ export default function App() {
                     path="/coletividades/:id/editar"
                     element={
                         <RequireAuth>
-                            <ColetividadeEditPage />
+                            <RequireNotMedico>
+                                <ColetividadeEditPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -293,7 +318,9 @@ export default function App() {
                     path="/coletividades/:id/atividades"
                     element={
                         <RequireAuth>
-                            <ColetividadeAtividadesPage />
+                            <RequireNotMedico>
+                                <ColetividadeAtividadesPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -302,7 +329,9 @@ export default function App() {
                     path="/coletividades/:id/utentes"
                     element={
                         <RequireAuth>
-                            <ColetividadeUtentesPage />
+                            <RequireNotMedico>
+                                <ColetividadeUtentesPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -311,7 +340,9 @@ export default function App() {
                     path="/coletividades/:coletividadeId/utentes/atividades/:coletividadeAtividadeId"
                     element={
                         <RequireAuth>
-                            <ColetividadeUtentesAtividadePage />
+                            <RequireNotMedico>
+                                <ColetividadeUtentesAtividadePage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -320,7 +351,9 @@ export default function App() {
                     path="/coletividades/:id/staff"
                     element={
                         <RequireAuth>
-                            <ColetividadeStaffPage />
+                            <RequireNotMedico>
+                                <ColetividadeStaffPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -329,7 +362,9 @@ export default function App() {
                     path="/coletividades/:coletividadeId/staff/atividades/:coletividadeAtividadeId"
                     element={
                         <RequireAuth>
-                            <ColetividadeStaffAtividadePage />
+                            <RequireNotMedico>
+                                <ColetividadeStaffAtividadePage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -338,7 +373,9 @@ export default function App() {
                     path="/clubes/:clubeId/clube-modalidade/:clubeModalidadeId/modalidade"
                     element={
                         <RequireAuth>
-                            <ModalidadeEventosPage />
+                            <RequireNotMedico>
+                                <ModalidadeEventosPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -347,7 +384,9 @@ export default function App() {
                     path="/gestao/eventos"
                     element={
                         <RequireAuth>
-                            <GestaoEventosPage />
+                            <RequireNotMedico>
+                                <GestaoEventosPage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -357,7 +396,9 @@ export default function App() {
                     path="/minha-area/clube/:clubeId"
                     element={
                         <RequireAuth>
-                            <AreaAcessoClubePage />
+                            <RequireNotMedico>
+                                <AreaAcessoClubePage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
@@ -365,7 +406,9 @@ export default function App() {
                     path="/minha-area/coletividade/:coletividadeId"
                     element={
                         <RequireAuth>
-                            <AreaAcessoColetividadePage />
+                            <RequireNotMedico>
+                                <AreaAcessoColetividadePage />
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
