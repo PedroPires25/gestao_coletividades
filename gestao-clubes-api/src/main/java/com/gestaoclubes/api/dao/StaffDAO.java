@@ -97,6 +97,31 @@ public class StaffDAO {
         return null;
     }
 
+    public Staff buscarPorUtilizadorId(int utilizadorId) {
+        String sql = """
+            SELECT s.*, COALESCE(u.nome, s.nome) AS nome_efetivo,
+                   COALESCE(u.logo_path, s.foto_path) AS foto_efetiva
+            FROM staff s
+            LEFT JOIN utilizadores u ON u.id = s.utilizador_id
+            WHERE s.utilizador_id = ?
+            LIMIT 1
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, utilizadorId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return mapStaffComJoin(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public boolean atualizar(int id, Staff s) {
         String sql = """
             UPDATE staff
