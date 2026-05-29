@@ -108,6 +108,10 @@ public class SecurityUtils {
         return "ROLE_SUPER_ADMIN".equals(currentRole());
     }
 
+    public static boolean isDepartamentoMedico() {
+        return "ROLE_DEPARTAMENTO_MEDICO".equals(currentRole());
+    }
+
     public static boolean isAdministradorEstrutura() {
         return "ROLE_ADMINISTRADOR".equals(currentRole()) && currentPrivilegiosAtivos();
     }
