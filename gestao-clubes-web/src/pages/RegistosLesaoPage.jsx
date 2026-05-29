@@ -51,6 +51,73 @@ const EMPTY_FORM = {
     tratamento: "",
 };
 
+function FormFields({ values, onChange: onCh, atletasList, staffList }) {
+    return (
+        <>
+            <div className="row2">
+                <div className="row">
+                    <label className="field-label">Atleta *</label>
+                    <select className="input" name="atletaId" value={values.atletaId} onChange={onCh} required>
+                        <option value="">Selecionar atleta</option>
+                        {atletasList.map((a) => (
+                            <option key={a.id} value={a.id}>{a.nome}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="row">
+                    <label className="field-label">Staff responsável</label>
+                    <select className="input" name="staffId" value={values.staffId} onChange={onCh}>
+                        <option value="">Nenhum</option>
+                        {staffList.map((s) => (
+                            <option key={s.id} value={s.id}>{s.nome || `Staff #${s.id}`}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+            <div className="row2">
+                <div className="row">
+                    <label className="field-label">Tipo de lesão *</label>
+                    <input className="input" name="tipo" value={values.tipo} onChange={onCh} placeholder="Ex: Entorse, Fratura, Distensão..." required />
+                </div>
+                <div className="row">
+                    <label className="field-label">Parte do corpo</label>
+                    <input className="input" name="parteCorpo" value={values.parteCorpo} onChange={onCh} placeholder="Ex: Joelho direito" />
+                </div>
+            </div>
+            <div className="row2">
+                <div className="row">
+                    <label className="field-label">Gravidade</label>
+                    <select className="input" name="gravidade" value={values.gravidade} onChange={onCh}>
+                        {GRAVIDADES.map((g) => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                </div>
+                <div className="row">
+                    <label className="field-label">Data da lesão *</label>
+                    <input className="input" name="dataLesao" type="date" value={values.dataLesao} onChange={onCh} required />
+                </div>
+            </div>
+            <div className="row2">
+                <div className="row">
+                    <label className="field-label">Retorno previsto</label>
+                    <input className="input" name="dataRetornoPrevista" type="date" value={values.dataRetornoPrevista} onChange={onCh} />
+                </div>
+                <div className="row">
+                    <label className="field-label">Retorno efetivo</label>
+                    <input className="input" name="dataRetornoEfetiva" type="date" value={values.dataRetornoEfetiva} onChange={onCh} />
+                </div>
+            </div>
+            <div className="row">
+                <label className="field-label">Descrição</label>
+                <textarea className="input" name="descricao" value={values.descricao} onChange={onCh} rows={3} placeholder="Descrição detalhada da lesão..." />
+            </div>
+            <div className="row">
+                <label className="field-label">Tratamento</label>
+                <textarea className="input" name="tratamento" value={values.tratamento} onChange={onCh} rows={3} placeholder="Protocolo de tratamento..." />
+            </div>
+        </>
+    );
+}
+
 export default function RegistosLesaoPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
@@ -172,73 +239,6 @@ export default function RegistosLesaoPage() {
         }
     }
 
-    function FormFields({ values, onChange: onCh }) {
-        return (
-            <>
-                <div className="row2">
-                    <div className="row">
-                        <label className="field-label">Atleta *</label>
-                        <select className="input" name="atletaId" value={values.atletaId} onChange={onCh} required>
-                            <option value="">Selecionar atleta</option>
-                            {atletasList.map((a) => (
-                                <option key={a.id} value={a.id}>{a.nome}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="row">
-                        <label className="field-label">Staff responsável</label>
-                        <select className="input" name="staffId" value={values.staffId} onChange={onCh}>
-                            <option value="">Nenhum</option>
-                            {staffList.map((s) => (
-                                <option key={s.id} value={s.id}>{s.nome || `Staff #${s.id}`}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-                <div className="row2">
-                    <div className="row">
-                        <label className="field-label">Tipo de lesão *</label>
-                        <input className="input" name="tipo" value={values.tipo} onChange={onCh} placeholder="Ex: Entorse, Fratura, Distensão..." required />
-                    </div>
-                    <div className="row">
-                        <label className="field-label">Parte do corpo</label>
-                        <input className="input" name="parteCorpo" value={values.parteCorpo} onChange={onCh} placeholder="Ex: Joelho direito" />
-                    </div>
-                </div>
-                <div className="row2">
-                    <div className="row">
-                        <label className="field-label">Gravidade</label>
-                        <select className="input" name="gravidade" value={values.gravidade} onChange={onCh}>
-                            {GRAVIDADES.map((g) => <option key={g} value={g}>{g}</option>)}
-                        </select>
-                    </div>
-                    <div className="row">
-                        <label className="field-label">Data da lesão *</label>
-                        <input className="input" name="dataLesao" type="date" value={values.dataLesao} onChange={onCh} required />
-                    </div>
-                </div>
-                <div className="row2">
-                    <div className="row">
-                        <label className="field-label">Retorno previsto</label>
-                        <input className="input" name="dataRetornoPrevista" type="date" value={values.dataRetornoPrevista} onChange={onCh} />
-                    </div>
-                    <div className="row">
-                        <label className="field-label">Retorno efetivo</label>
-                        <input className="input" name="dataRetornoEfetiva" type="date" value={values.dataRetornoEfetiva} onChange={onCh} />
-                    </div>
-                </div>
-                <div className="row">
-                    <label className="field-label">Descrição</label>
-                    <textarea className="input" name="descricao" value={values.descricao} onChange={onCh} rows={3} placeholder="Descrição detalhada da lesão..." />
-                </div>
-                <div className="row">
-                    <label className="field-label">Tratamento</label>
-                    <textarea className="input" name="tratamento" value={values.tratamento} onChange={onCh} rows={3} placeholder="Protocolo de tratamento..." />
-                </div>
-            </>
-        );
-    }
-
     return (
         <>
             <SideMenu title="Gestão de Clubes" subtitle={clube?.nome || "Clube"} logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
@@ -318,7 +318,7 @@ export default function RegistosLesaoPage() {
                         {showForm && (
                             <div className="form-scroll">
                             <form onSubmit={onSubmit} className="row">
-                                <FormFields values={form} onChange={onChange} />
+                                <FormFields values={form} onChange={onChange} atletasList={atletasList} staffList={staffList} />
                                 <div className="actions" style={{ marginTop: 8 }}>
                                     <button type="submit" className="btn btn-primary" disabled={saving}>
                                         {saving ? "A guardar..." : "Guardar"}
@@ -340,7 +340,7 @@ export default function RegistosLesaoPage() {
                         </div>
                         <div className="modal-body">
                             {erro && <div className="alert error">{erro}</div>}
-                            <FormFields values={editForm} onChange={onEditChange} />
+                            <FormFields values={editForm} onChange={onEditChange} atletasList={atletasList} staffList={staffList} />
                         </div>
                         <div className="modal-footer">
                             <button type="button" className="btn" onClick={() => setEditOpen(false)}>Cancelar</button>
