@@ -376,7 +376,7 @@ export default function ClubeDepartamentoStaffPage() {
                 email: editForm.email,
                 telefone: editForm.telefone,
                 morada: editForm.morada,
-                numRegisto: editForm.numRegisto,
+                ...(isDepartamentoMedico ? {} : { numRegisto: editForm.numRegisto }),
                 ...(isDepartamentoMedico ? {} : { remuneracao: Number(editForm.remuneracao || 0) }),
             });
 
@@ -674,10 +674,13 @@ export default function ClubeDepartamentoStaffPage() {
                         <div className="row">
                             {/* Campos visíveis para todos */}
                             <div className="row2">
-                                <div className="row">
-                                    <label className="field-label" htmlFor="editNumRegisto">Nº Registo</label>
-                                    <input id="editNumRegisto" className="input" name="numRegisto" value={editForm.numRegisto} onChange={onEditChange} />
-                                </div>
+                                {/* Nº Registo: editável apenas no perfil do utilizador, aqui é só leitura para médico */}
+                                {!isDepartamentoMedico && (
+                                    <div className="row">
+                                        <label className="field-label" htmlFor="editNumRegisto">Nº Registo</label>
+                                        <input id="editNumRegisto" className="input" name="numRegisto" value={editForm.numRegisto} onChange={onEditChange} />
+                                    </div>
+                                )}
                                 <div className="row">
                                     <label className="field-label" htmlFor="editEmail">Email</label>
                                     <input id="editEmail" className="input" name="email" type="email" value={editForm.email} onChange={onEditChange} />

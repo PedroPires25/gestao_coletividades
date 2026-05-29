@@ -49,13 +49,14 @@ const eyeButtonStyle = {
 };
 
 export default function PerfilPage() {
-    const { user, updateSession } = useAuth();
+    const { user, updateSession, isDepartamentoMedico } = useAuth();
     const { setTheme } = useTheme();
     const [nome, setNome] = useState("");
     const [email, setEmail] = useState("");
     const [morada, setMorada] = useState("");
     const [telefone, setTelefone] = useState("");
     const [editEmail, setEditEmail] = useState("");
+    const [numRegisto, setNumRegisto] = useState("");
     const [temaPreferido, setTemaPreferido] = useState("");
     const [logoPath, setLogoPath] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -92,6 +93,7 @@ export default function PerfilPage() {
                 setEditEmail(data.email || "");
                 setMorada(data.morada || "");
                 setTelefone(data.telefone || "");
+                setNumRegisto(data.numRegisto || "");
                 setTemaPreferido(data.temaPreferido || "");
                 setLogoPath(data.logoPath || null);
             })
@@ -145,6 +147,7 @@ export default function PerfilPage() {
         getMyProfile().then((data) => {
             setMorada(data.morada || "");
             setTelefone(data.telefone || "");
+            setNumRegisto(data.numRegisto || "");
         });
         setDadosMsg(null);
     }
@@ -158,11 +161,13 @@ export default function PerfilPage() {
                 morada: morada.trim(),
                 telefone: telefone.trim(),
                 email: editEmail.trim(),
+                ...(isDepartamentoMedico ? { numRegisto: numRegisto.trim() } : {}),
             });
             setEmail(updated.email || editEmail);
             setEditEmail(updated.email || editEmail);
             setMorada(updated.morada || "");
             setTelefone(updated.telefone || "");
+            if (isDepartamentoMedico) setNumRegisto(updated.numRegisto || "");
             updateSession({ email: updated.email });
             setEditingDados(false);
             setDadosMsg({ type: "success", text: "Dados pessoais atualizados com sucesso." });
@@ -321,7 +326,13 @@ export default function PerfilPage() {
                                 <span className="perfil-dados-label">Telefone:</span>
                                 <span className="perfil-dados-value">{telefone || "—"}</span>
                             </div>
-                            <button
+                                {isDepartamentoMedico && (
+                                    <div className="perfil-dados-row">
+                                        <span className="perfil-dados-label">Nº Registo:</span>
+                                        <span className="perfil-dados-value">{numRegisto || "—"}</span>
+                                    </div>
+                                )}
+                                <button
                                 type="button"
                                 className="perfil-save-btn"
                                 onClick={handleEditDados}
@@ -366,6 +377,20 @@ export default function PerfilPage() {
                                     maxLength={30}
                                 />
                             </div>
+
+                            {isDepartamentoMedico && (
+                                <div className="perfil-field">
+                                    <label htmlFor="perfil-num-registo">Nº Registo</label>
+                                    <input
+                                        id="perfil-num-registo"
+                                        type="text"
+                                        value={numRegisto}
+                                        onChange={(e) => setNumRegisto(e.target.value)}
+                                        className="perfil-input"
+                                        maxLength={50}
+                                    />
+                                </div>
+                            )}
 
                             <div className="perfil-form-actions">
                                 <button type="submit" className="perfil-save-btn" disabled={savingDados}>
