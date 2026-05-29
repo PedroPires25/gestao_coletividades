@@ -103,9 +103,19 @@ function getOptionValue(item) {
 export default function ClubeDepartamentoStaffPage() {
     const { clubeId, tipo } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, isDepartamentoMedico, user } = useAuth();
 
     const config = DEPT_CONFIG[tipo];
+
+    // Redireciona médico se tentar aceder ao departamento de direção
+    useEffect(() => {
+        if (isDepartamentoMedico && tipo !== "medico") {
+            navigate(`/clubes/${clubeId}/medico`, { replace: true });
+        }
+    }, [isDepartamentoMedico, tipo, clubeId, navigate]);
+
+    // Para médicos: identifica o próprio registo pelo utilizadorId
+    const isOwnRow = (row) => row.utilizadorId != null && row.utilizadorId === user?.id;
 
     const [clube, setClube] = useState(null);
     const [staffRows, setStaffRows] = useState([]);
@@ -152,24 +162,38 @@ export default function ClubeDepartamentoStaffPage() {
     );
 
     const menuItems = useMemo(
-        () => [
-            { label: "Home", to: "/menu" },
-            ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
-            ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
-            ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
-            { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
-            { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
-            { label: "Staff", to: `/clubes/${clubeId}/staff` },
-            { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
-            {
-                label: "Logout",
-                onClick: () => {
-                    logout();
-                    navigate("/login", { replace: true });
+        () => {
+            if (isDepartamentoMedico) {
+                return [
+                    { label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` },
+                    {
+                        label: "Logout",
+                        onClick: () => {
+                            logout();
+                            navigate("/login", { replace: true });
+                        },
+                    },
+                ];
+            }
+            return [
+                { label: "Home", to: "/menu" },
+                ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+                ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
+                ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+                { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
+                { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
+                { label: "Staff", to: `/clubes/${clubeId}/staff` },
+                { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
+                {
+                    label: "Logout",
+                    onClick: () => {
+                        logout();
+                        navigate("/login", { replace: true });
+                    },
                 },
-            },
-        ],
-        [clubeId, isAdmin, isSuperAdmin, logout, navigate]
+            ];
+        },
+        [clubeId, isAdmin, isSuperAdmin, isDepartamentoMedico, logout, navigate]
     );
 
     useEffect(() => {
@@ -353,17 +377,20 @@ export default function ClubeDepartamentoStaffPage() {
                 telefone: editForm.telefone,
                 morada: editForm.morada,
                 numRegisto: editForm.numRegisto,
-                remuneracao: Number(editForm.remuneracao || 0),
+                ...(isDepartamentoMedico ? {} : { remuneracao: Number(editForm.remuneracao || 0) }),
             });
 
-            await updateStaffAfetacao(clubeId, editForm.id, editForm.afetacaoId, {
-                cargoId: editForm.cargoId ? Number(editForm.cargoId) : null,
-                dataInicio: editForm.dataInicio || null,
-                dataFim: editForm.dataFim || null,
-                observacoes: editForm.observacoes || null,
-                ativo: Boolean(editForm.ativo),
-                escaloesIds: (editForm.escaloesIds || []).map((id) => Number(id)),
-            });
+            // Médico não pode atualizar afetações (cargo, remuneração, datas, etc.)
+            if (!isDepartamentoMedico) {
+                await updateStaffAfetacao(clubeId, editForm.id, editForm.afetacaoId, {
+                    cargoId: editForm.cargoId ? Number(editForm.cargoId) : null,
+                    dataInicio: editForm.dataInicio || null,
+                    dataFim: editForm.dataFim || null,
+                    observacoes: editForm.observacoes || null,
+                    ativo: Boolean(editForm.ativo),
+                    escaloesIds: (editForm.escaloesIds || []).map((id) => Number(id)),
+                });
+            }
 
             const refreshed = await getStaffByDepartamento(clubeId, tipo);
             setStaffRows(Array.isArray(refreshed) ? refreshed : []);
@@ -453,14 +480,15 @@ export default function ClubeDepartamentoStaffPage() {
                                         <th>Telefone</th>
                                         <th>Cargo</th>
                                         <th>Nº Registo</th>
-                                        <th>Remuneração</th>
-                                        <th>Data Início</th>
+                                        {!isDepartamentoMedico && <th>Remuneração</th>}
+                                        {!isDepartamentoMedico && <th>Data Início</th>}
                                         <th>Ações</th>
                                     </tr>
                                     </thead>
                                     <tbody>
                                     {staffRows.map((row) => {
                                         const pendingName = hasPendingName(row.nome);
+                                        const canEdit = !isDepartamentoMedico || isOwnRow(row);
                                         return (
                                             <tr
                                                 key={`${row.id}-${row.afetacaoId}`}
@@ -476,9 +504,9 @@ export default function ClubeDepartamentoStaffPage() {
                                                 <td className="nowrap">
                                                     <span className="nome-com-avatar">
                                                         <span
-                                                            className="avatar-upload-trigger"
-                                                            title="Clique para alterar foto"
-                                                            onClick={(e) => { e.stopPropagation(); handleAvatarClick(row.id); }}
+                                                            className={canEdit ? "avatar-upload-trigger" : ""}
+                                                            title={canEdit ? "Clique para alterar foto" : undefined}
+                                                            onClick={canEdit ? (e) => { e.stopPropagation(); handleAvatarClick(row.id); } : undefined}
                                                         >
                                                             {row.fotoPath ? (
                                                                 <img
@@ -499,13 +527,15 @@ export default function ClubeDepartamentoStaffPage() {
                                                 <td className="cell-muted">{row.telefone || "-"}</td>
                                                 <td>{row.cargo || "-"}</td>
                                                 <td>{row.numRegisto || row.num_registo || "-"}</td>
-                                                <td>{row.remuneracao != null ? row.remuneracao : "-"}</td>
-                                                <td>{formatDateOnly(row.dataInicio || row.data_inicio) || "-"}</td>
+                                                {!isDepartamentoMedico && <td>{row.remuneracao != null ? row.remuneracao : "-"}</td>}
+                                                {!isDepartamentoMedico && <td>{formatDateOnly(row.dataInicio || row.data_inicio) || "-"}</td>}
                                                 <td>
                                                     <div className="table-actions">
-                                                        <button type="button" className="btn" onClick={() => abrirEditar(row)}>
-                                                            Editar
-                                                        </button>
+                                                        {canEdit && (
+                                                            <button type="button" className="btn" onClick={() => abrirEditar(row)}>
+                                                                Editar
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -517,7 +547,8 @@ export default function ClubeDepartamentoStaffPage() {
                         )}
                     </div>
 
-                    {/* Formulário de registo */}
+                    {/* Formulário de registo — oculto para Departamento Médico */}
+                    {!isDepartamentoMedico && (
                     <div className="card">
                         <div className="modalidades-toolbar">
                             <div className="toolbar-title-group">
@@ -625,6 +656,7 @@ export default function ClubeDepartamentoStaffPage() {
                             </div>
                         ) : null}
                     </div>
+                    )}
                 </div>
             </div>
 
@@ -640,88 +672,96 @@ export default function ClubeDepartamentoStaffPage() {
                         </div>
 
                         <div className="row">
+                            {/* Campos visíveis para todos */}
                             <div className="row2">
-                                <div className="row">
-                                    <label className="field-label" htmlFor="editNome">Nome</label>
-                                    <input id="editNome" className="input" name="nome" value={editForm.nome} onChange={onEditChange} />
-                                </div>
                                 <div className="row">
                                     <label className="field-label" htmlFor="editNumRegisto">Nº Registo</label>
                                     <input id="editNumRegisto" className="input" name="numRegisto" value={editForm.numRegisto} onChange={onEditChange} />
                                 </div>
-                            </div>
-
-                            <div className="row2">
                                 <div className="row">
                                     <label className="field-label" htmlFor="editEmail">Email</label>
                                     <input id="editEmail" className="input" name="email" type="email" value={editForm.email} onChange={onEditChange} />
                                 </div>
+                            </div>
+
+                            <div className="row2">
                                 <div className="row">
                                     <label className="field-label" htmlFor="editTelefone">Telefone</label>
                                     <input id="editTelefone" className="input" name="telefone" value={editForm.telefone} onChange={onEditChange} />
                                 </div>
-                            </div>
-
-                            <div className="row">
-                                <label className="field-label" htmlFor="editMorada">Morada</label>
-                                <input id="editMorada" className="input" name="morada" value={editForm.morada} onChange={onEditChange} />
-                            </div>
-
-                            <div className="row2">
                                 <div className="row">
-                                    <label className="field-label" htmlFor="editRemuneracao">Remuneração</label>
-                                    <input id="editRemuneracao" className="input" name="remuneracao" type="number" min="0" step="0.01" value={editForm.remuneracao} onChange={onEditChange} />
-                                </div>
-                                <div className="row">
-                                    <label className="field-label" htmlFor="editCargoId">Cargo</label>
-                                    <select id="editCargoId" className="input" name="cargoId" value={editForm.cargoId} onChange={onEditChange}>
-                                        <option value="">Selecionar</option>
-                                        {deptCargos.map((item) => {
-                                            const value = getOptionValue(item);
-                                            const label = getOptionLabel(item);
-                                            return <option key={value} value={value}>{label}</option>;
-                                        })}
-                                    </select>
+                                    <label className="field-label" htmlFor="editMorada">Morada</label>
+                                    <input id="editMorada" className="input" name="morada" value={editForm.morada} onChange={onEditChange} />
                                 </div>
                             </div>
 
-                            <div className="row2">
-                                <div className="row">
-                                    <label className="field-label" htmlFor="editDataInicio">Data início</label>
-                                    <input id="editDataInicio" className="input" name="dataInicio" type="date" value={editForm.dataInicio} onChange={onEditChange} />
-                                </div>
-                                <div className="row">
-                                    <label className="field-label" htmlFor="editDataFim">Data fim</label>
-                                    <input id="editDataFim" className="input" name="dataFim" type="date" value={editForm.dataFim} onChange={onEditChange} />
-                                </div>
-                            </div>
-
-                            {escaloes.length > 0 ? (
-                                <div className="row">
-                                    <label className="field-label">Escalões</label>
-                                    <div className="checkbox-grid">
-                                        {escaloes.map((escalao) => {
-                                            const checked = (editForm.escaloesIds || []).includes(String(escalao.id));
-                                            return (
-                                                <label className="filter-checkbox" key={escalao.id}>
-                                                    <input type="checkbox" checked={checked} onChange={() => toggleEscalaoEdit(escalao.id)} />
-                                                    {escalao.nome}
-                                                </label>
-                                            );
-                                        })}
+                            {/* Campos administrativos — apenas visíveis para Administrador/Secretário */}
+                            {!isDepartamentoMedico && (
+                                <>
+                                    <div className="row2">
+                                        <div className="row">
+                                            <label className="field-label" htmlFor="editNome">Nome</label>
+                                            <input id="editNome" className="input" name="nome" value={editForm.nome} onChange={onEditChange} />
+                                        </div>
+                                        <div className="row">
+                                            <label className="field-label" htmlFor="editRemuneracao">Remuneração</label>
+                                            <input id="editRemuneracao" className="input" name="remuneracao" type="number" min="0" step="0.01" value={editForm.remuneracao} onChange={onEditChange} />
+                                        </div>
                                     </div>
-                                </div>
-                            ) : null}
 
-                            <div className="row">
-                                <label className="field-label" htmlFor="editObservacoes">Observações</label>
-                                <textarea id="editObservacoes" className="input" name="observacoes" rows={3} value={editForm.observacoes} onChange={onEditChange} />
-                            </div>
+                                    <div className="row2">
+                                        <div className="row">
+                                            <label className="field-label" htmlFor="editCargoId">Cargo</label>
+                                            <select id="editCargoId" className="input" name="cargoId" value={editForm.cargoId} onChange={onEditChange}>
+                                                <option value="">Selecionar</option>
+                                                {deptCargos.map((item) => {
+                                                    const value = getOptionValue(item);
+                                                    const label = getOptionLabel(item);
+                                                    return <option key={value} value={value}>{label}</option>;
+                                                })}
+                                            </select>
+                                        </div>
+                                        <div className="row">
+                                            <label className="field-label" htmlFor="editDataInicio">Data início</label>
+                                            <input id="editDataInicio" className="input" name="dataInicio" type="date" value={editForm.dataInicio} onChange={onEditChange} />
+                                        </div>
+                                    </div>
 
-                            <label className="filter-checkbox">
-                                <input type="checkbox" name="ativo" checked={editForm.ativo} onChange={onEditChange} />
-                                Afetação ativa
-                            </label>
+                                    <div className="row2">
+                                        <div className="row">
+                                            <label className="field-label" htmlFor="editDataFim">Data fim</label>
+                                            <input id="editDataFim" className="input" name="dataFim" type="date" value={editForm.dataFim} onChange={onEditChange} />
+                                        </div>
+                                    </div>
+
+                                    {escaloes.length > 0 ? (
+                                        <div className="row">
+                                            <label className="field-label">Escalões</label>
+                                            <div className="checkbox-grid">
+                                                {escaloes.map((escalao) => {
+                                                    const checked = (editForm.escaloesIds || []).includes(String(escalao.id));
+                                                    return (
+                                                        <label className="filter-checkbox" key={escalao.id}>
+                                                            <input type="checkbox" checked={checked} onChange={() => toggleEscalaoEdit(escalao.id)} />
+                                                            {escalao.nome}
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ) : null}
+
+                                    <div className="row">
+                                        <label className="field-label" htmlFor="editObservacoes">Observações</label>
+                                        <textarea id="editObservacoes" className="input" name="observacoes" rows={3} value={editForm.observacoes} onChange={onEditChange} />
+                                    </div>
+
+                                    <label className="filter-checkbox">
+                                        <input type="checkbox" name="ativo" checked={editForm.ativo} onChange={onEditChange} />
+                                        Afetação ativa
+                                    </label>
+                                </>
+                            )}
                         </div>
 
                         <div className="modal-footer">
