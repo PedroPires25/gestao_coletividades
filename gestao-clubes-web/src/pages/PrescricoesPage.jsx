@@ -29,6 +29,61 @@ const EMPTY_FORM = {
     notas: "",
 };
 
+function FormFields({ values, onChange: onCh, atletasList, staffList }) {
+    return (
+        <>
+            <div className="row2">
+                <div className="row">
+                    <label className="field-label">Atleta *</label>
+                    <select className="input" name="atletaId" value={values.atletaId} onChange={onCh} required>
+                        <option value="">Selecionar atleta</option>
+                        {atletasList.map((a) => (
+                            <option key={a.id} value={a.id}>{a.nome}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="row">
+                    <label className="field-label">Staff médico</label>
+                    <select className="input" name="staffId" value={values.staffId} onChange={onCh}>
+                        <option value="">Nenhum</option>
+                        {staffList.map((s) => (
+                            <option key={s.id} value={s.id}>{s.nome || `Staff #${s.id}`}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+            <div className="row">
+                <label className="field-label">Medicamento *</label>
+                <input className="input" name="medicamento" value={values.medicamento} onChange={onCh} placeholder="Nome do medicamento" required />
+            </div>
+            <div className="row2">
+                <div className="row">
+                    <label className="field-label">Dosagem</label>
+                    <input className="input" name="dosagem" value={values.dosagem} onChange={onCh} placeholder="Ex: 500mg" />
+                </div>
+                <div className="row">
+                    <label className="field-label">Frequência</label>
+                    <input className="input" name="frequencia" value={values.frequencia} onChange={onCh} placeholder="Ex: 2x dia" />
+                </div>
+            </div>
+            <div className="row2">
+                <div className="row">
+                    <label className="field-label">Data início</label>
+                    <input className="input" name="dataInicio" type="date" value={values.dataInicio} onChange={onCh} />
+                </div>
+                <div className="row">
+                    <label className="field-label">Data fim</label>
+                    <input className="input" name="dataFim" type="date" value={values.dataFim} onChange={onCh} />
+                </div>
+            </div>
+            <div className="row">
+                <label className="field-label">Notas</label>
+                <textarea className="input" name="notas" value={values.notas} onChange={onCh} rows={2} placeholder="Instruções adicionais..." />
+            </div>
+        </>
+    );
+}
+
 export default function PrescricoesPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
@@ -143,61 +198,6 @@ export default function PrescricoesPage() {
         }
     }
 
-    function FormFields({ values, onChange: onCh }) {
-        return (
-            <>
-                <div className="row2">
-                    <div className="row">
-                        <label className="field-label">Atleta *</label>
-                        <select className="input" name="atletaId" value={values.atletaId} onChange={onCh} required>
-                            <option value="">Selecionar atleta</option>
-                            {atletasList.map((a) => (
-                                <option key={a.id} value={a.id}>{a.nome}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="row">
-                        <label className="field-label">Staff médico</label>
-                        <select className="input" name="staffId" value={values.staffId} onChange={onCh}>
-                            <option value="">Nenhum</option>
-                            {staffList.map((s) => (
-                                <option key={s.id} value={s.id}>{s.nome || `Staff #${s.id}`}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-                <div className="row">
-                    <label className="field-label">Medicamento *</label>
-                    <input className="input" name="medicamento" value={values.medicamento} onChange={onCh} placeholder="Nome do medicamento" required />
-                </div>
-                <div className="row2">
-                    <div className="row">
-                        <label className="field-label">Dosagem</label>
-                        <input className="input" name="dosagem" value={values.dosagem} onChange={onCh} placeholder="Ex: 500mg" />
-                    </div>
-                    <div className="row">
-                        <label className="field-label">Frequência</label>
-                        <input className="input" name="frequencia" value={values.frequencia} onChange={onCh} placeholder="Ex: 2x dia" />
-                    </div>
-                </div>
-                <div className="row2">
-                    <div className="row">
-                        <label className="field-label">Data início</label>
-                        <input className="input" name="dataInicio" type="date" value={values.dataInicio} onChange={onCh} />
-                    </div>
-                    <div className="row">
-                        <label className="field-label">Data fim</label>
-                        <input className="input" name="dataFim" type="date" value={values.dataFim} onChange={onCh} />
-                    </div>
-                </div>
-                <div className="row">
-                    <label className="field-label">Notas</label>
-                    <textarea className="input" name="notas" value={values.notas} onChange={onCh} rows={2} placeholder="Instruções adicionais..." />
-                </div>
-            </>
-        );
-    }
-
     return (
         <>
             <SideMenu title="Gestão de Clubes" subtitle={clube?.nome || "Clube"} logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
@@ -292,7 +292,7 @@ export default function PrescricoesPage() {
                         {showForm && (
                             <div className="form-scroll">
                             <form onSubmit={onSubmit} className="row">
-                                <FormFields values={form} onChange={onChange} />
+                                <FormFields values={form} onChange={onChange} atletasList={atletasList} staffList={staffList} />
                                 <div className="actions" style={{ marginTop: 8 }}>
                                     <button type="submit" className="btn btn-primary" disabled={saving}>
                                         {saving ? "A guardar..." : "Guardar"}
@@ -314,7 +314,7 @@ export default function PrescricoesPage() {
                         </div>
                         <div className="modal-body">
                             {erro && <div className="alert error">{erro}</div>}
-                            <FormFields values={editForm} onChange={onEditChange} />
+                            <FormFields values={editForm} onChange={onEditChange} atletasList={atletasList} staffList={staffList} />
                         </div>
                         <div className="modal-footer">
                             <button type="button" className="btn" onClick={() => setEditOpen(false)}>Cancelar</button>

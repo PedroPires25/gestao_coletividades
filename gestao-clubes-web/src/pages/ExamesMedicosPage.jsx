@@ -27,6 +27,79 @@ const EMPTY_FORM = {
     notas: "",
 };
 
+function FormFields({ values, onChange: onCh, fileRef, existingFile, atletasList, staffList }) {
+    return (
+        <>
+            <div className="row2">
+                <div className="row">
+                    <label className="field-label">Atleta *</label>
+                    <select className="input" name="atletaId" value={values.atletaId} onChange={onCh} required>
+                        <option value="">Selecionar atleta</option>
+                        {atletasList.map((a) => (
+                            <option key={a.id} value={a.id}>{a.nome}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="row">
+                    <label className="field-label">Staff responsável</label>
+                    <select className="input" name="staffId" value={values.staffId} onChange={onCh}>
+                        <option value="">Nenhum</option>
+                        {staffList.map((s) => (
+                            <option key={s.id} value={s.id}>{s.nome || `Staff #${s.id}`}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+            <div className="row2">
+                <div className="row">
+                    <label className="field-label">Data do exame *</label>
+                    <input className="input" name="dataExame" type="date" value={values.dataExame} onChange={onCh} required />
+                </div>
+                <div className="row">
+                    <label className="field-label">Tipo *</label>
+                    <select className="input" name="tipo" value={values.tipo} onChange={onCh} required>
+                        <option value="">Selecionar tipo</option>
+                        {TIPOS_EXAME.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                </div>
+            </div>
+            <div className="row">
+                <label className="field-label">Resultado</label>
+                <textarea className="input" name="resultado" value={values.resultado} onChange={onCh} rows={3} placeholder="Resultado do exame..." />
+            </div>
+            <div className="row">
+                <label className="field-label">Notas</label>
+                <textarea className="input" name="notas" value={values.notas} onChange={onCh} rows={2} placeholder="Notas adicionais..." />
+            </div>
+            <div className="row">
+                <label className="field-label">
+                    Documentação anexa
+                    <span className="cell-muted" style={{ fontWeight: 400, marginLeft: 6 }}>
+                        (PDF, imagem, declaração de seguro, Mod.2…)
+                    </span>
+                </label>
+                {existingFile && (
+                    <div style={{ marginBottom: 6, fontSize: "0.85rem" }}>
+                        Ficheiro atual:{" "}
+                        <a href={getExameFileUrl(existingFile)} target="_blank" rel="noreferrer" style={{ color: "var(--color-primary, #6366f1)" }}>
+                            📎 Ver / descarregar
+                        </a>
+                    </div>
+                )}
+                <input
+                    className="input"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    ref={fileRef}
+                />
+                <div className="cell-muted" style={{ fontSize: "0.78rem", marginTop: 3 }}>
+                    Formatos aceites: PDF, JPG, PNG, DOC, DOCX
+                </div>
+            </div>
+        </>
+    );
+}
+
 export default function ExamesMedicosPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
@@ -152,79 +225,6 @@ export default function ExamesMedicosPage() {
         }
     }
 
-    function FormFields({ values, onChange: onCh, fileRef, existingFile }) {
-        return (
-            <>
-                <div className="row2">
-                    <div className="row">
-                        <label className="field-label">Atleta *</label>
-                        <select className="input" name="atletaId" value={values.atletaId} onChange={onCh} required>
-                            <option value="">Selecionar atleta</option>
-                            {atletasList.map((a) => (
-                                <option key={a.id} value={a.id}>{a.nome}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="row">
-                        <label className="field-label">Staff responsável</label>
-                        <select className="input" name="staffId" value={values.staffId} onChange={onCh}>
-                            <option value="">Nenhum</option>
-                            {staffList.map((s) => (
-                                <option key={s.id} value={s.id}>{s.nome || `Staff #${s.id}`}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-                <div className="row2">
-                    <div className="row">
-                        <label className="field-label">Data do exame *</label>
-                        <input className="input" name="dataExame" type="date" value={values.dataExame} onChange={onCh} required />
-                    </div>
-                    <div className="row">
-                        <label className="field-label">Tipo *</label>
-                        <select className="input" name="tipo" value={values.tipo} onChange={onCh} required>
-                            <option value="">Selecionar tipo</option>
-                            {TIPOS_EXAME.map((t) => <option key={t} value={t}>{t}</option>)}
-                        </select>
-                    </div>
-                </div>
-                <div className="row">
-                    <label className="field-label">Resultado</label>
-                    <textarea className="input" name="resultado" value={values.resultado} onChange={onCh} rows={3} placeholder="Resultado do exame..." />
-                </div>
-                <div className="row">
-                    <label className="field-label">Notas</label>
-                    <textarea className="input" name="notas" value={values.notas} onChange={onCh} rows={2} placeholder="Notas adicionais..." />
-                </div>
-                <div className="row">
-                    <label className="field-label">
-                        Documentação anexa
-                        <span className="cell-muted" style={{ fontWeight: 400, marginLeft: 6 }}>
-                            (PDF, imagem, declaração de seguro, Mod.2…)
-                        </span>
-                    </label>
-                    {existingFile && (
-                        <div style={{ marginBottom: 6, fontSize: "0.85rem" }}>
-                            Ficheiro atual:{" "}
-                            <a href={getExameFileUrl(existingFile)} target="_blank" rel="noreferrer" style={{ color: "var(--color-primary, #6366f1)" }}>
-                                📎 Ver / descarregar
-                            </a>
-                        </div>
-                    )}
-                    <input
-                        className="input"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                        ref={fileRef}
-                    />
-                    <div className="cell-muted" style={{ fontSize: "0.78rem", marginTop: 3 }}>
-                        Formatos aceites: PDF, JPG, PNG, DOC, DOCX
-                    </div>
-                </div>
-            </>
-        );
-    }
-
     return (
         <>
             <SideMenu title="Gestão de Clubes" subtitle={clube?.nome || "Clube"} logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
@@ -306,7 +306,7 @@ export default function ExamesMedicosPage() {
                         {showForm && (
                             <div className="form-scroll">
                             <form onSubmit={onSubmit} className="row">
-                                <FormFields values={form} onChange={onChange} fileRef={fileInputRef} existingFile={null} />
+                                <FormFields values={form} onChange={onChange} fileRef={fileInputRef} existingFile={null} atletasList={atletasList} staffList={staffList} />
                                 <div className="actions" style={{ marginTop: 8 }}>
                                     <button type="submit" className="btn btn-primary" disabled={saving}>
                                         {saving ? "A guardar..." : "Guardar"}
@@ -328,7 +328,7 @@ export default function ExamesMedicosPage() {
                         </div>
                         <div className="modal-body">
                             {erro && <div className="alert error">{erro}</div>}
-                            <FormFields values={editForm} onChange={onEditChange} fileRef={editFileInputRef} existingFile={editForm.ficheiroPath || null} />
+                            <FormFields values={editForm} onChange={onEditChange} fileRef={editFileInputRef} existingFile={editForm.ficheiroPath || null} atletasList={atletasList} staffList={staffList} />
                         </div>
                         <div className="modal-footer">
                             <button type="button" className="btn" onClick={() => setEditOpen(false)}>Cancelar</button>
