@@ -72,6 +72,9 @@ public class StaffRestController {
             @PathVariable int clubeId,
             @RequestBody CriarStaffRequest body
     ) {
+        if (SecurityUtils.isDepartamentoMedico()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para registar novos membros.");
+        }
         exigirGestaoClube(clubeId);
         validarCriacao(body);
 
@@ -143,11 +146,35 @@ public class StaffRestController {
             @PathVariable int staffId,
             @RequestBody AtualizarStaffRequest body
     ) {
-        exigirGestaoClube(clubeId);
         Staff atual = staffDAO.buscarPorId(staffId);
         if (atual == null) {
             throw new IllegalArgumentException("Membro do staff não encontrado.");
         }
+
+        if (SecurityUtils.isDepartamentoMedico()) {
+            // Médico só pode editar o seu próprio registo, apenas campos pessoais
+            Integer myUserId = SecurityUtils.currentUserId();
+            if (myUserId == null || !myUserId.equals(atual.getUtilizadorId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não pode editar dados de outro membro.");
+            }
+            // Apenas campos pessoais permitidos; remuneração e nome ficam inalterados
+            Staff atualizado = new Staff(
+                    staffId,
+                    atual.getNome(),
+                    blankToFallback(body.email, atual.getEmail()),
+                    blankToFallback(body.telefone, atual.getTelefone()),
+                    blankToFallback(body.morada, atual.getMorada()),
+                    blankToFallback(body.numRegisto, atual.getNumRegisto()),
+                    atual.getRemuneracao()
+            );
+            boolean ok = staffDAO.atualizar(staffId, atualizado);
+            if (!ok) {
+                throw new IllegalStateException("Não foi possível atualizar o perfil.");
+            }
+            return ResponseEntity.ok(Map.of("ok", true, "id", staffId, "clubeId", clubeId));
+        }
+
+        exigirGestaoClube(clubeId);
 
         Staff atualizado = new Staff(
                 staffId,
@@ -174,6 +201,9 @@ public class StaffRestController {
             @PathVariable int afetacaoId,
             @RequestBody AtualizarAfetacaoRequest body
     ) {
+        if (SecurityUtils.isDepartamentoMedico()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para editar afetações.");
+        }
         exigirGestaoClube(clubeId);
         Map<String, Object> afetacao = staffAfetacaoDAO.buscarDetalhePorId(afetacaoId);
         if (afetacao == null) {

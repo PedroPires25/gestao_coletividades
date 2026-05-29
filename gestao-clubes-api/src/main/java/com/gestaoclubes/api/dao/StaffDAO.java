@@ -184,6 +184,7 @@ public class StaffDAO {
     public List<Map<String, Object>> listarPorClube(int clubeId) {
         String sql = """
             SELECT s.id,
+                   s.utilizador_id,
                    COALESCE(u.nome, s.nome) AS nome,
                    s.email,
                    s.telefone,
@@ -228,6 +229,7 @@ public class StaffDAO {
     public List<Map<String, Object>> listarPorClubeModalidade(int clubeId, int clubeModalidadeId) {
         String sql = """
             SELECT s.id,
+                   s.utilizador_id,
                    COALESCE(u.nome, s.nome) AS nome,
                    s.email,
                    s.telefone,
@@ -289,6 +291,7 @@ public class StaffDAO {
         String placeholders = String.join(",", cargos.stream().map(c -> "?").toList());
 
         String sql = "SELECT s.id,"
+                + " s.utilizador_id,"
                 + " COALESCE(u.nome, s.nome) AS nome,"
                 + " s.email, s.telefone, s.morada, s.num_registo, s.remuneracao,"
                 + " COALESCE(u.logo_path, s.foto_path) AS foto_path,"
@@ -338,6 +341,7 @@ public class StaffDAO {
                 while (rs.next()) {
                     Map<String, Object> row = new LinkedHashMap<>();
                     row.put("id", rs.getInt("id"));
+                    try { row.put("utilizadorId", getNullableInt(rs, "utilizador_id")); } catch (SQLException ignored) {}
                     row.put("nome", rs.getString("nome"));
                     row.put("email", rs.getString("email"));
                     row.put("telefone", rs.getString("telefone"));
