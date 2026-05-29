@@ -158,13 +158,14 @@ public class StaffRestController {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não pode editar dados de outro membro.");
             }
             // Apenas campos pessoais permitidos; remuneração e nome ficam inalterados
+            // numRegisto só é editável no perfil do utilizador, não aqui
             Staff atualizado = new Staff(
                     staffId,
                     atual.getNome(),
                     blankToFallback(body.email, atual.getEmail()),
                     blankToFallback(body.telefone, atual.getTelefone()),
                     blankToFallback(body.morada, atual.getMorada()),
-                    blankToFallback(body.numRegisto, atual.getNumRegisto()),
+                    atual.getNumRegisto(),
                     atual.getRemuneracao()
             );
             boolean ok = staffDAO.atualizar(staffId, atualizado);

@@ -1,7 +1,9 @@
 package com.gestaoclubes.api.controller;
 
 import com.gestaoclubes.api.dao.PerfilDAO;
+import com.gestaoclubes.api.dao.StaffDAO;
 import com.gestaoclubes.api.dao.UtilizadorDAO;
+import com.gestaoclubes.api.model.Staff;
 import com.gestaoclubes.api.model.Utilizador;
 import com.gestaoclubes.api.security.JwtUtil;
 import com.gestaoclubes.api.util.PasswordPolicyUtil;
@@ -17,6 +19,7 @@ public class AuthRestController {
     private final UtilizadorDAO utilizadorDAO;
     private final PerfilDAO perfilDAO;
     private final JwtUtil jwtUtil;
+    private final StaffDAO staffDAO = new StaffDAO();
 
     public AuthRestController(UtilizadorDAO utilizadorDAO, PerfilDAO perfilDAO, JwtUtil jwtUtil) {
         this.utilizadorDAO = utilizadorDAO;
@@ -61,6 +64,8 @@ public class AuthRestController {
         public String morada;
         public String telefone;
         public String temaPreferido;
+        public String numRegisto;
+        public Integer staffId;
 
         public UserDto(Utilizador u, String role) {
             this.id = u.getId();
@@ -206,6 +211,7 @@ public class AuthRestController {
         public String telefone;
         public String email;
         public String temaPreferido;
+        public String numRegisto;
     }
 
     public static class ChangePasswordRequest {
@@ -227,7 +233,15 @@ public class AuthRestController {
         }
 
         String rolePlain = perfilDAO.obterDescricaoPerfil(u.getPerfilId());
-        return ResponseEntity.ok(new UserDto(u, rolePlain));
+        UserDto dto = new UserDto(u, rolePlain);
+        if ("DEPARTAMENTO_MEDICO".equals(rolePlain)) {
+            Staff staffRecord = staffDAO.buscarPorUtilizadorId(u.getId());
+            if (staffRecord != null) {
+                dto.numRegisto = staffRecord.getNumRegisto();
+                dto.staffId = staffRecord.getId();
+            }
+        }
+        return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/me")
@@ -265,9 +279,35 @@ public class AuthRestController {
             utilizadorDAO.atualizarTemaPreferido(u.getId(), req.temaPreferido.trim());
         }
 
+        // Nº Registo só pode ser alterado pelo próprio utilizador do Departamento Médico
+        String rolePlain = perfilDAO.obterDescricaoPerfil(u.getPerfilId());
+        if (req.numRegisto != null && "DEPARTAMENTO_MEDICO".equals(rolePlain)) {
+            Staff staffRecord = staffDAO.buscarPorUtilizadorId(u.getId());
+            if (staffRecord != null) {
+                Staff atualizado = new Staff(
+                        staffRecord.getId(),
+                        staffRecord.getNome(),
+                        staffRecord.getEmail(),
+                        staffRecord.getTelefone(),
+                        staffRecord.getMorada(),
+                        req.numRegisto.trim(),
+                        staffRecord.getRemuneracao()
+                );
+                staffDAO.atualizar(staffRecord.getId(), atualizado);
+            }
+        }
+
         Utilizador updated = utilizadorDAO.buscarPorId(jwtUser.id());
-        String rolePlain = perfilDAO.obterDescricaoPerfil(updated.getPerfilId());
-        return ResponseEntity.ok(new UserDto(updated, rolePlain));
+        String updatedRole = perfilDAO.obterDescricaoPerfil(updated.getPerfilId());
+        UserDto dto = new UserDto(updated, updatedRole);
+        if ("DEPARTAMENTO_MEDICO".equals(updatedRole)) {
+            Staff staffRecord = staffDAO.buscarPorUtilizadorId(updated.getId());
+            if (staffRecord != null) {
+                dto.numRegisto = staffRecord.getNumRegisto();
+                dto.staffId = staffRecord.getId();
+            }
+        }
+        return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/me/password")
