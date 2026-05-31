@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import RequireAdmin from "./auth/RequireAdmin";
 import RequireSuperAdmin from "./auth/RequireSuperAdmin";
 import RequireNotMedico from "./auth/RequireNotMedico";
+import RequireNotTreinador from "./auth/RequireNotTreinador";
 import TomorrowReminder from "./components/TomorrowReminder";
 
 // páginas base
@@ -118,7 +119,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <MenuPage />
+                                <RequireNotTreinador>
+                                    <MenuPage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -177,7 +180,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ClubeHomePage />
+                                <RequireNotTreinador>
+                                    <ClubeHomePage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -189,7 +194,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ClubeEditPage />
+                                <RequireNotTreinador>
+                                    <ClubeEditPage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -200,7 +207,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ClubeModalidadesPage />
+                                <RequireNotTreinador>
+                                    <ClubeModalidadesPage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -211,7 +220,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ClubeAtletasPage />
+                                <RequireNotTreinador>
+                                    <ClubeAtletasPage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -222,7 +233,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ClubeAtletasModalidadePage />
+                                <RequireNotTreinador>
+                                    <ClubeAtletasModalidadePage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -233,7 +246,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ClubeStaffPage />
+                                <RequireNotTreinador>
+                                    <ClubeStaffPage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -244,7 +259,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ClubeStaffModalidadePage />
+                                <RequireNotTreinador>
+                                    <ClubeStaffModalidadePage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -254,7 +271,9 @@ export default function App() {
                     path="/clubes/:clubeId/staff/departamento/:tipo"
                     element={
                         <RequireAuth>
-                            <ClubeDepartamentoStaffPage />
+                            <RequireNotTreinador>
+                                <ClubeDepartamentoStaffPage />
+                            </RequireNotTreinador>
                         </RequireAuth>
                     }
                 />
@@ -305,7 +324,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ColetividadeHomePage />
+                                <RequireNotTreinador>
+                                    <ColetividadeHomePage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -317,7 +338,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ColetividadeEditPage />
+                                <RequireNotTreinador>
+                                    <ColetividadeEditPage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -328,7 +351,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ColetividadeAtividadesPage />
+                                <RequireNotTreinador>
+                                    <ColetividadeAtividadesPage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -339,7 +364,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ColetividadeUtentesPage />
+                                <RequireNotTreinador>
+                                    <ColetividadeUtentesPage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -350,7 +377,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ColetividadeUtentesAtividadePage />
+                                <RequireNotTreinador>
+                                    <ColetividadeUtentesAtividadePage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -361,7 +390,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ColetividadeStaffPage />
+                                <RequireNotTreinador>
+                                    <ColetividadeStaffPage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -372,7 +403,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ColetividadeStaffAtividadePage />
+                                <RequireNotTreinador>
+                                    <ColetividadeStaffAtividadePage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -383,7 +416,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <ModalidadeEventosPage />
+                                <RequireNotTreinador>
+                                    <ModalidadeEventosPage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -394,7 +429,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <GestaoEventosPage />
+                                <RequireNotTreinador>
+                                    <GestaoEventosPage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -406,7 +443,9 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <AreaAcessoClubePage />
+                                <RequireNotTreinador>
+                                    <AreaAcessoClubePage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
@@ -416,20 +455,22 @@ export default function App() {
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <AreaAcessoColetividadePage />
+                                <RequireNotTreinador>
+                                    <AreaAcessoColetividadePage />
+                                </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
 
                 {/* MÓDULO CLÍNICO */}
-                <Route path="/clubes/:clubeId/medico" element={<RequireAuth><ClubeModuloMedicoPage /></RequireAuth>} />
-                <Route path="/clubes/:clubeId/medico/lesoes" element={<RequireAuth><RegistosLesaoPage /></RequireAuth>} />
-                <Route path="/clubes/:clubeId/medico/consultas" element={<RequireAuth><ConsultasMedicasPage /></RequireAuth>} />
-                <Route path="/clubes/:clubeId/medico/exames" element={<RequireAuth><ExamesMedicosPage /></RequireAuth>} />
-                <Route path="/clubes/:clubeId/medico/prescricoes" element={<RequireAuth><PrescricoesPage /></RequireAuth>} />
-                <Route path="/clubes/:clubeId/medico/relatorios" element={<RequireAuth><RelatoriosMedicosPage /></RequireAuth>} />
-                <Route path="/clubes/:clubeId/medico/atletas/:atletaId/ficha" element={<RequireAuth><AtletaFichaMedicaPage /></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico" element={<RequireAuth><RequireNotTreinador><ClubeModuloMedicoPage /></RequireNotTreinador></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico/lesoes" element={<RequireAuth><RequireNotTreinador><RegistosLesaoPage /></RequireNotTreinador></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico/consultas" element={<RequireAuth><RequireNotTreinador><ConsultasMedicasPage /></RequireNotTreinador></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico/exames" element={<RequireAuth><RequireNotTreinador><ExamesMedicosPage /></RequireNotTreinador></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico/prescricoes" element={<RequireAuth><RequireNotTreinador><PrescricoesPage /></RequireNotTreinador></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico/relatorios" element={<RequireAuth><RequireNotTreinador><RelatoriosMedicosPage /></RequireNotTreinador></RequireAuth>} />
+                <Route path="/clubes/:clubeId/medico/atletas/:atletaId/ficha" element={<RequireAuth><RequireNotTreinador><AtletaFichaMedicaPage /></RequireNotTreinador></RequireAuth>} />
 
                 {/* MÓDULO TREINADOR */}
                 <Route path="/clubes/:clubeId/treinador" element={<RequireAuth><ClubeModuloTreinadorPage /></RequireAuth>} />
