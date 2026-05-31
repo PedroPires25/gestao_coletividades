@@ -4,35 +4,43 @@ import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById } from "../api";
 import { getStaffByDepartamento } from "../services/staff";
-import staffIcon from "../assets/staff.svg"; // Usar o mesmo ícone do SideMenu
+
+// Usamos ícones ou fallback para emojis se não existirem
+import staffIcon from "../assets/staff.svg";
+import eventosIcon from "../assets/eventos.svg";
 
 const MODULOS = [
     {
-        id: "sessoes",
-        titulo: "Sessões de Treino",
-        descricao: "Registo de treinos, presenças e observações",
+        id: "treinos",
+        titulo: "Treinos",
+        descricao: "Gestão de sessões de treino e planeamento.",
         emoji: "📅",
+        colorClass: "icon-blue",
         path: (clubeId) => `/clubes/${clubeId}/treinador/sessoes`,
     },
     {
-        id: "assiduidade",
-        titulo: "Consultar Assiduidade",
-        descricao: "Percentagens de presenças dos atletas por período",
-        emoji: "📊",
-        path: (clubeId) => `/clubes/${clubeId}/treinador/assiduidade`,
-    },
-    {
-        id: "planos",
-        titulo: "Planos de Treino",
-        descricao: "Criar e enviar planos de treino individuais",
+        id: "plano_treino",
+        titulo: "Plano de Treino",
+        descricao: "Criar e enviar planos de treino individuais.",
         emoji: "📋",
+        colorClass: "icon-orange",
         path: (clubeId) => `/clubes/${clubeId}/treinador/planos`,
     },
     {
-        id: "eventos",
-        titulo: "Gestão de Eventos",
-        descricao: "Criar e gerir eventos e convocatórias do clube",
-        emoji: "🎉",
+        id: "estatisticas",
+        titulo: "Estatísticas",
+        descricao: "Indicadores de desempenho desportivo.",
+        emoji: "📊",
+        colorClass: "icon-cyan",
+        path: (clubeId) => `/clubes/${clubeId}/treinador/assiduidade`,
+    },
+    {
+        id: "convocatorias",
+        titulo: "Convocatórias",
+        descricao: "Convocação de atletas para jogos e eventos.",
+        icon: eventosIcon, // Mantemos o ícone de eventos para as convocatórias
+        emoji: "📢",
+        colorClass: "icon-red", // Cor vermelha conforme as regras anteriores
         path: (clubeId) => `/clubes/${clubeId}/eventos`,
     },
 ];
@@ -49,6 +57,10 @@ export default function ClubeModuloTreinadorPage() {
     const menuItems = useMemo(
         () => [
             { label: "Módulo de Treinador", to: `/clubes/${clubeId}/treinador` },
+            { label: "Treinos", to: `/clubes/${clubeId}/treinador/sessoes` },
+            { label: "Plano de Treino", to: `/clubes/${clubeId}/treinador/planos` },
+            { label: "Estatísticas", to: `/clubes/${clubeId}/treinador/assiduidade` },
+            { label: "Convocatórias", to: `/clubes/${clubeId}/eventos` },
             { label: "Eventos do Clube", to: `/clubes/${clubeId}/eventos` },
             {
                 label: "Logout",
@@ -84,7 +96,7 @@ export default function ClubeModuloTreinadorPage() {
             <SideMenu
                 title="Gestão de Clubes"
                 subtitle={clube?.nome || "Clube"}
-                logoHref="/menu"
+                logoHref={`/clubes/${clubeId}/treinador`} // O Treinador vai sempre para aqui
                 logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
@@ -104,16 +116,31 @@ export default function ClubeModuloTreinadorPage() {
                         <button
                             type="button"
                             className="btn"
-                            onClick={() => navigate(`/clubes/${clubeId}/staff/departamento/treinador`)}
+                            onClick={() => navigate(`/clubes/${clubeId}/treinador/sessoes`)}
                         >
-                            Equipa Técnica
+                            Treinos
                         </button>
                         <button
                             type="button"
                             className="btn"
+                            onClick={() => navigate(`/clubes/${clubeId}/eventos`)}
+                        >
+                            Eventos do Clube
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-logout"
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                color: "#ff4d4d",
+                                borderColor: "rgba(255, 77, 77, 0.3)",
+                                background: "rgba(255, 77, 77, 0.05)"
+                            }}
                             onClick={() => { logout(); navigate("/login", { replace: true }); }}
                         >
-                            Logout
+                            <span style={{ fontSize: "1.1rem" }}>🚪</span> Logout
                         </button>
                     </div>
                 </div>
@@ -147,7 +174,7 @@ export default function ClubeModuloTreinadorPage() {
                         <div
                             style={{
                                 display: "grid",
-                                gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
                                 gap: 16,
                             }}
                         >
@@ -156,33 +183,53 @@ export default function ClubeModuloTreinadorPage() {
                                     key={mod.id}
                                     type="button"
                                     onClick={() => navigate(mod.path(clubeId))}
+                                    className={`modulo-card-btn ${mod.colorClass}`}
                                     style={{
                                         display: "flex",
                                         flexDirection: "column",
                                         alignItems: "flex-start",
-                                        gap: 8,
-                                        padding: "20px 20px",
+                                        gap: 12,
+                                        padding: "24px 20px",
                                         borderRadius: 14,
                                         background: "var(--color-card-bg, #1e2130)",
                                         border: "1px solid rgba(255,255,255,0.08)",
                                         cursor: "pointer",
                                         textAlign: "left",
-                                        transition: "border-color 0.15s, box-shadow 0.15s",
+                                        transition: "all 0.2s ease-in-out",
+                                        position: "relative",
+                                        overflow: "hidden",
                                     }}
                                     onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = "rgba(99,102,241,0.5)";
-                                        e.currentTarget.style.boxShadow = "0 0 0 2px rgba(99,102,241,0.15)";
+                                        e.currentTarget.style.transform = "translateY(-4px)";
+                                        e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.2)";
                                     }}
                                     onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                                        e.currentTarget.style.transform = "translateY(0)";
                                         e.currentTarget.style.boxShadow = "none";
                                     }}
                                 >
-                                    <span style={{ fontSize: "2rem" }}>{mod.emoji}</span>
+                                    <div
+                                        className="modulo-icon-wrapper"
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            width: 56,
+                                            height: 56,
+                                            borderRadius: "50%",
+                                            marginBottom: 4,
+                                        }}
+                                    >
+                                        {mod.icon ? (
+                                            <img src={mod.icon} alt={mod.titulo} style={{ width: 28, height: 28 }} />
+                                        ) : (
+                                            <span style={{ fontSize: "1.8rem" }}>{mod.emoji}</span>
+                                        )}
+                                    </div>
                                     <span
                                         style={{
                                             fontWeight: 700,
-                                            fontSize: "1rem",
+                                            fontSize: "1.1rem",
                                             color: "var(--color-text, #fff)",
                                         }}
                                     >
@@ -190,9 +237,9 @@ export default function ClubeModuloTreinadorPage() {
                                     </span>
                                     <span
                                         style={{
-                                            fontSize: "0.82rem",
+                                            fontSize: "0.85rem",
                                             color: "var(--color-text-muted, #aaa)",
-                                            lineHeight: 1.4,
+                                            lineHeight: 1.5,
                                         }}
                                     >
                                         {mod.descricao}
@@ -203,6 +250,73 @@ export default function ClubeModuloTreinadorPage() {
                     </>
                 )}
             </div>
+
+            <style>{`
+                .modulo-card-btn {
+                    backdrop-filter: blur(10px);
+                }
+                
+                /* Definição de cores para os ícones baseada no padrão existente */
+                .modulo-card-btn.icon-blue .modulo-icon-wrapper {
+                    background: rgba(59, 130, 246, 0.15);
+                    border: 1px solid rgba(59, 130, 246, 0.4);
+                    color: #3b82f6;
+                }
+                .modulo-card-btn.icon-blue:hover { border-color: rgba(59, 130, 246, 0.6); }
+
+                .modulo-card-btn.icon-green .modulo-icon-wrapper {
+                    background: rgba(34, 197, 94, 0.15);
+                    border: 1px solid rgba(34, 197, 94, 0.4);
+                    color: #22c55e;
+                }
+                .modulo-card-btn.icon-green:hover { border-color: rgba(34, 197, 94, 0.6); }
+
+                .modulo-card-btn.icon-purple .modulo-icon-wrapper {
+                    background: rgba(168, 85, 247, 0.15);
+                    border: 1px solid rgba(168, 85, 247, 0.4);
+                    color: #a855f7;
+                }
+                .modulo-card-btn.icon-purple:hover { border-color: rgba(168, 85, 247, 0.6); }
+
+                .modulo-card-btn.icon-orange .modulo-icon-wrapper {
+                    background: rgba(249, 115, 22, 0.15);
+                    border: 1px solid rgba(249, 115, 22, 0.4);
+                    color: #f97316;
+                }
+                .modulo-card-btn.icon-orange:hover { border-color: rgba(249, 115, 22, 0.6); }
+
+                .modulo-card-btn.icon-red .modulo-icon-wrapper {
+                    background: rgba(239, 68, 68, 0.15);
+                    border: 1px solid rgba(239, 68, 68, 0.4);
+                    color: #ef4444;
+                }
+                .modulo-card-btn.icon-red:hover { border-color: rgba(239, 68, 68, 0.6); }
+
+                .modulo-card-btn.icon-cyan .modulo-icon-wrapper {
+                    background: rgba(6, 182, 212, 0.15);
+                    border: 1px solid rgba(6, 182, 212, 0.4);
+                    color: #06b6d4;
+                }
+                .modulo-card-btn.icon-cyan:hover { border-color: rgba(6, 182, 212, 0.6); }
+
+                .modulo-card-btn.icon-yellow .modulo-icon-wrapper {
+                    background: rgba(234, 179, 8, 0.15);
+                    border: 1px solid rgba(234, 179, 8, 0.4);
+                    color: #eab308;
+                }
+                .modulo-card-btn.icon-yellow:hover { border-color: rgba(234, 179, 8, 0.6); }
+
+                .btn-logout:hover {
+                    background: rgba(255, 77, 77, 0.1) !important;
+                    border-color: rgba(255, 77, 77, 0.5) !important;
+                }
+                
+                @media (max-width: 768px) {
+                    .modulo-card-btn {
+                        padding: 16px;
+                    }
+                }
+            `}</style>
         </>
     );
 }
