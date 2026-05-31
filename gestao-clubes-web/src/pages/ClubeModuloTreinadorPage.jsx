@@ -5,16 +5,19 @@ import { useAuth } from "../auth/AuthContext";
 import { getClubeById } from "../api";
 import { getStaffByDepartamento } from "../services/staff";
 
-// Usamos ícones ou fallback para emojis se não existirem
+// Importar os ícones corretos
 import staffIcon from "../assets/staff.svg";
-import eventosIcon from "../assets/eventos.svg";
+import treinoIcon from "../assets/treino.svg";
+import planoTreinoIcon from "../assets/plano-treino.svg";
+import estatisticasIcon from "../assets/estatisticas.svg";
+import convocatoriasIcon from "../assets/convocatorias.svg";
 
 const MODULOS = [
     {
         id: "treinos",
         titulo: "Treinos",
         descricao: "Gestão de sessões de treino e planeamento.",
-        emoji: "📅",
+        icon: treinoIcon,
         colorClass: "icon-blue",
         path: (clubeId) => `/clubes/${clubeId}/treinador/sessoes`,
     },
@@ -22,7 +25,7 @@ const MODULOS = [
         id: "plano_treino",
         titulo: "Plano de Treino",
         descricao: "Criar e enviar planos de treino individuais.",
-        emoji: "📋",
+        icon: planoTreinoIcon,
         colorClass: "icon-orange",
         path: (clubeId) => `/clubes/${clubeId}/treinador/planos`,
     },
@@ -30,7 +33,7 @@ const MODULOS = [
         id: "estatisticas",
         titulo: "Estatísticas",
         descricao: "Indicadores de desempenho desportivo.",
-        emoji: "📊",
+        icon: estatisticasIcon,
         colorClass: "icon-cyan",
         path: (clubeId) => `/clubes/${clubeId}/treinador/assiduidade`,
     },
@@ -38,9 +41,8 @@ const MODULOS = [
         id: "convocatorias",
         titulo: "Convocatórias",
         descricao: "Convocação de atletas para jogos e eventos.",
-        icon: eventosIcon, // Mantemos o ícone de eventos para as convocatórias
-        emoji: "📢",
-        colorClass: "icon-red", // Cor vermelha conforme as regras anteriores
+        icon: convocatoriasIcon,
+        colorClass: "icon-red",
         path: (clubeId) => `/clubes/${clubeId}/eventos`,
     },
 ];
@@ -60,7 +62,6 @@ export default function ClubeModuloTreinadorPage() {
             { label: "Treinos", to: `/clubes/${clubeId}/treinador/sessoes` },
             { label: "Plano de Treino", to: `/clubes/${clubeId}/treinador/planos` },
             { label: "Estatísticas", to: `/clubes/${clubeId}/treinador/assiduidade` },
-            { label: "Convocatórias", to: `/clubes/${clubeId}/eventos` },
             { label: "Eventos do Clube", to: `/clubes/${clubeId}/eventos` },
             {
                 label: "Logout",
@@ -96,7 +97,7 @@ export default function ClubeModuloTreinadorPage() {
             <SideMenu
                 title="Gestão de Clubes"
                 subtitle={clube?.nome || "Clube"}
-                logoHref={`/clubes/${clubeId}/treinador`} // O Treinador vai sempre para aqui
+                logoHref={`/clubes/${clubeId}/treinador`}
                 logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
@@ -116,31 +117,16 @@ export default function ClubeModuloTreinadorPage() {
                         <button
                             type="button"
                             className="btn"
-                            onClick={() => navigate(`/clubes/${clubeId}/treinador/sessoes`)}
-                        >
-                            Treinos
-                        </button>
-                        <button
-                            type="button"
-                            className="btn"
                             onClick={() => navigate(`/clubes/${clubeId}/eventos`)}
                         >
                             Eventos do Clube
                         </button>
                         <button
                             type="button"
-                            className="btn btn-logout"
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "6px",
-                                color: "#ff4d4d",
-                                borderColor: "rgba(255, 77, 77, 0.3)",
-                                background: "rgba(255, 77, 77, 0.05)"
-                            }}
+                            className="btn"
                             onClick={() => { logout(); navigate("/login", { replace: true }); }}
                         >
-                            <span style={{ fontSize: "1.1rem" }}>🚪</span> Logout
+                            Logout
                         </button>
                     </div>
                 </div>
@@ -220,11 +206,7 @@ export default function ClubeModuloTreinadorPage() {
                                             marginBottom: 4,
                                         }}
                                     >
-                                        {mod.icon ? (
-                                            <img src={mod.icon} alt={mod.titulo} style={{ width: 28, height: 28 }} />
-                                        ) : (
-                                            <span style={{ fontSize: "1.8rem" }}>{mod.emoji}</span>
-                                        )}
+                                        <img src={mod.icon} alt={mod.titulo} style={{ width: 28, height: 28 }} />
                                     </div>
                                     <span
                                         style={{
@@ -256,7 +238,6 @@ export default function ClubeModuloTreinadorPage() {
                     backdrop-filter: blur(10px);
                 }
                 
-                /* Definição de cores para os ícones baseada no padrão existente */
                 .modulo-card-btn.icon-blue .modulo-icon-wrapper {
                     background: rgba(59, 130, 246, 0.15);
                     border: 1px solid rgba(59, 130, 246, 0.4);
@@ -305,17 +286,6 @@ export default function ClubeModuloTreinadorPage() {
                     color: #eab308;
                 }
                 .modulo-card-btn.icon-yellow:hover { border-color: rgba(234, 179, 8, 0.6); }
-
-                .btn-logout:hover {
-                    background: rgba(255, 77, 77, 0.1) !important;
-                    border-color: rgba(255, 77, 77, 0.5) !important;
-                }
-                
-                @media (max-width: 768px) {
-                    .modulo-card-btn {
-                        padding: 16px;
-                    }
-                }
             `}</style>
         </>
     );
