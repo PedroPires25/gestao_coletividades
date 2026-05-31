@@ -13,12 +13,21 @@ public class EventoAtletaDAO {
 
     public List<Map<String, Object>> listarPorEvento(int eventoId) {
         List<Map<String, Object>> lista = new ArrayList<>();
+        // SQL com a lógica correta de prioridade de emails
         String sql = """
-            SELECT a.id, COALESCE(u.nome, a.nome) AS nome, a.data_nascimento,
+            SELECT a.id,
+                   COALESCE(u.nome, a.nome) AS nome,
+                   a.data_nascimento,
                    COALESCE(NULLIF(TRIM(u.email_notificacoes), ''), NULLIF(TRIM(u.utilizador), ''), NULLIF(TRIM(a.email), '')) AS email,
-                   a.telefone, a.morada, a.remuneracao,
-                   a.clube_atual_id, COALESCE(u.logo_path, a.foto_path) AS foto_path, ea.id AS estado_id, ea.descricao AS estado,
-                   e.id AS escalao_id, e.nome AS escalao
+                   a.telefone,
+                   a.morada,
+                   a.remuneracao,
+                   a.clube_atual_id,
+                   COALESCE(u.logo_path, a.foto_path) AS foto_path,
+                   ea.id AS estado_id,
+                   ea.descricao AS estado,
+                   e.id AS escalao_id,
+                   e.nome AS escalao
             FROM evento_atleta evt_a
             JOIN atleta a ON a.id = evt_a.atleta_id
             LEFT JOIN utilizadores u ON u.id = a.utilizador_id
