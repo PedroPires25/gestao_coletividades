@@ -58,6 +58,10 @@ export async function getRegisterProfiles() {
     return http("/auth/profiles");
 }
 
+export async function getRegisterContext() {
+    return http("/auth/register/context");
+}
+
 // ADMIN USERS
 export async function getAdminUsers(estado) {
     const q = estado ? `?estado=${encodeURIComponent(estado)}` : "";

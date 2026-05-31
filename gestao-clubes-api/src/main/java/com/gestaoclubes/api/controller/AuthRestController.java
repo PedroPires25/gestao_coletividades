@@ -1,5 +1,7 @@
 package com.gestaoclubes.api.controller;
 
+import com.gestaoclubes.api.dao.ClubeDAO;
+import com.gestaoclubes.api.dao.ColetividadeDAO;
 import com.gestaoclubes.api.dao.PerfilDAO;
 import com.gestaoclubes.api.dao.StaffDAO;
 import com.gestaoclubes.api.dao.UtilizadorDAO;
@@ -11,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "http://localhost:5173")
@@ -19,6 +23,8 @@ public class AuthRestController {
     private final UtilizadorDAO utilizadorDAO;
     private final PerfilDAO perfilDAO;
     private final JwtUtil jwtUtil;
+    private final ClubeDAO clubeDAO = new ClubeDAO();
+    private final ColetividadeDAO coletividadeDAO = new ColetividadeDAO();
     private final StaffDAO staffDAO = new StaffDAO();
 
     public AuthRestController(UtilizadorDAO utilizadorDAO, PerfilDAO perfilDAO, JwtUtil jwtUtil) {
@@ -97,6 +103,32 @@ public class AuthRestController {
         }
     }
 
+    public static class EstruturaRegistoDto {
+        public int id;
+        public String nome;
+
+        public EstruturaRegistoDto(int id, String nome) {
+            this.id = id;
+            this.nome = nome;
+        }
+    }
+
+    public static class RegisterContextResponse {
+        public List<String> profiles;
+        public List<EstruturaRegistoDto> clubes;
+        public List<EstruturaRegistoDto> coletividades;
+
+        public RegisterContextResponse(
+                List<String> profiles,
+                List<EstruturaRegistoDto> clubes,
+                List<EstruturaRegistoDto> coletividades
+        ) {
+            this.profiles = profiles;
+            this.clubes = clubes;
+            this.coletividades = coletividades;
+        }
+    }
+
     public static class GetRedirectUrlResponse {
         public String redirectUrl;
         public String reason;
@@ -116,6 +148,23 @@ public class AuthRestController {
                         .filter(p -> !PerfilDAO.SUPER_ADMIN.equals(p))
                         .toList()
         );
+    }
+
+    @GetMapping("/register/context")
+    public ResponseEntity<?> getRegisterContext() {
+        List<String> profiles = perfilDAO.listarPerfisDisponiveis().stream()
+                .filter(p -> !PerfilDAO.SUPER_ADMIN.equals(p))
+                .toList();
+
+        List<EstruturaRegistoDto> clubes = clubeDAO.listarTodos().stream()
+                .map(clube -> new EstruturaRegistoDto(clube.getId(), clube.getNome()))
+                .toList();
+
+        List<EstruturaRegistoDto> coletividades = coletividadeDAO.listarTodos().stream()
+                .map(coletividade -> new EstruturaRegistoDto(coletividade.getId(), coletividade.getNome()))
+                .toList();
+
+        return ResponseEntity.ok(new RegisterContextResponse(profiles, clubes, coletividades));
     }
 
     @PostMapping("/login")
