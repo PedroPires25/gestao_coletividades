@@ -388,4 +388,33 @@ public class AtletaDAO {
             return false;
         }
     }
+
+    /**
+     * Retorna o email efetivo para notificações de um atleta.
+     * Prioridade: email_notificacoes do utilizador ligado → email de login → email do atleta.
+     */
+    public String obterEmailEfetivo(int atletaId) {
+        String sql = """
+            SELECT COALESCE(
+                NULLIF(TRIM(u.email_notificacoes), ''),
+                NULLIF(TRIM(u.utilizador), ''),
+                NULLIF(TRIM(a.email), '')
+            ) AS email_efetivo
+            FROM atleta a
+            LEFT JOIN utilizadores u ON u.id = a.utilizador_id
+            WHERE a.id = ?
+        """;
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, atletaId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("email_efetivo");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
