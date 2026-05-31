@@ -17,6 +17,7 @@ public class Utilizador {
     private String nome;
     private String morada;
     private String telefone;
+    private String emailNotificacoes;
     private String temaPreferido;
 
     public Utilizador() {
@@ -165,5 +166,13 @@ public class Utilizador {
 
     public void setTemaPreferido(String temaPreferido) {
         this.temaPreferido = temaPreferido;
+    }
+
+    public String getEmailNotificacoes() {
+        return emailNotificacoes;
+    }
+
+    public void setEmailNotificacoes(String emailNotificacoes) {
+        this.emailNotificacoes = emailNotificacoes;
     }
 }
