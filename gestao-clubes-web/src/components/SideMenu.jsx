@@ -19,6 +19,12 @@ import eventosIcon from "../assets/eventos.svg";
 import departamentoMedicoIcon from "../assets/departamento-medico.svg";
 import direcaoIcon from "../assets/direcao.svg";
 
+// Ícones do Módulo de Treinador
+import treinoIcon from "../assets/treino.svg";
+import planoTreinoIcon from "../assets/plano-treino.svg";
+import estatisticasIcon from "../assets/estatisticas.svg";
+import convocatoriasIcon from "../assets/convocatorias.svg";
+
 
 const MENU_ICONS = {
     Home: homeIcon,
@@ -34,11 +40,16 @@ const MENU_ICONS = {
     utilizadoresAutorizados: utilizadoresAutorizadosIcon,
     Eventos: eventosIcon,
     "Módulo Clínico": departamentoMedicoIcon,
-    "Módulo de Treinador": staffIcon, // Placeholder
+    "Módulo de Treinador": staffIcon,
     "Eventos do Clube": eventosIcon,
     "Voltar ao Clube": clubesIcon,
     "Voltar": homeIcon,
     "Direção": direcaoIcon,
+    // Novos mapeamentos para o Treinador
+    "Treinos": treinoIcon,
+    "Plano de Treino": planoTreinoIcon,
+    "Estatísticas": estatisticasIcon,
+    "Convocatórias": convocatoriasIcon,
 };
 
 const MENU_ICON_COLORS = [
