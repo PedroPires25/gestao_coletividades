@@ -133,6 +133,7 @@ export function AuthProvider({ children }) {
         const isAdmin = isSuperAdmin || scopedAdminActive;
 
         const isDepartamentoMedico = role === "DEPARTAMENTO_MEDICO";
+        const isTreinador = role === "TREINADOR_PRINCIPAL";
 
         return {
             session,
@@ -146,6 +147,7 @@ export function AuthProvider({ children }) {
             isSuperAdmin,
             isScopedAdmin,
             isDepartamentoMedico,
+            isTreinador,
             privilegiosAtivos: session?.user?.privilegiosAtivos ?? false,
             estadoRegisto: session?.user?.estadoRegisto ?? null,
             clubeId: session?.user?.clubeId ?? null,
