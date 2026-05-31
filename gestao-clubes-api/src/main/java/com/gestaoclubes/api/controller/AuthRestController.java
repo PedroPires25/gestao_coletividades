@@ -69,6 +69,7 @@ public class AuthRestController {
         public String nome;
         public String morada;
         public String telefone;
+        public String emailNotificacoes;
         public String temaPreferido;
         public String numRegisto;
         public Integer staffId;
@@ -89,6 +90,7 @@ public class AuthRestController {
             this.nome = u.getNome();
             this.morada = u.getMorada();
             this.telefone = u.getTelefone();
+            this.emailNotificacoes = u.getEmailNotificacoes();
             this.temaPreferido = u.getTemaPreferido();
         }
     }
@@ -258,7 +260,7 @@ public class AuthRestController {
         public String nome;
         public String morada;
         public String telefone;
-        public String email;
+        public String emailNotificacoes;
         public String temaPreferido;
         public String numRegisto;
     }
@@ -309,19 +311,14 @@ public class AuthRestController {
             utilizadorDAO.atualizarNome(u.getId(), req.nome.trim());
         }
 
-        if (req.morada != null || req.telefone != null || req.email != null) {
+        if (req.morada != null || req.telefone != null || req.emailNotificacoes != null) {
             String morada = req.morada != null ? req.morada.trim() : u.getMorada();
             String telefone = req.telefone != null ? req.telefone.trim() : u.getTelefone();
-            String email = req.email != null ? req.email.trim() : u.getUtilizador();
+            String emailNotificacoes = req.emailNotificacoes != null
+                    ? normalizarCampoOpcional(req.emailNotificacoes)
+                    : u.getEmailNotificacoes();
 
-            if (req.email != null && !req.email.trim().equals(u.getUtilizador())) {
-                Utilizador existente = utilizadorDAO.buscarPorEmail(req.email.trim());
-                if (existente != null && existente.getId() != u.getId()) {
-                    return ResponseEntity.badRequest().body("Já existe um utilizador com esse email.");
-                }
-            }
-
-            utilizadorDAO.atualizarDadosPessoais(u.getId(), morada, telefone, email);
+            utilizadorDAO.atualizarDadosPessoais(u.getId(), morada, telefone, emailNotificacoes);
         }
 
         if (req.temaPreferido != null) {
@@ -645,6 +642,14 @@ public class AuthRestController {
 
     private String normalizarEstruturaTipo(String estruturaTipo) {
         return estruturaTipo == null ? null : estruturaTipo.trim().toUpperCase();
+    }
+
+    private String normalizarCampoOpcional(String valor) {
+        if (valor == null) {
+            return null;
+        }
+        String normalizado = valor.trim();
+        return normalizado.isEmpty() ? null : normalizado;
     }
 
     private JwtUtil.JwtUser getAuthenticatedUser() {

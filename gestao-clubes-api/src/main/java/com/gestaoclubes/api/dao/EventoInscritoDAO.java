@@ -13,7 +13,9 @@ public class EventoInscritoDAO {
     public List<Map<String, Object>> listarPorEvento(int eventoId) {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
-            SELECT i.id, COALESCE(u.nome, i.nome) AS nome, i.email, i.data_nascimento,
+            SELECT i.id, COALESCE(u.nome, i.nome) AS nome,
+                   COALESCE(NULLIF(TRIM(u.email_notificacoes), ''), NULLIF(TRIM(u.utilizador), ''), NULLIF(TRIM(i.email), '')) AS email,
+                   i.data_nascimento,
                    ei.evento_id
             FROM evento_inscrito ei
             INNER JOIN inscrito i ON i.id = ei.inscrito_id

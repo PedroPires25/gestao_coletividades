@@ -80,14 +80,17 @@ public class TreinadorService {
             
             if (planoId > 0 && emailService != null) {
                 Atleta atleta = atletaDAO.buscarPorId(atletaId);
-                if (atleta != null && atleta.getEmail() != null && !atleta.getEmail().isBlank()) {
-                    try {
-                        emailService.enviarPlanoTreino(atleta.getEmail(), atleta.getNome(), conteudo);
-                    } catch (Exception e) {
-                        System.err.println("Erro ao enviar email de plano de treino para atleta " + atletaId + ": " + e.getMessage());
+                if (atleta != null) {
+                    String emailDestino = atletaDAO.obterEmailEfetivo(atletaId);
+                    if (emailDestino != null && !emailDestino.isBlank()) {
+                        try {
+                            emailService.enviarPlanoTreino(emailDestino, atleta.getNome(), conteudo);
+                        } catch (Exception e) {
+                            System.err.println("Erro ao enviar email de plano de treino para atleta " + atletaId + ": " + e.getMessage());
+                        }
+                    } else {
+                        System.err.println("Atleta " + atletaId + " não tem email configurado.");
                     }
-                } else {
-                    System.err.println("Atleta " + atletaId + " não tem email configurado.");
                 }
             }
             
