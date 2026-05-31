@@ -22,7 +22,9 @@ public class ClubeRestController {
 
     @GetMapping
     public List<Clube> listarTodos() {
-        exigirSuperAdmin();
+        if (!SecurityUtils.isSuperAdmin() && !SecurityUtils.isAdministradorEstrutura()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas administradores podem listar clubes.");
+        }
         return clubeDAO.listarTodos();
     }
 
