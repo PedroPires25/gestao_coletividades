@@ -15,11 +15,24 @@ export default function AssiduidadePage() {
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState("");
 
-    const menuItems = useMemo(() => [
-        { label: "Módulo de Treinador", to: `/clubes/${clubeId}/treinador` },
-        { label: "Eventos do Clube", to: `/clubes/${clubeId}/eventos` },
-        { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
-    ], [clubeId, logout, navigate]);
+    const menuItems = useMemo(
+        () => [
+            { label: "Módulo de Treinador", to: `/clubes/${clubeId}/treinador` },
+            { label: "Treinos", to: `/clubes/${clubeId}/treinador/sessoes` },
+            { label: "Plano de Treino", to: `/clubes/${clubeId}/treinador/planos` },
+            { label: "Estatísticas", to: `/clubes/${clubeId}/treinador/assiduidade` },
+            { label: "Convocatórias", to: `/clubes/${clubeId}/eventos` },
+            { label: "Eventos do Clube", to: `/clubes/${clubeId}/eventos` },
+            {
+                label: "Logout",
+                onClick: () => {
+                    logout();
+                    navigate("/login", { replace: true });
+                },
+            },
+        ],
+        [clubeId, logout, navigate]
+    );
 
     async function handleFilter() {
         if (!startDate || !endDate) {
@@ -40,7 +53,7 @@ export default function AssiduidadePage() {
 
     return (
         <>
-            <SideMenu title="Gestão de Clubes" subtitle="Assiduidade" logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
+            <SideMenu title="Gestão de Clubes" subtitle="Estatísticas" logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
 
             <div className="container" style={{ paddingTop: 24 }}>
                 <div className="page-title page-title-with-icon">
