@@ -49,7 +49,7 @@ public class PasswordRecoveryRestController {
                 passwordResetTokenDAO.inserir(u.getId(), token, expiresAt);
 
                 String link = "http://localhost:5173/reset-password?token=" + token;
-                emailService.enviarEmailRecuperacao(u.getUtilizador(), link);
+                emailService.enviarEmailRecuperacao(obterEmailDestino(u), link);
             }
         }
 
@@ -103,7 +103,7 @@ public class PasswordRecoveryRestController {
         try {
             Utilizador u = utilizadorDAO.buscarPorId(t.getUserId());
             if (u != null) {
-                emailService.enviarEmailConfirmacaoAlteracao(u.getUtilizador());
+                emailService.enviarEmailConfirmacaoAlteracao(obterEmailDestino(u));
             }
         } catch (Exception e) {
             System.err.println("Erro ao enviar email de confirmação: " + e.getMessage());
@@ -116,5 +116,12 @@ public class PasswordRecoveryRestController {
         public String token;
         public String newPassword;
         public String confirmPassword;
+    }
+
+    private String obterEmailDestino(Utilizador utilizador) {
+        if (utilizador.getEmailNotificacoes() != null && !utilizador.getEmailNotificacoes().isBlank()) {
+            return utilizador.getEmailNotificacoes().trim();
+        }
+        return utilizador.getUtilizador();
     }
 }
