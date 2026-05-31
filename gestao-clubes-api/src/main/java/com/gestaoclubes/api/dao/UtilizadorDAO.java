@@ -81,23 +81,24 @@ public class UtilizadorDAO {
         String hash = PasswordUtil.hashPassword(palavraChave);
 
         String sql = "INSERT INTO utilizadores " +
-                "(utilizador, palavra_chave, perfil_id, ativo, privilegios_ativos, estado_registo, " +
+                "(utilizador, email_notificacoes, palavra_chave, perfil_id, ativo, privilegios_ativos, estado_registo, " +
                 "clube_id, modalidade_id, coletividade_id, atividade_id) " +
-                "VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, email.trim());
-            stmt.setString(2, hash);
-            stmt.setInt(3, perfilId);
-            stmt.setBoolean(4, privilegiosAtivos);
-            stmt.setString(5, estadoRegisto.trim().toUpperCase());
+            stmt.setString(2, email.trim());
+            stmt.setString(3, hash);
+            stmt.setInt(4, perfilId);
+            stmt.setBoolean(5, privilegiosAtivos);
+            stmt.setString(6, estadoRegisto.trim().toUpperCase());
 
-            setNullableInt(stmt, 6, clubeId);
-            setNullableInt(stmt, 7, modalidadeId);
-            setNullableInt(stmt, 8, coletividadeId);
-            setNullableInt(stmt, 9, atividadeId);
+            setNullableInt(stmt, 7, clubeId);
+            setNullableInt(stmt, 8, modalidadeId);
+            setNullableInt(stmt, 9, coletividadeId);
+            setNullableInt(stmt, 10, atividadeId);
 
             return stmt.executeUpdate() == 1;
 
@@ -110,7 +111,7 @@ public class UtilizadorDAO {
     public List<Utilizador> listarTodos() {
         List<Utilizador> lista = new ArrayList<>();
         String sql = "SELECT id, utilizador, perfil_id, ativo, privilegios_ativos, estado_registo, " +
-                "clube_id, modalidade_id, coletividade_id, atividade_id, logo_path, nome " +
+                "clube_id, modalidade_id, coletividade_id, atividade_id, logo_path, nome, email_notificacoes " +
                 "FROM utilizadores ORDER BY utilizador";
 
         try (Connection conn = ConexoBD.getConnection();
@@ -730,6 +731,7 @@ public class UtilizadorDAO {
         try { u.setNome(rs.getString("nome")); } catch (SQLException ignored) {}
         try { u.setMorada(rs.getString("morada")); } catch (SQLException ignored) {}
         try { u.setTelefone(rs.getString("telefone")); } catch (SQLException ignored) {}
+        try { u.setEmailNotificacoes(rs.getString("email_notificacoes")); } catch (SQLException ignored) {}
         try { u.setTemaPreferido(rs.getString("tema_preferido")); } catch (SQLException ignored) {}
         return u;
     }
@@ -747,7 +749,7 @@ public class UtilizadorDAO {
         List<Utilizador> lista = new ArrayList<>();
 
         String sql = "SELECT id, utilizador, perfil_id, ativo, privilegios_ativos, estado_registo, " +
-                "clube_id, modalidade_id, coletividade_id, atividade_id, logo_path, nome " +
+                "clube_id, modalidade_id, coletividade_id, atividade_id, logo_path, nome, email_notificacoes " +
                 "FROM utilizadores WHERE UPPER(estado_registo) = UPPER(?) ORDER BY utilizador";
 
         try (Connection conn = ConexoBD.getConnection();
@@ -800,15 +802,15 @@ public class UtilizadorDAO {
         }
     }
 
-    public boolean atualizarDadosPessoais(int userId, String morada, String telefone, String email) {
-        String sql = "UPDATE utilizadores SET morada=?, telefone=?, utilizador=? WHERE id=?";
+    public boolean atualizarDadosPessoais(int userId, String morada, String telefone, String emailNotificacoes) {
+        String sql = "UPDATE utilizadores SET morada=?, telefone=?, email_notificacoes=? WHERE id=?";
 
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, morada);
             ps.setString(2, telefone);
-            ps.setString(3, email);
+            ps.setString(3, emailNotificacoes);
             ps.setInt(4, userId);
             return ps.executeUpdate() > 0;
 
