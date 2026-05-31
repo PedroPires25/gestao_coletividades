@@ -4,6 +4,7 @@ import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById } from "../api";
 import { getStaffByDepartamento } from "../services/staff";
+import staffIcon from "../assets/staff.svg"; // Usar o mesmo ícone do SideMenu
 
 const MODULOS = [
     {
@@ -92,7 +93,7 @@ export default function ClubeModuloTreinadorPage() {
                 <div className="page-title page-title-with-icon">
                     <div className="page-title-main-wrap">
                         <span className="page-title-icon-circle">
-                            <span style={{ fontSize: "1.6rem" }}>🏋️</span>
+                            <img src={staffIcon} alt="Módulo de Treinador" className="page-title-icon" />
                         </span>
                         <div className="page-title-texts">
                             <h1>Módulo de Treinador</h1>
