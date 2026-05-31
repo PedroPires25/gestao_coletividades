@@ -52,10 +52,10 @@ export default function PerfilPage() {
     const { user, updateSession, isDepartamentoMedico } = useAuth();
     const { setTheme } = useTheme();
     const [nome, setNome] = useState("");
-    const [email, setEmail] = useState("");
+    const [loginEmail, setLoginEmail] = useState("");
     const [morada, setMorada] = useState("");
     const [telefone, setTelefone] = useState("");
-    const [editEmail, setEditEmail] = useState("");
+    const [emailNotificacoes, setEmailNotificacoes] = useState("");
     const [numRegisto, setNumRegisto] = useState("");
     const [temaPreferido, setTemaPreferido] = useState("");
     const [logoPath, setLogoPath] = useState(null);
@@ -89,8 +89,8 @@ export default function PerfilPage() {
             .then((data) => {
                 if (cancelled) return;
                 setNome(data.nome || "");
-                setEmail(data.email || "");
-                setEditEmail(data.email || "");
+                setLoginEmail(data.email || "");
+                setEmailNotificacoes(data.emailNotificacoes || data.email || "");
                 setMorada(data.morada || "");
                 setTelefone(data.telefone || "");
                 setNumRegisto(data.numRegisto || "");
@@ -143,8 +143,9 @@ export default function PerfilPage() {
 
     function handleCancelDados() {
         setEditingDados(false);
-        setEditEmail(email);
         getMyProfile().then((data) => {
+            setLoginEmail(data.email || "");
+            setEmailNotificacoes(data.emailNotificacoes || data.email || "");
             setMorada(data.morada || "");
             setTelefone(data.telefone || "");
             setNumRegisto(data.numRegisto || "");
@@ -160,15 +161,15 @@ export default function PerfilPage() {
             const updated = await updateMyProfile({
                 morada: morada.trim(),
                 telefone: telefone.trim(),
-                email: editEmail.trim(),
+                emailNotificacoes: emailNotificacoes.trim(),
                 ...(isDepartamentoMedico ? { numRegisto: numRegisto.trim() } : {}),
             });
-            setEmail(updated.email || editEmail);
-            setEditEmail(updated.email || editEmail);
+            setLoginEmail(updated.email || "");
+            setEmailNotificacoes(updated.emailNotificacoes || updated.email || "");
             setMorada(updated.morada || "");
             setTelefone(updated.telefone || "");
             if (isDepartamentoMedico) setNumRegisto(updated.numRegisto || "");
-            updateSession({ email: updated.email });
+            updateSession({ email: updated.email, emailNotificacoes: updated.emailNotificacoes || null });
             setEditingDados(false);
             setDadosMsg({ type: "success", text: "Dados pessoais atualizados com sucesso." });
         } catch (err) {
@@ -257,7 +258,7 @@ export default function PerfilPage() {
                                 <img src={avatarUrl} alt="Avatar" />
                             ) : (
                                 <span className="perfil-avatar-initials">
-                                    {(nome || email || "?")[0].toUpperCase()}
+                                    {(nome || emailNotificacoes || loginEmail || "?")[0].toUpperCase()}
                                 </span>
                             )}
                         </div>
@@ -275,11 +276,11 @@ export default function PerfilPage() {
 
                     <form className="perfil-form" onSubmit={handleSave}>
                         <div className="perfil-field">
-                            <label htmlFor="perfil-email">Email</label>
+                            <label htmlFor="perfil-email">Email de login/registo</label>
                             <input
                                 id="perfil-email"
                                 type="email"
-                                value={email}
+                                value={loginEmail}
                                 disabled
                                 className="perfil-input"
                             />
@@ -315,8 +316,12 @@ export default function PerfilPage() {
                     {!editingDados ? (
                         <div className="perfil-dados-resumo">
                             <div className="perfil-dados-row">
-                                <span className="perfil-dados-label">Email:</span>
-                                <span className="perfil-dados-value">{email || "—"}</span>
+                                <span className="perfil-dados-label">Email de login/registo:</span>
+                                <span className="perfil-dados-value">{loginEmail || "—"}</span>
+                            </div>
+                            <div className="perfil-dados-row">
+                                <span className="perfil-dados-label">Email para notificações:</span>
+                                <span className="perfil-dados-value">{emailNotificacoes || loginEmail || "—"}</span>
                             </div>
                             <div className="perfil-dados-row">
                                 <span className="perfil-dados-label">Morada:</span>
@@ -343,12 +348,24 @@ export default function PerfilPage() {
                     ) : (
                         <form className="perfil-form" onSubmit={handleSaveDados}>
                             <div className="perfil-field">
-                                <label htmlFor="perfil-edit-email">Email</label>
+                                <label htmlFor="perfil-login-email">Email de login/registo</label>
                                 <input
-                                    id="perfil-edit-email"
+                                    id="perfil-login-email"
                                     type="email"
-                                    value={editEmail}
-                                    onChange={(e) => setEditEmail(e.target.value)}
+                                    value={loginEmail}
+                                    disabled
+                                    className="perfil-input"
+                                    maxLength={120}
+                                />
+                            </div>
+
+                            <div className="perfil-field">
+                                <label htmlFor="perfil-email-notificacoes">Email para notificações</label>
+                                <input
+                                    id="perfil-email-notificacoes"
+                                    type="email"
+                                    value={emailNotificacoes}
+                                    onChange={(e) => setEmailNotificacoes(e.target.value)}
                                     className="perfil-input"
                                     maxLength={120}
                                 />

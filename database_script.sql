@@ -881,6 +881,14 @@ ALTER TABLE utilizadores
   ADD COLUMN telefone VARCHAR(30) DEFAULT NULL;
 
 ALTER TABLE utilizadores
+  ADD COLUMN email_notificacoes VARCHAR(120) DEFAULT NULL;
+
+UPDATE utilizadores
+SET email_notificacoes = utilizador
+WHERE id > 0
+  AND (email_notificacoes IS NULL OR TRIM(email_notificacoes) = '');
+
+ALTER TABLE utilizadores
   ADD COLUMN tema_preferido VARCHAR(30) DEFAULT NULL;
 
 -- =========================================================
