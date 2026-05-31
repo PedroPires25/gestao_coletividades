@@ -169,7 +169,7 @@ function getStaffDestination(clubeId, item) {
 export default function ClubeStaffPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, isDepartamentoMedico, isTreinador } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [staffRows, setStaffRows] = useState([]);
@@ -390,18 +390,20 @@ export default function ClubeStaffPage() {
                                 <span className="modalidade-figura-label">Direção</span>
                             </Link>
 
-                            <Link
-                                to={`/clubes/${clubeId}/staff/departamento/medico`}
-                                className="modalidade-figura-btn icon-red"
-                                title="Departamento Médico"
-                            >
-                                <span className="modalidade-figura-circle">
-                                    <span className="menu-style-icon">
-                                        <img src={deptMedicoIcon} alt="Departamento Médico" />
+                            {(isAdmin || isDepartamentoMedico) && (
+                                <Link
+                                    to={`/clubes/${clubeId}/staff/departamento/medico`}
+                                    className="modalidade-figura-btn icon-red"
+                                    title="Departamento Médico"
+                                >
+                                    <span className="modalidade-figura-circle">
+                                        <span className="menu-style-icon">
+                                            <img src={deptMedicoIcon} alt="Departamento Médico" />
+                                        </span>
                                     </span>
-                                </span>
-                                <span className="modalidade-figura-label">Dept. Médico</span>
-                            </Link>
+                                    <span className="modalidade-figura-label">Dept. Médico</span>
+                                </Link>
+                            )}
                         </div>
                     </section>
 
