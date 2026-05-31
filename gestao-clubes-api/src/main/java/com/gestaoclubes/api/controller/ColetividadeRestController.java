@@ -22,7 +22,9 @@ public class ColetividadeRestController {
 
     @GetMapping
     public List<Coletividade> listarTodos() {
-        exigirSuperAdmin();
+        if (!SecurityUtils.isSuperAdmin() && !SecurityUtils.isAdministradorEstrutura()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas administradores podem listar coletividades.");
+        }
         return coletividadeDAO.listarTodos();
     }
 
