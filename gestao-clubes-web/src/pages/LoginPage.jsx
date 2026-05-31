@@ -145,7 +145,7 @@ export default function LoginPage() {
         return () => {
             ignore = true;
         };
-    }, [open, registerBaseDataLoaded, registerBaseDataLoading]);
+    }, [open, registerBaseDataLoaded]); // registerBaseDataLoading is an internal guard, not an external trigger
 
     useEffect(() => {
         if (PERFIS_CLUBE.includes(rPerfil)) {
