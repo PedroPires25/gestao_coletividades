@@ -48,8 +48,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/me/**").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/clubes").hasRole("SUPER_ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/coletividades").hasRole("SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/clubes").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/api/coletividades").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR")
                         .requestMatchers(HttpMethod.GET, "/api/clubes/*/modalidades").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/coletividades/*/atividades").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/atividades").permitAll()

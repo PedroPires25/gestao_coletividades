@@ -3,9 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import {
     apiRegister,
-    getRegisterProfiles,
-    getClubes,
-    getColetividades,
+    getRegisterContext,
     getModalidadesDoClube,
     getAtividadesDaColetividade,
     getAtividades
@@ -90,6 +88,7 @@ export default function LoginPage() {
     const [atividades, setAtividades] = useState([]);
     const [registerBaseDataLoaded, setRegisterBaseDataLoaded] = useState(false);
     const [registerBaseDataLoading, setRegisterBaseDataLoading] = useState(false);
+    const [registerBaseDataError, setRegisterBaseDataError] = useState("");
 
     const [showRPass, setShowRPass] = useState(false);
     const [showRPass2, setShowRPass2] = useState(false);
@@ -115,24 +114,26 @@ export default function LoginPage() {
 
         async function loadBaseData() {
             setRegisterBaseDataLoading(true);
+            setRegisterBaseDataError("");
             try {
-                const [profilesData, clubesData, coletividadesData] = await Promise.all([
-                    getRegisterProfiles(),
-                    getClubes().catch(() => []),
-                    getColetividades().catch(() => []),
-                ]);
+                const context = await getRegisterContext();
 
                 if (ignore) return;
 
-                if (Array.isArray(profilesData) && profilesData.length > 0) {
-                    setProfiles(profilesData.filter((p) => p !== "SUPER_ADMIN"));
+                if (Array.isArray(context?.profiles) && context.profiles.length > 0) {
+                    setProfiles(context.profiles.filter((p) => p !== "SUPER_ADMIN"));
                 }
 
-                setClubes(Array.isArray(clubesData) ? clubesData : []);
-                setColetividades(Array.isArray(coletividadesData) ? coletividadesData : []);
+                setClubes(Array.isArray(context?.clubes) ? context.clubes : []);
+                setColetividades(Array.isArray(context?.coletividades) ? context.coletividades : []);
                 setRegisterBaseDataLoaded(true);
-            } catch {
-                // sem ação
+            } catch (e) {
+                if (!ignore) {
+                    setClubes([]);
+                    setColetividades([]);
+                    setRegisterBaseDataError(e.message || "Não foi possível carregar os dados do registo.");
+                    setRegisterBaseDataLoaded(true);
+                }
             } finally {
                 if (!ignore) {
                     setRegisterBaseDataLoading(false);
@@ -246,6 +247,9 @@ export default function LoginPage() {
 
     function closeRegisterModal() {
         setOpen(false);
+        setRegisterBaseDataLoaded(false);
+        setRegisterBaseDataLoading(false);
+        setRegisterBaseDataError("");
         setConsentGeral(false);
         setConsentDados(false);
         setTriedSubmit(false);
@@ -303,6 +307,11 @@ export default function LoginPage() {
             return;
         }
 
+        if (registerBaseDataError) {
+            setRErro(registerBaseDataError);
+            return;
+        }
+
         if (!registerPasswordState.isValid) {
             setRErro("A palavra-passe não cumpre todos os critérios de segurança.");
             return;
@@ -314,6 +323,10 @@ export default function LoginPage() {
         }
 
         if (PERFIS_CLUBE.includes(rPerfil)) {
+            if (clubes.length === 0) {
+                setRErro("Nenhum clube disponível.");
+                return;
+            }
             if (!rClubeId) {
                 setRErro("Seleciona um clube.");
                 return;
@@ -325,6 +338,10 @@ export default function LoginPage() {
         }
 
         if (PERFIS_COLETIVIDADE.includes(rPerfil)) {
+            if (coletividades.length === 0) {
+                setRErro("Nenhuma coletividade disponível.");
+                return;
+            }
             if (!rColetividadeId) {
                 setRErro("Seleciona uma coletividade.");
                 return;
@@ -336,8 +353,16 @@ export default function LoginPage() {
                 setRErro("Seleciona CLUBE ou COLETIVIDADE.");
                 return;
             }
+            if (rEstruturaTipo === "CLUBE" && clubes.length === 0) {
+                setRErro("Nenhum clube disponível.");
+                return;
+            }
             if (rEstruturaTipo === "CLUBE" && !rClubeId) {
                 setRErro("Seleciona um clube.");
+                return;
+            }
+            if (rEstruturaTipo === "COLETIVIDADE" && coletividades.length === 0) {
+                setRErro("Nenhuma coletividade disponível.");
                 return;
             }
             if (rEstruturaTipo === "COLETIVIDADE" && !rColetividadeId) {
@@ -508,6 +533,11 @@ export default function LoginPage() {
                         {rErro && <div className="alert error">{rErro}</div>}
                         {rOk && <div className="alert ok">{rOk}</div>}
                         {registerBaseDataLoading && <div className="hint">A carregar dados do registo...</div>}
+                        {!registerBaseDataLoading && registerBaseDataError && (
+                            <div className="hint" style={{ color: "#e05252" }}>
+                                {registerBaseDataError}
+                            </div>
+                        )}
 
                         <div className="row">
                             <input
@@ -549,8 +579,15 @@ export default function LoginPage() {
                                     value={rClubeId}
                                     onChange={(e) => setRClubeId(e.target.value)}
                                     style={fieldErrStyle(!rClubeId)}
+                                    disabled={registerBaseDataLoading || clubes.length === 0}
                                 >
-                                    <option value="">Selecionar clube</option>
+                                    <option value="">
+                                        {registerBaseDataLoading
+                                            ? "A carregar clubes..."
+                                            : clubes.length === 0
+                                                ? "Nenhum clube disponível"
+                                                : "Selecionar clube"}
+                                    </option>
                                     {clubes.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.nome}
@@ -586,8 +623,15 @@ export default function LoginPage() {
                                     value={rColetividadeId}
                                     onChange={(e) => setRColetividadeId(e.target.value)}
                                     style={fieldErrStyle(!rColetividadeId)}
+                                    disabled={registerBaseDataLoading || coletividades.length === 0}
                                 >
-                                    <option value="">Selecionar coletividade</option>
+                                    <option value="">
+                                        {registerBaseDataLoading
+                                            ? "A carregar coletividades..."
+                                            : coletividades.length === 0
+                                                ? "Nenhuma coletividade disponível"
+                                                : "Selecionar coletividade"}
+                                    </option>
                                     {coletividades.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.nome}
