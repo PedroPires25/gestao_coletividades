@@ -11,7 +11,7 @@ import EventCarousel from "../components/EventCarousel";
 export default function ClubeEventosPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, modalidadeId, role } = useAuth(); // modalidadeId = clube_modalidade.id
+    const { logout, modalidadeId, role, isTreinador } = useAuth(); // modalidadeId = clube_modalidade.id
     const isDeptMedico = role === "DEPARTAMENTO_MEDICO";
 
     const [clube, setClube] = useState(null);
@@ -58,9 +58,11 @@ export default function ClubeEventosPage() {
     }
 
     const menuItems = [
-        isDeptMedico
-            ? { label: "Módulo Clínico", onClick: () => navigate(`/clubes/${clubeId}/medico`) }
-            : { label: "Voltar ao Clube", onClick: () => navigate(`/clubes/${clubeId}`) },
+        isTreinador
+            ? { label: "Módulo de Treinador", onClick: () => navigate(`/clubes/${clubeId}/treinador`) }
+            : isDeptMedico
+                ? { label: "Módulo Clínico", onClick: () => navigate(`/clubes/${clubeId}/medico`) }
+                : { label: "Voltar ao Clube", onClick: () => navigate(`/clubes/${clubeId}`) },
         { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
     ];
 
@@ -104,6 +106,17 @@ export default function ClubeEventosPage() {
                                 onClick={() => navigate(`/clubes/${clubeId}/medico`)}
                             >
                                 ← Módulo Clínico
+                            </button>
+                        </div>
+                    )}
+                    {isTreinador && (
+                        <div className="actions">
+                            <button
+                                type="button"
+                                className="btn"
+                                onClick={() => navigate(`/clubes/${clubeId}/treinador`)}
+                            >
+                                ← Módulo de Treinador
                             </button>
                         </div>
                     )}
