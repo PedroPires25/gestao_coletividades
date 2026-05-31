@@ -31,7 +31,7 @@ const QUICK_ICONS = {
 export default function ClubeHomePage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin, canManageClube } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, isDepartamentoMedico, isTreinador, canManageClube } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [erro, setErro] = useState("");
@@ -77,8 +77,8 @@ export default function ClubeHomePage() {
             ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
             ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
-            { label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` },
-            { label: "Módulo Treinador", to: `/clubes/${clubeId}/treinador` },
+            ...(isAdmin || isDepartamentoMedico ? [{ label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` }] : []),
+            ...(isAdmin || isTreinador ? [{ label: "Módulo Treinador", to: `/clubes/${clubeId}/treinador` }] : []),
             { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
             ...(canManageClube(Number(clubeId)) ? [{ label: "Definições do Clube", to: `/clubes/${clubeId}/editar` }] : []),
             {
@@ -89,15 +89,15 @@ export default function ClubeHomePage() {
                 },
             },
         ],
-        [clubeId, isAdmin, isSuperAdmin, canManageClube, logout, navigate]
+        [clubeId, isAdmin, isSuperAdmin, isDepartamentoMedico, isTreinador, canManageClube, logout, navigate]
     );
 
     const quickLinks = [
         { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
         { label: "Atletas", to: `/clubes/${clubeId}/atletas` },
         { label: "Staff", to: `/clubes/${clubeId}/staff` },
-        { label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` },
-        { label: "Módulo Treinador", to: `/clubes/${clubeId}/treinador` },
+        ...(isAdmin || isDepartamentoMedico ? [{ label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` }] : []),
+        ...(isAdmin || isTreinador ? [{ label: "Módulo Treinador", to: `/clubes/${clubeId}/treinador` }] : []),
         { label: "Eventos", to: `/clubes/${clubeId}/eventos` },
         { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),

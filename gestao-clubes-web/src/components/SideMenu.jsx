@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useTheme } from "../theme/ThemeContext";
+import { useAuth } from "../auth/AuthContext"; // Importar o useAuth
 import UserAvatar from "./UserAvatar";
 
 import homeIcon from "../assets/home.svg";
@@ -33,6 +34,7 @@ const MENU_ICONS = {
     utilizadoresAutorizados: utilizadoresAutorizadosIcon,
     Eventos: eventosIcon,
     "Módulo Clínico": departamentoMedicoIcon,
+    "Módulo de Treinador": staffIcon, // Placeholder
     "Eventos do Clube": eventosIcon,
     "Voltar ao Clube": clubesIcon,
     "Voltar": homeIcon,
@@ -54,7 +56,6 @@ function getIcon(label) {
 export default function SideMenu({
                                      title = "Gestão de Coletividades",
                                      subtitle = "",
-                                     logoHref = "/menu",
                                      logoSrc = "/LOGO_GCDC04.png",
                                      items = [],
                                      showBurger = true,
@@ -62,6 +63,19 @@ export default function SideMenu({
                                  }) {
     const [open, setOpen] = useState(false);
     const { theme, setTheme } = useTheme();
+    const { isTreinador, isDepartamentoMedico, clubeId } = useAuth(); // Usar o hook de autenticação
+
+    // Determinar o link do logo com base no perfil
+    const logoHref = useMemo(() => {
+        if (isTreinador && clubeId) {
+            return `/clubes/${clubeId}/treinador`;
+        }
+        if (isDepartamentoMedico && clubeId) {
+            return `/clubes/${clubeId}/medico`;
+        }
+        return "/menu";
+    }, [isTreinador, isDepartamentoMedico, clubeId]);
+
 
     function closeMenu() {
         setOpen(false);
