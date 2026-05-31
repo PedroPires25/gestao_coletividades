@@ -16,11 +16,23 @@ export default function PlanoTreinoPage() {
     const [msg, setMsg] = useState("");
     const [erro, setErro] = useState("");
 
-    const menuItems = useMemo(() => [
-        { label: "Módulo de Treinador", to: `/clubes/${clubeId}/treinador` },
-        { label: "Eventos do Clube", to: `/clubes/${clubeId}/eventos` },
-        { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
-    ], [clubeId, logout, navigate]);
+    const menuItems = useMemo(
+        () => [
+            { label: "Módulo de Treinador", to: `/clubes/${clubeId}/treinador` },
+            { label: "Treinos", to: `/clubes/${clubeId}/treinador/sessoes` },
+            { label: "Plano de Treino", to: `/clubes/${clubeId}/treinador/planos` },
+            { label: "Estatísticas", to: `/clubes/${clubeId}/treinador/assiduidade` },
+            { label: "Eventos do Clube", to: `/clubes/${clubeId}/eventos` },
+            {
+                label: "Logout",
+                onClick: () => {
+                    logout();
+                    navigate("/login", { replace: true });
+                },
+            },
+        ],
+        [clubeId, logout, navigate]
+    );
 
     useEffect(() => {
         async function carregarAtletas() {
@@ -63,7 +75,7 @@ export default function PlanoTreinoPage() {
 
     return (
         <>
-            <SideMenu title="Gestão de Clubes" subtitle="Planos de Treino" logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
+            <SideMenu title="Gestão de Clubes" subtitle="Plano de Treino" logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
 
             <div className="container" style={{ paddingTop: 24 }}>
                 <div className="page-title page-title-with-icon">
