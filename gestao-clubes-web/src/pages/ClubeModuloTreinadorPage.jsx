@@ -43,7 +43,7 @@ const MODULOS = [
         descricao: "Convocação de atletas para jogos e eventos.",
         icon: convocatoriasIcon,
         colorClass: "icon-red",
-        path: (clubeId) => `/clubes/${clubeId}/eventos`,
+        path: (clubeId) => `/clubes/${clubeId}/treinador/convocatorias`,
     },
 ];
 
