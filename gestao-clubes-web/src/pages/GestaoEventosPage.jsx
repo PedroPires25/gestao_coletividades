@@ -187,6 +187,7 @@ export default function GestaoEventosPage() {
         }
     }, []);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { carregarEventos(); }, [carregarEventos]);
 
     // Load accessible structures on mount
@@ -243,6 +244,7 @@ export default function GestaoEventosPage() {
 
     useEffect(() => {
         if (!showForm && !editingId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setForm(criarFormularioBase(form.tipo));
         }
     }, [
@@ -269,6 +271,7 @@ export default function GestaoEventosPage() {
                 })
                 .catch(() => setModalidades([]));
         } else {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setModalidades([]);
         }
     }, [form.clubeId, form.tipo, canChooseEstruturaLivremente, currentModalidadeId]);
@@ -280,6 +283,7 @@ export default function GestaoEventosPage() {
                 .then(d => setAtletas(Array.isArray(d) ? d : []))
                 .catch(() => setAtletas([]));
         } else {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setAtletas([]);
         }
     }, [form.clubeModalidadeId, form.clubeId, form.tipo]);
@@ -297,6 +301,7 @@ export default function GestaoEventosPage() {
                 })
                 .catch(() => setAtividades([]));
         } else {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setAtividades([]);
         }
     }, [form.coletividadeId, form.tipo, canChooseEstruturaLivremente, currentAtividadeId]);
@@ -308,6 +313,7 @@ export default function GestaoEventosPage() {
                 .then(d => setUtentes(Array.isArray(d) ? d : []))
                 .catch(() => setUtentes([]));
         } else {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setUtentes([]);
         }
     }, [form.coletividadeAtividadeId, form.coletividadeId, form.tipo]);
@@ -519,6 +525,7 @@ export default function GestaoEventosPage() {
                                 <div style={{ gridColumn: "1 / -1" }}>
                                     <label>📍 Localização no Mapa</label>
                                     <MapPicker
+                                        searchValue={form.local}
                                         latitude={form.latitude}
                                         longitude={form.longitude}
                                         onLocationChange={(lat, lng, address) => {

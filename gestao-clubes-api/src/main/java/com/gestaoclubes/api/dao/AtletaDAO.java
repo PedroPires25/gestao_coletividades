@@ -5,9 +5,11 @@ import com.gestaoclubes.api.util.ConexoBD;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class AtletaDAO {
 
@@ -154,6 +156,48 @@ public class AtletaDAO {
         }
 
         return lista;
+    }
+
+    public boolean todosPertencemClubeModalidade(int clubeModalidadeId, List<Integer> atletaIds) {
+        if (atletaIds == null || atletaIds.isEmpty()) return true;
+
+        Set<Integer> idsUnicos = new HashSet<>(atletaIds);
+        if (idsUnicos.contains(null)) return false;
+
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < idsUnicos.size(); i++) {
+            if (i > 0) placeholders.append(",");
+            placeholders.append("?");
+        }
+
+        String sql = """
+            SELECT COUNT(DISTINCT a.id) AS total
+            FROM atleta a
+            JOIN atleta_clube_modalidade acm ON acm.atleta_id = a.id
+            WHERE acm.clube_modalidade_id = ?
+              AND acm.ativo = 1
+              AND a.id IN (%s)
+        """.formatted(placeholders);
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            int idx = 1;
+            ps.setInt(idx++, clubeModalidadeId);
+            for (Integer atletaId : idsUnicos) {
+                ps.setInt(idx++, atletaId);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("total") == idsUnicos.size();
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 
     public Integer inserirEDevolverId(Atleta a) {
