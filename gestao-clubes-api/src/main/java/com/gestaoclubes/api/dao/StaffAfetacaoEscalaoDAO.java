@@ -4,9 +4,50 @@ import com.gestaoclubes.api.util.ConexoBD;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class StaffAfetacaoEscalaoDAO {
+
+    /**
+     * Returns the escalões assigned to the trainer (identified by {@code utilizadorId})
+     * in the given clube + clube_modalidade, for active afetações.
+     */
+    public List<Map<String, Object>> listarEscaloesPorTreinador(int utilizadorId, int clubeId, int clubeModalidadeId) {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        String sql = """
+            SELECT DISTINCT e.id, e.nome
+            FROM staff s
+            JOIN staff_afetacao sa ON sa.staff_id = s.id
+            JOIN staff_afetacao_escalao sae ON sae.staff_afetacao_id = sa.id
+            JOIN escalao e ON e.id = sae.escalao_id
+            WHERE s.utilizador_id = ?
+              AND sa.clube_id = ?
+              AND sa.clube_modalidade_id = ?
+              AND (sa.data_fim IS NULL OR sa.data_fim >= CURDATE())
+            ORDER BY e.nome
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, utilizadorId);
+            ps.setInt(2, clubeId);
+            ps.setInt(3, clubeModalidadeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    java.util.LinkedHashMap<String, Object> row = new java.util.LinkedHashMap<>();
+                    row.put("id", rs.getInt("id"));
+                    row.put("nome", rs.getString("nome"));
+                    lista.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return lista;
+    }
 
     public List<Integer> listarIdsPorAfetacao(int afetacaoId) {
         List<Integer> ids = new ArrayList<>();
