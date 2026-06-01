@@ -47,8 +47,13 @@ export async function getAtletasTreinador(clubeId) {
     return authFetch(`/clubes/${clubeId}/treinador/atletas`);
 }
 
-export async function getAtletasConvocatoriasTreinador(clubeId) {
-    return authFetch(`/clubes/${clubeId}/treinador/convocatorias/atletas`);
+export async function getAtletasConvocatoriasTreinador(clubeId, escalaoId) {
+    const params = escalaoId != null ? `?escalaoId=${escalaoId}` : "";
+    return authFetch(`/clubes/${clubeId}/treinador/convocatorias/atletas${params}`);
+}
+
+export async function getEscaloesTreinador(clubeId) {
+    return authFetch(`/clubes/${clubeId}/treinador/escaloes`);
 }
 
 export async function getConvocatoriasTreinador(clubeId) {
