@@ -322,8 +322,8 @@ public class EventoDAO {
         String sql = """
             INSERT INTO evento (titulo, descricao, data_hora, data_hora_fim, local, observacoes, tipo,
                                 clube_modalidade_id, coletividade_atividade_id, criado_por,
-                                latitude, longitude)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                latitude, longitude, escalao_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = ConexoBD.getConnection();
@@ -346,6 +346,8 @@ public class EventoDAO {
             else ps.setNull(11, Types.DOUBLE);
             if (evento.getLongitude() != null) ps.setDouble(12, evento.getLongitude());
             else ps.setNull(12, Types.DOUBLE);
+            if (evento.getEscalaoId() != null) ps.setInt(13, evento.getEscalaoId());
+            else ps.setNull(13, Types.INTEGER);
 
             ps.executeUpdate();
 
@@ -428,6 +430,7 @@ public class EventoDAO {
         tryPut(row, rs, "coletividadeNome", "coletividade_nome");
         tryPut(row, rs, "atividadeNome", "atividade_nome");
         tryPut(row, rs, "totalConvocados", "total_convocados");
+        tryPut(row, rs, "escalaoId", "escalao_id");
         return row;
     }
 
