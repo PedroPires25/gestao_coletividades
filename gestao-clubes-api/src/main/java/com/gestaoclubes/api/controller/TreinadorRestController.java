@@ -9,8 +9,10 @@ import com.gestaoclubes.api.dao.StaffAfetacaoEscalaoDAO;
 import com.gestaoclubes.api.model.ClubeModalidade;
 import com.gestaoclubes.api.model.Evento;
 import com.gestaoclubes.api.security.SecurityUtils;
+import com.gestaoclubes.api.service.ConvocatoriaNotificacaoService;
 import com.gestaoclubes.api.service.EmailService;
 import com.gestaoclubes.api.service.TreinadorService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +36,8 @@ public class TreinadorRestController {
 
     private final TreinadorService treinadorService;
     private final EmailService emailService;
+    @Autowired
+    private ConvocatoriaNotificacaoService notificacaoService;
     private final AtletaDAO atletaDAO = new AtletaDAO();
     private final EventoDAO eventoDAO = new EventoDAO();
     private final EventoAtletaDAO eventoAtletaDAO = new EventoAtletaDAO();
@@ -231,6 +235,10 @@ public class TreinadorRestController {
 
         if (!atletasConvocados.isEmpty()) {
             eventoAtletaDAO.inserirMultiplos(eventoId, atletasConvocados);
+            Map<String, Object> eventoGuardado = eventoDAO.buscarPorId(eventoId);
+            if (eventoGuardado != null) {
+                notificacaoService.notificarConvocados(eventoId, eventoGuardado, "MODALIDADE");
+            }
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
@@ -318,6 +326,10 @@ public class TreinadorRestController {
         eventoAtletaDAO.removerTodos(eventoId);
         if (!atletasConvocados.isEmpty()) {
             eventoAtletaDAO.inserirMultiplos(eventoId, atletasConvocados);
+            Map<String, Object> eventoGuardado = eventoDAO.buscarPorId(eventoId);
+            if (eventoGuardado != null) {
+                notificacaoService.notificarConvocados(eventoId, eventoGuardado, "MODALIDADE");
+            }
         }
 
         return ResponseEntity.ok(Map.of("mensagem", "Evento atualizado com sucesso."));
