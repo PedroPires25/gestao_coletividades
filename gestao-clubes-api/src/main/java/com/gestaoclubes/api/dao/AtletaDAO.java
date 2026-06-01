@@ -158,6 +158,57 @@ public class AtletaDAO {
         return lista;
     }
 
+    public List<Map<String, Object>> listarAtivosPorClube(int clubeId) {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        String sql = """
+            SELECT a.id,
+                   COALESCE(u.nome, a.nome) AS nome,
+                   a.data_nascimento,
+                   a.email,
+                   a.telefone,
+                   a.morada,
+                   a.remuneracao,
+                   a.clube_atual_id,
+                   COALESCE(u.logo_path, a.foto_path) AS foto_path,
+                   ea.id AS estado_id,
+                   ea.descricao AS estado,
+                   e.id AS escalao_id,
+                   e.nome AS escalao,
+                   cm.id AS clube_modalidade_id,
+                   cm.epoca,
+                   acm.data_inscricao,
+                   acm.data_fim,
+                   acm.ativo
+            FROM atleta a
+            LEFT JOIN utilizadores u ON u.id = a.utilizador_id
+            JOIN atleta_clube_modalidade acm ON acm.atleta_id = a.id
+            JOIN clube_modalidade cm ON cm.id = acm.clube_modalidade_id
+            JOIN estado_atleta ea ON ea.id = a.estado_id
+            JOIN escalao e ON e.id = a.escalao_id
+            WHERE cm.clube_id = ?
+              AND cm.ativo = 1
+              AND acm.ativo = 1
+            ORDER BY nome
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, clubeId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapAthleteRow(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return lista;
+    }
+
     /**
      * Lists athletes in a clube_modalidade filtered to those belonging to one of the given escalão IDs.
      */
