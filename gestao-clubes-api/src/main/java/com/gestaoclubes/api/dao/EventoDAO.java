@@ -273,6 +273,115 @@ public class EventoDAO {
         return lista;
     }
 
+    public List<Map<String, Object>> listarModalidadePorClube(int clubeId) {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        String sql = """
+            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
+                   e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
+                    e.latitude, e.longitude, e.escalao_id,
+                    cm.clube_id,
+                    c.nome AS clube_nome,
+                    m.nome AS modalidade_nome,
+                    ca.coletividade_id,
+                    col.nome AS coletividade_nome,
+                    a.nome AS atividade_nome,
+                    (SELECT COUNT(*) FROM evento_atleta ea WHERE ea.evento_id = e.id) +
+                    (SELECT COUNT(*) FROM evento_inscrito ei WHERE ei.evento_id = e.id) AS total_convocados
+            FROM evento e
+            JOIN clube_modalidade cm ON cm.id = e.clube_modalidade_id
+            JOIN clube c ON c.id = cm.clube_id
+            LEFT JOIN modalidade m ON m.id = cm.modalidade_id
+            LEFT JOIN coletividade_atividade ca ON ca.id = e.coletividade_atividade_id
+            LEFT JOIN coletividade col ON col.id = ca.coletividade_id
+            LEFT JOIN atividade a ON a.id = ca.atividade_id
+            WHERE cm.clube_id = ?
+              AND e.tipo = 'MODALIDADE'
+            ORDER BY e.data_hora DESC
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, clubeId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return lista;
+    }
+
+    public List<Map<String, Object>> listarPorClubeModalidadeEEscaloes(
+            int clubeId,
+            int clubeModalidadeId,
+            List<Integer> escalaoIds,
+            int criadoPor
+    ) {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        String filtroEscaloes = "";
+        if (escalaoIds != null && !escalaoIds.isEmpty()) {
+            String placeholders = escalaoIds.stream()
+                    .map(i -> "?")
+                    .collect(java.util.stream.Collectors.joining(","));
+            filtroEscaloes = " OR e.escalao_id IN (" + placeholders + ")";
+        }
+
+        String sql = """
+            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
+                   e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
+                    e.latitude, e.longitude, e.escalao_id,
+                    cm.clube_id,
+                    c.nome AS clube_nome,
+                    m.nome AS modalidade_nome,
+                    ca.coletividade_id,
+                    col.nome AS coletividade_nome,
+                    a.nome AS atividade_nome,
+                    (SELECT COUNT(*) FROM evento_atleta ea WHERE ea.evento_id = e.id) +
+                    (SELECT COUNT(*) FROM evento_inscrito ei WHERE ei.evento_id = e.id) AS total_convocados
+            FROM evento e
+            JOIN clube_modalidade cm ON cm.id = e.clube_modalidade_id
+            JOIN clube c ON c.id = cm.clube_id
+            LEFT JOIN modalidade m ON m.id = cm.modalidade_id
+            LEFT JOIN coletividade_atividade ca ON ca.id = e.coletividade_atividade_id
+            LEFT JOIN coletividade col ON col.id = ca.coletividade_id
+            LEFT JOIN atividade a ON a.id = ca.atividade_id
+            WHERE cm.clube_id = ?
+              AND e.clube_modalidade_id = ?
+              AND e.tipo = 'MODALIDADE'
+              AND ((e.escalao_id IS NULL AND e.criado_por = ?)%s)
+            ORDER BY e.data_hora DESC
+        """.formatted(filtroEscaloes);
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            int idx = 1;
+            ps.setInt(idx++, clubeId);
+            ps.setInt(idx++, clubeModalidadeId);
+            ps.setInt(idx++, criadoPor);
+            if (escalaoIds != null) {
+                for (Integer escalaoId : escalaoIds) {
+                    ps.setInt(idx++, escalaoId);
+                }
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return lista;
+    }
+
     public List<Map<String, Object>> listarPorColetividadeAtividade(int coletividadeAtividadeId) {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
@@ -366,7 +475,7 @@ public class EventoDAO {
         String sql = """
             UPDATE evento
             SET titulo = ?, descricao = ?, data_hora = ?, data_hora_fim = ?, local = ?, observacoes = ?,
-                latitude = ?, longitude = ?
+                clube_modalidade_id = ?, escalao_id = ?, latitude = ?, longitude = ?
             WHERE id = ?
         """;
 
@@ -380,11 +489,15 @@ public class EventoDAO {
             else ps.setNull(4, Types.TIMESTAMP);
             ps.setString(5, evento.getLocal());
             ps.setString(6, evento.getObservacoes());
-            if (evento.getLatitude() != null) ps.setDouble(7, evento.getLatitude());
-            else ps.setNull(7, Types.DOUBLE);
-            if (evento.getLongitude() != null) ps.setDouble(8, evento.getLongitude());
-            else ps.setNull(8, Types.DOUBLE);
-            ps.setInt(9, id);
+            if (evento.getClubeModalidadeId() != null) ps.setInt(7, evento.getClubeModalidadeId());
+            else ps.setNull(7, Types.INTEGER);
+            if (evento.getEscalaoId() != null) ps.setInt(8, evento.getEscalaoId());
+            else ps.setNull(8, Types.INTEGER);
+            if (evento.getLatitude() != null) ps.setDouble(9, evento.getLatitude());
+            else ps.setNull(9, Types.DOUBLE);
+            if (evento.getLongitude() != null) ps.setDouble(10, evento.getLongitude());
+            else ps.setNull(10, Types.DOUBLE);
+            ps.setInt(11, id);
 
             return ps.executeUpdate() > 0;
 
