@@ -182,6 +182,97 @@ public class EventoDAO {
         return lista;
     }
 
+    public List<Map<String, Object>> listarPorClubeModalidadeECriador(int clubeId, int clubeModalidadeId, int criadoPor) {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        String sql = """
+            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
+                   e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
+                    e.latitude, e.longitude,
+                    cm.clube_id,
+                    c.nome AS clube_nome,
+                    m.nome AS modalidade_nome,
+                    ca.coletividade_id,
+                    col.nome AS coletividade_nome,
+                    a.nome AS atividade_nome,
+                    (SELECT COUNT(*) FROM evento_atleta ea WHERE ea.evento_id = e.id) +
+                    (SELECT COUNT(*) FROM evento_inscrito ei WHERE ei.evento_id = e.id) AS total_convocados
+            FROM evento e
+            JOIN clube_modalidade cm ON cm.id = e.clube_modalidade_id
+            JOIN clube c ON c.id = cm.clube_id
+            LEFT JOIN modalidade m ON m.id = cm.modalidade_id
+            LEFT JOIN coletividade_atividade ca ON ca.id = e.coletividade_atividade_id
+            LEFT JOIN coletividade col ON col.id = ca.coletividade_id
+            LEFT JOIN atividade a ON a.id = ca.atividade_id
+            WHERE cm.clube_id = ?
+              AND e.clube_modalidade_id = ?
+              AND e.criado_por = ?
+            ORDER BY e.data_hora DESC
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, clubeId);
+            ps.setInt(2, clubeModalidadeId);
+            ps.setInt(3, criadoPor);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return lista;
+    }
+
+    /** All events for a given clube + modalidade, regardless of who created them. Used by the trainer's Convocatórias view. */
+    public List<Map<String, Object>> listarPorClubeEModalidade(int clubeId, int clubeModalidadeId) {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        String sql = """
+            SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
+                   e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
+                    e.latitude, e.longitude,
+                    cm.clube_id,
+                    c.nome AS clube_nome,
+                    m.nome AS modalidade_nome,
+                    ca.coletividade_id,
+                    col.nome AS coletividade_nome,
+                    a.nome AS atividade_nome,
+                    (SELECT COUNT(*) FROM evento_atleta ea WHERE ea.evento_id = e.id) +
+                    (SELECT COUNT(*) FROM evento_inscrito ei WHERE ei.evento_id = e.id) AS total_convocados
+            FROM evento e
+            JOIN clube_modalidade cm ON cm.id = e.clube_modalidade_id
+            JOIN clube c ON c.id = cm.clube_id
+            LEFT JOIN modalidade m ON m.id = cm.modalidade_id
+            LEFT JOIN coletividade_atividade ca ON ca.id = e.coletividade_atividade_id
+            LEFT JOIN coletividade col ON col.id = ca.coletividade_id
+            LEFT JOIN atividade a ON a.id = ca.atividade_id
+            WHERE cm.clube_id = ?
+              AND e.clube_modalidade_id = ?
+            ORDER BY e.data_hora DESC
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, clubeId);
+            ps.setInt(2, clubeModalidadeId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return lista;
+    }
+
     public List<Map<String, Object>> listarPorColetividadeAtividade(int coletividadeAtividadeId) {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
