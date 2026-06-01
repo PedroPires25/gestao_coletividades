@@ -47,6 +47,32 @@ export async function getAtletasTreinador(clubeId) {
     return authFetch(`/clubes/${clubeId}/treinador/atletas`);
 }
 
+export async function getAtletasConvocatoriasTreinador(clubeId) {
+    return authFetch(`/clubes/${clubeId}/treinador/convocatorias/atletas`);
+}
+
+export async function getConvocatoriasTreinador(clubeId) {
+    return authFetch(`/clubes/${clubeId}/treinador/convocatorias`);
+}
+
+export async function getConvocadosConvocatoriaTreinador(clubeId, eventoId) {
+    return authFetch(`/clubes/${clubeId}/treinador/convocatorias/${eventoId}/convocados`);
+}
+
+export async function createConvocatoriaTreinador(clubeId, payload) {
+    return authFetch(`/clubes/${clubeId}/treinador/convocatorias`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function updateConvocatoriaTreinador(clubeId, eventoId, payload) {
+    return authFetch(`/clubes/${clubeId}/treinador/convocatorias/${eventoId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+    });
+}
+
 // =======================
 // SESSÕES DE TREINO
 // =======================

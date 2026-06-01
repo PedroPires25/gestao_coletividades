@@ -21,7 +21,7 @@ export default function AssiduidadePage() {
             { label: "Treinos", to: `/clubes/${clubeId}/treinador/sessoes` },
             { label: "Plano de Treino", to: `/clubes/${clubeId}/treinador/planos` },
             { label: "Estatísticas", to: `/clubes/${clubeId}/treinador/assiduidade` },
-            { label: "Convocatórias", to: `/clubes/${clubeId}/eventos` },
+            { label: "Convocatórias", to: `/clubes/${clubeId}/treinador/convocatorias` },
             { label: "Eventos do Clube", to: `/clubes/${clubeId}/eventos` },
             {
                 label: "Logout",
