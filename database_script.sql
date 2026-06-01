@@ -1119,5 +1119,10 @@ CREATE TABLE IF NOT EXISTS notificacao (
 
 
 -- Add escalao_id to evento for trainer permission filtering
-ALTER TABLE evento ADD COLUMN IF NOT EXISTS escalao_id INT NULL,
-    ADD CONSTRAINT fk_evento_escalao FOREIGN KEY (escalao_id) REFERENCES escalao(id);
+
+ALTER TABLE evento
+ADD COLUMN escalao_id INT NULL;
+ALTER TABLE evento
+ADD CONSTRAINT fk_evento_escalao
+FOREIGN KEY (escalao_id)
+REFERENCES escalao(id);
