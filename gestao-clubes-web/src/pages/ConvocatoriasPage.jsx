@@ -10,6 +10,7 @@ import {
     getAtletasConvocatoriasTreinador,
     getConvocatoriasTreinador,
     getConvocadosConvocatoriaTreinador,
+    getEscaloesTreinador,
     updateConvocatoriaTreinador,
 } from "../services/treinador";
 
@@ -50,6 +51,7 @@ function subtipoLabel(value) {
 const EMPTY_FORM = {
     titulo: "",
     subtipo: "CONVOCATORIA",
+    escalaoId: "",
     data: "",
     horaInicio: "",
     horaFim: "",
@@ -63,10 +65,11 @@ const EMPTY_FORM = {
 export default function ConvocatoriasPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, modalidadeId } = useAuth();
+    const { logout } = useAuth();
 
     const [eventos, setEventos] = useState([]);
     const [atletas, setAtletas] = useState([]);
+    const [escaloes, setEscaloes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState("");
     const [saving, setSaving] = useState(false);
@@ -99,12 +102,21 @@ export default function ConvocatoriasPage() {
         setErro("");
         setLoading(true);
         try {
-            const [eventosData, atletasData] = await Promise.all([
+            const [eventosData, escaloesData] = await Promise.all([
                 getConvocatoriasTreinador(clubeId),
-                getAtletasConvocatoriasTreinador(clubeId),
+                getEscaloesTreinador(clubeId),
             ]);
             setEventos(Array.isArray(eventosData) ? eventosData : []);
-            setAtletas(Array.isArray(atletasData) ? atletasData : []);
+            const escaloesLista = Array.isArray(escaloesData) ? escaloesData : [];
+            setEscaloes(escaloesLista);
+            // Default athletes: load for first escalão if available, else no filter
+            if (escaloesLista.length > 0) {
+                const atletasData = await getAtletasConvocatoriasTreinador(clubeId, escaloesLista[0].id);
+                setAtletas(Array.isArray(atletasData) ? atletasData : []);
+            } else {
+                const atletasData = await getAtletasConvocatoriasTreinador(clubeId, null);
+                setAtletas(Array.isArray(atletasData) ? atletasData : []);
+            }
         } catch (e) {
             setErro(e.message || "Erro ao carregar convocatórias.");
         } finally {
@@ -138,9 +150,16 @@ export default function ConvocatoriasPage() {
         try {
             const conv = await getConvocadosConvocatoriaTreinador(clubeId, evento.id);
             const ids = (Array.isArray(conv) ? conv : []).map((a) => a.id);
+            const escalaoId = evento.escalaoId ?? "";
+            // Load athletes for the event's escalão (or all if none)
+            if (escalaoId) {
+                const atletasData = await getAtletasConvocatoriasTreinador(clubeId, escalaoId);
+                setAtletas(Array.isArray(atletasData) ? atletasData : []);
+            }
             setForm({
                 titulo: evento.titulo || "",
                 subtipo: evento.subtipo || "CONVOCATORIA",
+                escalaoId: escalaoId,
                 data: toFormDate(evento.dataHora),
                 horaInicio: toFormTime(evento.dataHora),
                 horaFim: toFormTime(evento.dataHoraFim),
@@ -175,6 +194,7 @@ export default function ConvocatoriasPage() {
             const payload = {
                 titulo: form.titulo.trim(),
                 subtipo: form.subtipo,
+                escalaoId: form.escalaoId ? Number(form.escalaoId) : null,
                 data: form.data,
                 horaInicio: form.horaInicio,
                 horaFim: form.horaFim || null,
@@ -247,8 +267,29 @@ export default function ConvocatoriasPage() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Escalão/Equipa</label>
-                                    <input className="input" value={modalidadeId ? `Equipa ${modalidadeId}` : "Equipa do treinador"} disabled />
+                                    <label>Escalão *</label>
+                                    <select
+                                        className="input"
+                                        value={form.escalaoId}
+                                        onChange={async (e) => {
+                                            const novoEscalaoId = e.target.value;
+                                            setForm((p) => ({ ...p, escalaoId: novoEscalaoId, atletasConvocados: [] }));
+                                            if (novoEscalaoId) {
+                                                try {
+                                                    const data = await getAtletasConvocatoriasTreinador(clubeId, novoEscalaoId);
+                                                    setAtletas(Array.isArray(data) ? data : []);
+                                                } catch {
+                                                    setAtletas([]);
+                                                }
+                                            }
+                                        }}
+                                        required
+                                    >
+                                        <option value="">-- Selecionar escalão --</option>
+                                        {escaloes.map((esc) => (
+                                            <option key={esc.id} value={esc.id}>{esc.nome}</option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div className="form-group">
