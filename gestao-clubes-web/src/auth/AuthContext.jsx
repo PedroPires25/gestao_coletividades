@@ -134,6 +134,7 @@ export function AuthProvider({ children }) {
 
         const isDepartamentoMedico = role === "DEPARTAMENTO_MEDICO";
         const isTreinador = role === "TREINADOR_PRINCIPAL";
+        const isSecretario = role === "SECRETARIO";
 
         return {
             session,
@@ -148,6 +149,7 @@ export function AuthProvider({ children }) {
             isScopedAdmin,
             isDepartamentoMedico,
             isTreinador,
+            isSecretario,
             privilegiosAtivos: session?.user?.privilegiosAtivos ?? false,
             estadoRegisto: session?.user?.estadoRegisto ?? null,
             clubeId: session?.user?.clubeId ?? null,
