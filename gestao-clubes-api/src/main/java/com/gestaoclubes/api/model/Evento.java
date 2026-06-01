@@ -75,4 +75,6 @@ public class Evento {
     public void setLatitude(Double latitude) { this.latitude = latitude; }
     public Double getLongitude() { return longitude; }
     public void setLongitude(Double longitude) { this.longitude = longitude; }
+    public Integer getEscalaoId() { return escalaoId; }
+    public void setEscalaoId(Integer escalaoId) { this.escalaoId = escalaoId; }
 }

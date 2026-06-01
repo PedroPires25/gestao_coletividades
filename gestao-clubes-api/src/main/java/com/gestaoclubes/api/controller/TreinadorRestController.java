@@ -2,8 +2,10 @@ package com.gestaoclubes.api.controller;
 
 import com.gestaoclubes.api.dao.AtletaDAO;
 import com.gestaoclubes.api.dao.ClubeModalidadeDAO;
+import com.gestaoclubes.api.dao.EscalaoDAO;
 import com.gestaoclubes.api.dao.EventoAtletaDAO;
 import com.gestaoclubes.api.dao.EventoDAO;
+import com.gestaoclubes.api.dao.StaffAfetacaoEscalaoDAO;
 import com.gestaoclubes.api.model.ClubeModalidade;
 import com.gestaoclubes.api.model.Evento;
 import com.gestaoclubes.api.security.SecurityUtils;
@@ -36,6 +38,8 @@ public class TreinadorRestController {
     private final EventoDAO eventoDAO = new EventoDAO();
     private final EventoAtletaDAO eventoAtletaDAO = new EventoAtletaDAO();
     private final ClubeModalidadeDAO clubeModalidadeDAO = new ClubeModalidadeDAO();
+    private final EscalaoDAO escalaoDAO = new EscalaoDAO();
+    private final StaffAfetacaoEscalaoDAO staffAfetacaoEscalaoDAO = new StaffAfetacaoEscalaoDAO();
 
     public TreinadorRestController(EmailService emailService) {
         this.treinadorService = new TreinadorService();
@@ -52,12 +56,59 @@ public class TreinadorRestController {
         return atletaDAO.listarPorClube(clubeId);
     }
 
+    /**
+     * Returns athletes eligible to be convoked for the trainer's modality.
+     * If escalaoId is provided, returns athletes from that escalão and the one immediately below.
+     * If escalaoId is absent, returns all athletes of the modality (fallback).
+     */
     @GetMapping("/clubes/{clubeId}/treinador/convocatorias/atletas")
-    public List<Map<String, Object>> listarAtletasConvocatorias(@PathVariable int clubeId) {
+    public List<Map<String, Object>> listarAtletasConvocatorias(
+            @PathVariable int clubeId,
+            @RequestParam(required = false) Integer escalaoId
+    ) {
         exigirTreinadorNoClube(clubeId);
         Integer clubeModalidadeId = exigirModalidadeTreinadorNoClube(clubeId);
-        return atletaDAO.listarPorClubeModalidade(clubeId, clubeModalidadeId);
+
+        if (escalaoId == null) {
+            return atletaDAO.listarPorClubeModalidade(clubeId, clubeModalidadeId);
+        }
+
+        List<Integer> escalaoIds = resolverEscaloesPermitidos(clubeId, clubeModalidadeId, escalaoId);
+        return atletaDAO.listarPorClubeModalidadeEEscaloes(clubeId, clubeModalidadeId, escalaoIds);
     }
+
+    // ==========================================
+    // ESCALÕES DO TREINADOR
+    // ==========================================
+
+    /**
+     * Returns the escalões assigned to the authenticated trainer in the given clube,
+     * sorted by the canonical hierarchy (youngest → oldest).
+     */
+    @GetMapping("/clubes/{clubeId}/treinador/escaloes")
+    public List<Map<String, Object>> listarEscaloesTreinador(@PathVariable int clubeId) {
+        exigirTreinadorNoClube(clubeId);
+        Integer clubeModalidadeId = exigirModalidadeTreinadorNoClube(clubeId);
+        int utilizadorId = SecurityUtils.currentUserId();
+
+        List<Map<String, Object>> escaloes = staffAfetacaoEscalaoDAO
+                .listarEscaloesPorTreinador(utilizadorId, clubeId, clubeModalidadeId);
+
+        // Sort by the canonical hierarchy
+        List<String> ordem = EscalaoDAO.ESCALAO_ORDEM;
+        escaloes.sort((a, b) -> {
+            int posA = ordem.indexOf(((String) a.get("nome")).toLowerCase());
+            int posB = ordem.indexOf(((String) b.get("nome")).toLowerCase());
+            if (posA < 0) posA = Integer.MAX_VALUE;
+            if (posB < 0) posB = Integer.MAX_VALUE;
+            return Integer.compare(posA, posB);
+        });
+        return escaloes;
+    }
+
+    // ==========================================
+    // CONVOCATÓRIAS
+    // ==========================================
 
     @GetMapping("/clubes/{clubeId}/treinador/convocatorias")
     public List<Map<String, Object>> listarConvocatorias(@PathVariable int clubeId) {
@@ -76,7 +127,6 @@ public class TreinadorRestController {
     ) {
         exigirTreinadorNoClube(clubeId);
         Integer clubeModalidadeId = exigirModalidadeTreinadorNoClube(clubeId);
-        // Allow any trainer of this modalidade to view convocados (edit still requires ownership)
         Map<String, Object> evento = eventoDAO.buscarPorId(eventoId);
         if (evento == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado.");
@@ -100,6 +150,10 @@ public class TreinadorRestController {
         int treinadorId = exigirTreinadorNoClube(clubeId);
         Integer clubeModalidadeId = exigirModalidadeTreinadorNoClube(clubeId);
 
+        // Validate escalão
+        Integer escalaoId = payload.get("escalaoId") != null ? ((Number) payload.get("escalaoId")).intValue() : null;
+        List<Integer> escalaoIds = validarEEscaloes(clubeId, clubeModalidadeId, escalaoId);
+
         String titulo = valorTexto(payload.get("titulo"));
         String local = valorTexto(payload.get("local"));
         String descricao = valorTexto(payload.get("descricao"));
@@ -115,8 +169,15 @@ public class TreinadorRestController {
         }
 
         List<Integer> atletasConvocados = extrairIds(payload.get("atletasConvocados"));
-        if (!atletaDAO.todosPertencemClubeModalidade(clubeModalidadeId, atletasConvocados)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Existem atletas fora da equipa/modalidade do treinador.");
+        if (!atletasConvocados.isEmpty()) {
+            if (escalaoId != null) {
+                if (!atletaDAO.todosPertencemClubeModalidadeEEscaloes(clubeModalidadeId, escalaoIds, atletasConvocados)) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                            "Existem atletas fora do escalão permitido para este evento.");
+                }
+            } else if (!atletaDAO.todosPertencemClubeModalidade(clubeModalidadeId, atletasConvocados)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Existem atletas fora da equipa/modalidade do treinador.");
+            }
         }
 
         Evento evento = new Evento(
@@ -130,6 +191,7 @@ public class TreinadorRestController {
                 null,
                 treinadorId
         );
+        evento.setEscalaoId(escalaoId);
         if (fim != null) evento.setDataHoraFim(Timestamp.valueOf(fim));
         evento.setLatitude(extrairDouble(payload.get("latitude")));
         evento.setLongitude(extrairDouble(payload.get("longitude")));
@@ -159,6 +221,10 @@ public class TreinadorRestController {
         Integer clubeModalidadeId = exigirModalidadeTreinadorNoClube(clubeId);
         validarEventoTreinador(eventoId, clubeId, clubeModalidadeId, treinadorId);
 
+        // Validate escalão
+        Integer escalaoId = payload.get("escalaoId") != null ? ((Number) payload.get("escalaoId")).intValue() : null;
+        List<Integer> escalaoIds = validarEEscaloes(clubeId, clubeModalidadeId, escalaoId);
+
         String titulo = valorTexto(payload.get("titulo"));
         String local = valorTexto(payload.get("local"));
         String descricao = valorTexto(payload.get("descricao"));
@@ -174,8 +240,15 @@ public class TreinadorRestController {
         }
 
         List<Integer> atletasConvocados = extrairIds(payload.get("atletasConvocados"));
-        if (!atletaDAO.todosPertencemClubeModalidade(clubeModalidadeId, atletasConvocados)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Existem atletas fora da equipa/modalidade do treinador.");
+        if (!atletasConvocados.isEmpty()) {
+            if (escalaoId != null) {
+                if (!atletaDAO.todosPertencemClubeModalidadeEEscaloes(clubeModalidadeId, escalaoIds, atletasConvocados)) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                            "Existem atletas fora do escalão permitido para este evento.");
+                }
+            } else if (!atletaDAO.todosPertencemClubeModalidade(clubeModalidadeId, atletasConvocados)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Existem atletas fora da equipa/modalidade do treinador.");
+            }
         }
 
         Evento eventoAtualizado = new Evento(
@@ -190,6 +263,7 @@ public class TreinadorRestController {
                 null,
                 treinadorId
         );
+        eventoAtualizado.setEscalaoId(escalaoId);
         if (fim != null) eventoAtualizado.setDataHoraFim(Timestamp.valueOf(fim));
         eventoAtualizado.setLatitude(extrairDouble(payload.get("latitude")));
         eventoAtualizado.setLongitude(extrairDouble(payload.get("longitude")));
@@ -272,9 +346,7 @@ public class TreinadorRestController {
         if (SecurityUtils.isSuperAdmin()) return;
         if (SecurityUtils.canManageClube(clubeId)) return;
         String role = SecurityUtils.currentRole();
-        // Assumindo que a role para treinador é ROLE_TREINADOR_PRINCIPAL (com base no perfis que foram inseridos no SQL)
         if ("ROLE_TREINADOR_PRINCIPAL".equals(role) && Integer.valueOf(clubeId).equals(SecurityUtils.currentClubeId())) return;
-        
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para aceder ao módulo de treinador deste clube.");
     }
 
@@ -305,6 +377,57 @@ public class TreinadorRestController {
         return clubeModalidadeId;
     }
 
+    /**
+     * Validates that the trainer is assigned to {@code escalaoId} and returns
+     * the list of allowed escalão IDs (selected + immediately below).
+     * If escalaoId is null, returns empty list (no escalão restriction).
+     */
+    private List<Integer> validarEEscaloes(int clubeId, int clubeModalidadeId, Integer escalaoId) {
+        if (escalaoId == null) return Collections.emptyList();
+
+        int utilizadorId = SecurityUtils.currentUserId();
+        List<Map<String, Object>> treinadorEscaloes = staffAfetacaoEscalaoDAO
+                .listarEscaloesPorTreinador(utilizadorId, clubeId, clubeModalidadeId);
+
+        boolean escalaoAtribuido = treinadorEscaloes.stream()
+                .anyMatch(e -> escalaoId.equals(((Number) e.get("id")).intValue()));
+
+        if (!escalaoAtribuido) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "O treinador não está afeto ao escalão selecionado.");
+        }
+
+        List<Integer> ids = new ArrayList<>();
+        ids.add(escalaoId);
+        Integer escalaoAbaixo = escalaoDAO.buscarIdEscalaoAbaixo(escalaoId);
+        if (escalaoAbaixo != null) ids.add(escalaoAbaixo);
+        return ids;
+    }
+
+    /**
+     * Resolves allowed escalão IDs for athlete listing (same escalão + one below),
+     * without throwing if there are no assigned escalões (just returns all for that escalão).
+     */
+    private List<Integer> resolverEscaloesPermitidos(int clubeId, int clubeModalidadeId, int escalaoId) {
+        int utilizadorId = SecurityUtils.currentUserId();
+        List<Map<String, Object>> treinadorEscaloes = staffAfetacaoEscalaoDAO
+                .listarEscaloesPorTreinador(utilizadorId, clubeId, clubeModalidadeId);
+
+        boolean escalaoAtribuido = treinadorEscaloes.stream()
+                .anyMatch(e -> escalaoId == ((Number) e.get("id")).intValue());
+
+        if (!escalaoAtribuido) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "O treinador não está afeto ao escalão selecionado.");
+        }
+
+        List<Integer> ids = new ArrayList<>();
+        ids.add(escalaoId);
+        Integer escalaoAbaixo = escalaoDAO.buscarIdEscalaoAbaixo(escalaoId);
+        if (escalaoAbaixo != null) ids.add(escalaoAbaixo);
+        return ids;
+    }
+
     private Map<String, Object> validarEventoTreinador(int eventoId, int clubeId, int clubeModalidadeId, int treinadorId) {
         Map<String, Object> existente = eventoDAO.buscarPorId(eventoId);
         if (existente == null) {
@@ -316,13 +439,29 @@ public class TreinadorRestController {
         Integer eventoModalidadeId = numeroParaInt(existente.get("clubeModalidadeId"));
         String tipo = Objects.toString(existente.get("tipo"), null);
 
+        boolean criadoPorTreinador = Objects.equals(criadoPor, treinadorId);
         boolean clubeCorreto = Objects.equals(eventoClubeId, clubeId);
         boolean modalidadeCorreta = Objects.equals(eventoModalidadeId, clubeModalidadeId);
         boolean tipoPermitido = "MODALIDADE".equals(tipo);
 
-        if (!clubeCorreto || !modalidadeCorreta || !tipoPermitido) {
+        if (!criadoPorTreinador || !clubeCorreto || !modalidadeCorreta || !tipoPermitido) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não tem permissão para gerir este evento.");
         }
+
+        // Validate escalão ownership if stored on event
+        Integer eventoEscalaoId = numeroParaInt(existente.get("escalaoId"));
+        if (eventoEscalaoId != null) {
+            int utilizadorId = SecurityUtils.currentUserId();
+            List<Map<String, Object>> treinadorEscaloes = staffAfetacaoEscalaoDAO
+                    .listarEscaloesPorTreinador(utilizadorId, clubeId, clubeModalidadeId);
+            boolean escalaoAtribuido = treinadorEscaloes.stream()
+                    .anyMatch(e -> eventoEscalaoId.equals(((Number) e.get("id")).intValue()));
+            if (!escalaoAtribuido) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Não tem permissão para editar eventos deste escalão.");
+            }
+        }
+
         return existente;
     }
 
