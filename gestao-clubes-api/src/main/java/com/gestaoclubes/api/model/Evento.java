@@ -16,6 +16,7 @@ public class Evento {
     private int criadoPor;
     private Double latitude;
     private Double longitude;
+    private Integer escalaoId;
 
     public Evento() {}
 
