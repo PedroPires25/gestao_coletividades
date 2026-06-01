@@ -4,7 +4,7 @@ import SideMenu from "../components/SideMenu";
 import MapPicker from "../components/MapPicker";
 import MiniMap from "../components/MiniMap";
 import { useAuth } from "../auth/AuthContext";
-import { getUploadUrl } from "../api";
+import { getModalidadesDoClube, getUploadUrl } from "../api";
 import {
     createConvocatoriaTreinador,
     getAtletasConvocatoriasTreinador,
@@ -51,6 +51,7 @@ function subtipoLabel(value) {
 const EMPTY_FORM = {
     titulo: "",
     subtipo: "CONVOCATORIA",
+    clubeModalidadeId: "",
     escalaoId: "",
     data: "",
     horaInicio: "",
@@ -62,14 +63,24 @@ const EMPTY_FORM = {
     longitude: null,
 };
 
+function getClubeModalidadeId(item) {
+    return String(item?.id ?? item?.clubeModalidadeId ?? item?.clube_modalidade_id ?? "");
+}
+
+function modalidadeLabel(item) {
+    const nome = item?.modalidade?.nome || item?.nome || "Modalidade";
+    return item?.epoca ? `${nome} (${item.epoca})` : nome;
+}
+
 export default function ConvocatoriasPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout } = useAuth();
+    const { logout, isTreinador, modalidadeId: modalidadeAtualId } = useAuth();
 
     const [eventos, setEventos] = useState([]);
     const [atletas, setAtletas] = useState([]);
     const [escaloes, setEscaloes] = useState([]);
+    const [modalidades, setModalidades] = useState([]);
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState("");
     const [saving, setSaving] = useState(false);
@@ -102,19 +113,26 @@ export default function ConvocatoriasPage() {
         setErro("");
         setLoading(true);
         try {
-            const [eventosData, escaloesData] = await Promise.all([
+            const [eventosData, escaloesData, modalidadesData] = await Promise.all([
                 getConvocatoriasTreinador(clubeId),
                 getEscaloesTreinador(clubeId),
+                getModalidadesDoClube(clubeId, { apenasAtivas: true }),
             ]);
             setEventos(Array.isArray(eventosData) ? eventosData : []);
             const escaloesLista = Array.isArray(escaloesData) ? escaloesData : [];
+            const modalidadesLista = Array.isArray(modalidadesData) ? modalidadesData : [];
             setEscaloes(escaloesLista);
+            setModalidades(modalidadesLista);
+
+            const modalidadeInicial = isTreinador
+                ? modalidadeAtualId
+                : getClubeModalidadeId(modalidadesLista[0]);
             // Default athletes: load for first escalão if available, else no filter
             if (escaloesLista.length > 0) {
-                const atletasData = await getAtletasConvocatoriasTreinador(clubeId, escaloesLista[0].id);
+                const atletasData = await getAtletasConvocatoriasTreinador(clubeId, escaloesLista[0].id, modalidadeInicial);
                 setAtletas(Array.isArray(atletasData) ? atletasData : []);
             } else {
-                const atletasData = await getAtletasConvocatoriasTreinador(clubeId, null);
+                const atletasData = await getAtletasConvocatoriasTreinador(clubeId, null, modalidadeInicial);
                 setAtletas(Array.isArray(atletasData) ? atletasData : []);
             }
         } catch (e) {
@@ -122,7 +140,7 @@ export default function ConvocatoriasPage() {
         } finally {
             setLoading(false);
         }
-    }, [clubeId]);
+    }, [clubeId, isTreinador, modalidadeAtualId]);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -130,7 +148,10 @@ export default function ConvocatoriasPage() {
     }, [carregarDados]);
 
     function abrirNovoEvento() {
-        setForm(EMPTY_FORM);
+        const modalidadeInicial = isTreinador
+            ? modalidadeAtualId
+            : getClubeModalidadeId(modalidades[0]);
+        setForm({ ...EMPTY_FORM, clubeModalidadeId: modalidadeInicial || "" });
         setEditingEventoId(null);
         setSearchAtletas("");
         setShowForm(true);
@@ -151,14 +172,19 @@ export default function ConvocatoriasPage() {
             const conv = await getConvocadosConvocatoriaTreinador(clubeId, evento.id);
             const ids = (Array.isArray(conv) ? conv : []).map((a) => a.id);
             const escalaoId = evento.escalaoId ?? "";
+            const clubeModalidadeId = evento.clubeModalidadeId ?? "";
             // Load athletes for the event's escalão (or all if none)
             if (escalaoId) {
-                const atletasData = await getAtletasConvocatoriasTreinador(clubeId, escalaoId);
+                const atletasData = await getAtletasConvocatoriasTreinador(clubeId, escalaoId, clubeModalidadeId);
+                setAtletas(Array.isArray(atletasData) ? atletasData : []);
+            } else {
+                const atletasData = await getAtletasConvocatoriasTreinador(clubeId, null, clubeModalidadeId);
                 setAtletas(Array.isArray(atletasData) ? atletasData : []);
             }
             setForm({
                 titulo: evento.titulo || "",
                 subtipo: evento.subtipo || "CONVOCATORIA",
+                clubeModalidadeId,
                 escalaoId: escalaoId,
                 data: toFormDate(evento.dataHora),
                 horaInicio: toFormTime(evento.dataHora),
@@ -194,6 +220,7 @@ export default function ConvocatoriasPage() {
             const payload = {
                 titulo: form.titulo.trim(),
                 subtipo: form.subtipo,
+                clubeModalidadeId: form.clubeModalidadeId ? Number(form.clubeModalidadeId) : null,
                 escalaoId: form.escalaoId ? Number(form.escalaoId) : null,
                 data: form.data,
                 horaInicio: form.horaInicio,
@@ -236,7 +263,7 @@ export default function ConvocatoriasPage() {
                         <span className="page-title-icon-circle" style={{ fontSize: "1.6rem" }}>📢</span>
                         <div className="page-title-texts">
                             <h1>Convocatórias</h1>
-                            <div className="hint">Área de trabalho do treinador para criar e editar os próprios eventos.</div>
+                            <div className="hint">Área de trabalho para criar e gerir convocatórias.</div>
                         </div>
                     </div>
                     <div className="actions" style={{ display: "flex", gap: 8 }}>
@@ -267,6 +294,32 @@ export default function ConvocatoriasPage() {
                                 </div>
 
                                 <div className="form-group">
+                                    <label>Modalidade *</label>
+                                    <select
+                                        className="input"
+                                        value={form.clubeModalidadeId}
+                                        onChange={async (e) => {
+                                            const novoClubeModalidadeId = e.target.value;
+                                            setForm((p) => ({ ...p, clubeModalidadeId: novoClubeModalidadeId, atletasConvocados: [] }));
+                                            try {
+                                                const data = await getAtletasConvocatoriasTreinador(clubeId, form.escalaoId || null, novoClubeModalidadeId);
+                                                setAtletas(Array.isArray(data) ? data : []);
+                                            } catch {
+                                                setAtletas([]);
+                                            }
+                                        }}
+                                        disabled={isTreinador}
+                                        required
+                                    >
+                                        <option value="">-- Selecionar modalidade --</option>
+                                        {modalidades.map((modalidade) => {
+                                            const id = getClubeModalidadeId(modalidade);
+                                            return <option key={id} value={id}>{modalidadeLabel(modalidade)}</option>;
+                                        })}
+                                    </select>
+                                </div>
+
+                                <div className="form-group">
                                     <label>Escalão *</label>
                                     <select
                                         className="input"
@@ -276,7 +329,7 @@ export default function ConvocatoriasPage() {
                                             setForm((p) => ({ ...p, escalaoId: novoEscalaoId, atletasConvocados: [] }));
                                             if (novoEscalaoId) {
                                                 try {
-                                                    const data = await getAtletasConvocatoriasTreinador(clubeId, novoEscalaoId);
+                                                    const data = await getAtletasConvocatoriasTreinador(clubeId, novoEscalaoId, form.clubeModalidadeId);
                                                     setAtletas(Array.isArray(data) ? data : []);
                                                 } catch {
                                                     setAtletas([]);
@@ -364,7 +417,7 @@ export default function ConvocatoriasPage() {
                                         </label>
                                     ))}
                                     {atletasFiltrados.length === 0 && (
-                                        <p className="subtle" style={{ padding: "0.5rem", margin: 0 }}>Sem atletas disponíveis na tua equipa.</p>
+                                        <p className="subtle" style={{ padding: "0.5rem", margin: 0 }}>Sem atletas disponíveis para os filtros selecionados.</p>
                                     )}
                                 </div>
                             </div>
@@ -391,7 +444,7 @@ export default function ConvocatoriasPage() {
                     <p className="subtle">A carregar convocatórias...</p>
                 ) : eventos.length === 0 ? (
                     <div className="card" style={{ padding: "1.2rem" }}>
-                        <p className="subtle" style={{ margin: 0 }}>Ainda não criaste eventos neste módulo.</p>
+                        <p className="subtle" style={{ margin: 0 }}>Ainda não existem eventos neste módulo.</p>
                     </div>
                 ) : (
                     <div className="table-wrap">
@@ -400,6 +453,7 @@ export default function ConvocatoriasPage() {
                                 <tr>
                                     <th>Título</th>
                                     <th>Subtipo</th>
+                                    <th>Modalidade</th>
                                     <th>Data/Hora</th>
                                     <th>Data/Hora fim</th>
                                     <th>Local</th>
@@ -413,6 +467,7 @@ export default function ConvocatoriasPage() {
                                         <tr key={ev.id}>
                                             <td>{ev.titulo}</td>
                                             <td>{subtipoLabel(ev.subtipo)}</td>
+                                            <td>{ev.modalidadeNome || "—"}</td>
                                             <td>{formatDateTimeFromTs(ev.dataHora)}</td>
                                             <td>{ev.dataHoraFim ? formatDateTimeFromTs(ev.dataHoraFim) : "—"}</td>
                                             <td>
