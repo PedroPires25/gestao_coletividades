@@ -28,13 +28,17 @@ function FlyTo({ lat, lng }) {
     return null;
 }
 
-export default function MapPicker({ latitude, longitude, onLocationChange, readOnly = false }) {
-    const [searchQuery, setSearchQuery] = useState("");
+export default function MapPicker({ latitude, longitude, onLocationChange, readOnly = false, searchValue }) {
+    const [searchQuery, setSearchQuery] = useState(searchValue ?? "");
     const [results, setResults] = useState([]);
     const [searching, setSearching] = useState(false);
     const [showResults, setShowResults] = useState(false);
     const debounceRef = useRef(null);
     const wrapperRef = useRef(null);
+    // Track previous external value to detect changes originating from the parent
+    const prevSearchValue = useRef(searchValue);
+    // Prevent re-triggering search when a result selection echoes back through the parent
+    const ignoreNextSyncRef = useRef(false);
 
     const center = latitude && longitude ? [latitude, longitude] : [39.5, -8.0];
     const zoom = latitude && longitude ? 15 : 7;
@@ -74,6 +78,24 @@ export default function MapPicker({ latitude, longitude, onLocationChange, readO
         }
     }, []);
 
+    // Sync externally controlled searchValue → internal search field.
+    // When the parent changes the "Local" text field, the map search updates accordingly.
+    // The ignoreNextSyncRef flag prevents re-triggering a search when the parent's
+    // state is simply echoing back an address we just selected (result selection flow).
+    useEffect(() => {
+        if (searchValue === undefined) return;
+        if (searchValue !== prevSearchValue.current) {
+            prevSearchValue.current = searchValue;
+            setSearchQuery(searchValue);
+            if (ignoreNextSyncRef.current) {
+                ignoreNextSyncRef.current = false;
+                return;
+            }
+            clearTimeout(debounceRef.current);
+            debounceRef.current = setTimeout(() => searchNominatim(searchValue), 600);
+        }
+    }, [searchValue, searchNominatim]);
+
     const handleSearchInput = (e) => {
         const val = e.target.value;
         setSearchQuery(val);
@@ -84,6 +106,8 @@ export default function MapPicker({ latitude, longitude, onLocationChange, readO
     const selectResult = (item) => {
         const lat = parseFloat(item.lat);
         const lng = parseFloat(item.lon);
+        // Signal the sync effect to ignore the echo when the parent updates form.local
+        ignoreNextSyncRef.current = true;
         onLocationChange(lat, lng, item.display_name);
         setSearchQuery(item.display_name);
         setShowResults(false);
