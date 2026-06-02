@@ -83,6 +83,7 @@ export default function ConvocatoriasPage() {
     const [modalidades, setModalidades] = useState([]);
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState("");
+    const [msg, setMsg] = useState("");
     const [saving, setSaving] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [editingEventoId, setEditingEventoId] = useState(null);
@@ -215,6 +216,7 @@ export default function ConvocatoriasPage() {
     async function guardarEvento(e) {
         e.preventDefault();
         setErro("");
+        setMsg("");
         setSaving(true);
         try {
             const payload = {
@@ -232,16 +234,26 @@ export default function ConvocatoriasPage() {
                 longitude: form.longitude ?? null,
             };
 
+            let response;
             if (editingEventoId) {
-                await updateConvocatoriaTreinador(clubeId, editingEventoId, payload);
+                response = await updateConvocatoriaTreinador(clubeId, editingEventoId, payload);
             } else {
-                await createConvocatoriaTreinador(clubeId, payload);
+                response = await createConvocatoriaTreinador(clubeId, payload);
             }
 
             setShowForm(false);
             setEditingEventoId(null);
             setForm(EMPTY_FORM);
             await carregarDados();
+
+            const emailStatus = response?.emailStatus;
+            const mensagem = response?.mensagem;
+            if (emailStatus === "FALHA" || emailStatus === "PARCIAL") {
+                setErro(mensagem || "Erro ao enviar email da convocatória.");
+            } else {
+                setMsg(mensagem || "Evento guardado com sucesso.");
+                setTimeout(() => setMsg(""), 4500);
+            }
         } catch (err) {
             setErro(err.message || "Erro ao guardar evento.");
         } finally {
@@ -274,6 +286,7 @@ export default function ConvocatoriasPage() {
                     </div>
                 </div>
 
+                {msg && <div className="alert success">{msg}</div>}
                 {erro && <div className="alert error">{erro}</div>}
 
                 {showForm && (
