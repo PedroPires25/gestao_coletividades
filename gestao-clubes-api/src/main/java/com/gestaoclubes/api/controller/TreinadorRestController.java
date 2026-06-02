@@ -9,6 +9,7 @@ import com.gestaoclubes.api.dao.StaffAfetacaoEscalaoDAO;
 import com.gestaoclubes.api.model.ClubeModalidade;
 import com.gestaoclubes.api.model.Evento;
 import com.gestaoclubes.api.security.SecurityUtils;
+import com.gestaoclubes.api.service.ConvocatoriaNotificacaoService;
 import com.gestaoclubes.api.service.EmailService;
 import com.gestaoclubes.api.service.TreinadorService;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,6 +36,7 @@ public class TreinadorRestController {
 
     private final TreinadorService treinadorService;
     private final EmailService emailService;
+    private final ConvocatoriaNotificacaoService notificacaoService;
     private final AtletaDAO atletaDAO = new AtletaDAO();
     private final EventoDAO eventoDAO = new EventoDAO();
     private final EventoAtletaDAO eventoAtletaDAO = new EventoAtletaDAO();
@@ -41,9 +44,10 @@ public class TreinadorRestController {
     private final EscalaoDAO escalaoDAO = new EscalaoDAO();
     private final StaffAfetacaoEscalaoDAO staffAfetacaoEscalaoDAO = new StaffAfetacaoEscalaoDAO();
 
-    public TreinadorRestController(EmailService emailService) {
+    public TreinadorRestController(EmailService emailService, ConvocatoriaNotificacaoService notificacaoService) {
         this.treinadorService = new TreinadorService();
         this.emailService = emailService;
+        this.notificacaoService = notificacaoService;
     }
 
     // ==========================================
@@ -233,10 +237,24 @@ public class TreinadorRestController {
             eventoAtletaDAO.inserirMultiplos(eventoId, atletasConvocados);
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "id", eventoId,
-                "mensagem", "Evento criado com sucesso."
-        ));
+        LinkedHashMap<String, Object> resposta = new LinkedHashMap<>();
+        resposta.put("id", eventoId);
+        if (!atletasConvocados.isEmpty()) {
+            Map<String, Object> emailResult = notificacaoService.enviarEmailsConvocados(
+                    eventoId, titulo, inicio, local, descricao != null ? descricao : "", subtipo);
+            String emailStatus = (String) emailResult.get("status");
+            resposta.put("emailStatus", emailStatus);
+            if ("SUCESSO".equals(emailStatus) || "SEM_DESTINATARIOS".equals(emailStatus)) {
+                resposta.put("mensagem", "Convocatória criada e emails enviados com sucesso.");
+            } else {
+                resposta.put("mensagem", "Convocatória criada, mas ocorreu um erro no envio de emails.");
+            }
+        } else {
+            resposta.put("emailStatus", "SEM_DESTINATARIOS");
+            resposta.put("mensagem", "Evento criado com sucesso.");
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
     }
 
     @PutMapping("/clubes/{clubeId}/treinador/convocatorias/{eventoId}")
@@ -248,17 +266,18 @@ public class TreinadorRestController {
         exigirAcessoConvocatorias(clubeId);
         int utilizadorId = exigirUtilizadorAutenticado();
         boolean gestaoTotal = temGestaoTotalConvocatorias();
+        Map<String, Object> eventoExistente;
         Integer clubeModalidadeId;
         if (gestaoTotal) {
-            Map<String, Object> existente = validarEventoGestor(eventoId, clubeId);
+            eventoExistente = validarEventoGestor(eventoId, clubeId);
             Integer modalidadePayload = numeroParaInt(payload.get("clubeModalidadeId"));
             clubeModalidadeId = exigirClubeModalidadeDoClube(
                     clubeId,
-                    modalidadePayload != null ? modalidadePayload : numeroParaInt(existente.get("clubeModalidadeId"))
+                    modalidadePayload != null ? modalidadePayload : numeroParaInt(eventoExistente.get("clubeModalidadeId"))
             );
         } else {
             clubeModalidadeId = exigirModalidadeTreinadorNoClube(clubeId);
-            validarEventoTreinador(eventoId, clubeId, clubeModalidadeId, utilizadorId);
+            eventoExistente = validarEventoTreinador(eventoId, clubeId, clubeModalidadeId, utilizadorId);
         }
 
         // Validate escalão
@@ -315,12 +334,35 @@ public class TreinadorRestController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao atualizar evento.");
         }
 
+        List<Integer> convocadosExistentes = eventoAtletaDAO.listarPorEvento(eventoId)
+                .stream().map(a -> ((Number) a.get("id")).intValue()).toList();
         eventoAtletaDAO.removerTodos(eventoId);
         if (!atletasConvocados.isEmpty()) {
             eventoAtletaDAO.inserirMultiplos(eventoId, atletasConvocados);
         }
 
-        return ResponseEntity.ok(Map.of("mensagem", "Evento atualizado com sucesso."));
+        boolean camposAlterados = camposRelevantesAlterados(eventoExistente, inicio, local,
+                descricao != null ? descricao : "", subtipo);
+        boolean atletasAdicionados = atletasConvocados.stream()
+                .anyMatch(id -> !convocadosExistentes.contains(id));
+
+        LinkedHashMap<String, Object> resposta = new LinkedHashMap<>();
+        if ((camposAlterados || atletasAdicionados) && !atletasConvocados.isEmpty()) {
+            Map<String, Object> emailResult = notificacaoService.enviarEmailsConvocados(
+                    eventoId, titulo, inicio, local, descricao != null ? descricao : "", subtipo);
+            String emailStatus = (String) emailResult.get("status");
+            resposta.put("emailStatus", emailStatus);
+            if ("SUCESSO".equals(emailStatus) || "SEM_DESTINATARIOS".equals(emailStatus)) {
+                resposta.put("mensagem", "Email enviado com sucesso.");
+            } else {
+                resposta.put("mensagem", "Convocatória atualizada, mas ocorreu um erro no envio de emails.");
+            }
+        } else {
+            resposta.put("emailStatus", "NAO_ENVIADO");
+            resposta.put("mensagem", "Evento atualizado com sucesso.");
+        }
+
+        return ResponseEntity.ok(resposta);
     }
 
     // ==========================================
@@ -681,5 +723,17 @@ public class TreinadorRestController {
         } catch (DateTimeParseException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato inválido para " + campo + ".");
         }
+    }
+
+    private boolean camposRelevantesAlterados(Map<String, Object> existente, LocalDateTime novoInicio,
+            String novoLocal, String novaDescricao, String novoSubtipo) {
+        java.sql.Timestamp existenteTs = (java.sql.Timestamp) existente.get("dataHora");
+        LocalDateTime existenteInicio = existenteTs != null ? existenteTs.toLocalDateTime() : null;
+        if (!Objects.equals(existenteInicio, novoInicio)) return true;
+        if (!Objects.equals(existente.get("local"), novoLocal)) return true;
+        String descricaoExistente = existente.get("descricao") != null ? (String) existente.get("descricao") : "";
+        if (!descricaoExistente.equals(novaDescricao)) return true;
+        if (!Objects.equals(existente.get("observacoes"), novoSubtipo)) return true;
+        return false;
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -129,5 +130,66 @@ public class ConvocatoriaNotificacaoService {
             return ts.toLocalDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
         }
         return dataHora.toString();
+    }
+
+    public Map<String, Object> enviarEmailsConvocados(int eventoId, String nomeEvento,
+            LocalDateTime dataHoraInicio, String local, String descricao, String subtipo) {
+
+        List<Map<String, Object>> atletas = eventoAtletaDAO.listarPorEvento(eventoId);
+        if (atletas.isEmpty()) {
+            return Map.of("status", "SEM_DESTINATARIOS", "enviados", 0, "semEmail", 0, "erros", 0);
+        }
+
+        String dataHoraStr = dataHoraInicio != null
+                ? dataHoraInicio.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                : "";
+        String mensagemLog = "Convocatória: " + nomeEvento + " | " + dataHoraStr + " | " + local;
+
+        int enviados = 0, semEmail = 0, erros = 0;
+
+        for (Map<String, Object> atleta : atletas) {
+            Integer atletaId = atleta.get("id") != null ? ((Number) atleta.get("id")).intValue() : null;
+            String nome  = (String) atleta.get("nome");
+            String email = (String) atleta.get("email");
+
+            if (!emailValido(email)) {
+                System.err.println("[EMAIL] Atleta sem email válido (id=" + atletaId + ", nome=" + nome + ")");
+                semEmail++;
+                continue;
+            }
+
+            Estado estado;
+            if (emailAtivo) {
+                try {
+                    emailService.enviarConvocatoria(email, nome, nomeEvento, dataHoraStr, local, descricao, subtipo);
+                    estado = Estado.ENVIADA;
+                    enviados++;
+                } catch (Exception e) {
+                    System.err.println("[EMAIL] Erro ao enviar para " + email + ": " + e.getMessage());
+                    estado = Estado.ERRO;
+                    erros++;
+                }
+            } else {
+                System.out.println("[EMAIL SIMULADO] Para: " + email + " | " + mensagemLog);
+                estado = Estado.SIMULADA;
+                enviados++;
+            }
+
+            notificacaoDAO.inserir(new Notificacao(atletaId, eventoId, Canal.EMAIL, email, mensagemLog, estado));
+        }
+
+        int comEmail = atletas.size() - semEmail;
+        String status;
+        if (comEmail == 0)      status = "SEM_DESTINATARIOS";
+        else if (erros == 0)    status = "SUCESSO";
+        else if (enviados == 0) status = "FALHA";
+        else                    status = "PARCIAL";
+
+        return Map.of("status", status, "enviados", enviados, "semEmail", semEmail, "erros", erros);
+    }
+
+    private boolean emailValido(String email) {
+        if (email == null || email.isBlank()) return false;
+        return email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     }
 }
