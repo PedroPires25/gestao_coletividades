@@ -29,17 +29,33 @@ public class EmailService {
     }
     public void enviarConvocatoria(String emailDestino, String nomeDestinatario,
                                     String nomeEvento, String dataHora, String local) {
+        enviarConvocatoria(emailDestino, nomeDestinatario, nomeEvento, dataHora, local, null, null);
+    }
+
+    public void enviarConvocatoria(String emailDestino, String nomeDestinatario,
+                                    String nomeEvento, String dataHora, String local,
+                                    String descricao, String subtipo) {
         SimpleMailMessage mensagem = new SimpleMailMessage();
         mensagem.setTo(emailDestino);
         mensagem.setSubject("Convocatória - " + nomeEvento);
-        mensagem.setText("Olá" + (nomeDestinatario != null ? " " + nomeDestinatario : "") + ",\n\n" +
-                "Foi convocado(a) para o seguinte evento:\n\n" +
-                "  Evento : " + nomeEvento + "\n" +
-                "  Data/Hora: " + dataHora + "\n" +
-                "  Local   : " + local + "\n\n" +
-                "Por favor confirme a sua presença na plataforma.\n\n" +
-                "Cumprimentos,\n" +
-                "Equipa Gestão de Coletividades");
+
+        StringBuilder texto = new StringBuilder();
+        texto.append("Olá").append(nomeDestinatario != null ? " " + nomeDestinatario : "").append(",\n\n");
+        texto.append("Foi convocado(a) para o seguinte evento:\n\n");
+        texto.append("  Evento   : ").append(nomeEvento).append("\n");
+        if (subtipo != null && !subtipo.isBlank()) {
+            texto.append("  Tipo     : ").append(subtipo).append("\n");
+        }
+        texto.append("  Data/Hora: ").append(dataHora).append("\n");
+        texto.append("  Local    : ").append(local).append("\n");
+        if (descricao != null && !descricao.isBlank()) {
+            texto.append("  Descrição: ").append(descricao).append("\n");
+        }
+        texto.append("\nPor favor confirme a sua presença na plataforma.\n\n");
+        texto.append("Cumprimentos,\n");
+        texto.append("Equipa Gestão de Coletividades");
+
+        mensagem.setText(texto.toString());
         mailSender.send(mensagem);
     }
 
