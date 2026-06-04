@@ -47,8 +47,11 @@ export async function getAtletasTreinador(clubeId) {
     return authFetch(`/clubes/${clubeId}/treinador/atletas`);
 }
 
-export async function getAtletasConvocatoriasTreinador(clubeId, escalaoId) {
-    const params = escalaoId != null ? `?escalaoId=${escalaoId}` : "";
+export async function getAtletasConvocatoriasTreinador(clubeId, escalaoId, clubeModalidadeId) {
+    const searchParams = new URLSearchParams();
+    if (escalaoId != null && escalaoId !== "") searchParams.set("escalaoId", escalaoId);
+    if (clubeModalidadeId != null && clubeModalidadeId !== "") searchParams.set("clubeModalidadeId", clubeModalidadeId);
+    const params = searchParams.toString() ? `?${searchParams.toString()}` : "";
     return authFetch(`/clubes/${clubeId}/treinador/convocatorias/atletas${params}`);
 }
 
