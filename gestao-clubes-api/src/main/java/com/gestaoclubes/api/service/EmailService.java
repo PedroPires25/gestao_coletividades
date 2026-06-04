@@ -32,6 +32,7 @@ public class EmailService {
         this.objectMapper = new ObjectMapper();
     }
 
+
     private void sendBrevoEmail(String emailDestino, String nomeDestinatario, String subject, String textContent) {
         if (brevoApiKey == null || brevoApiKey.trim().isBlank()) {
             System.err.println("ERRO: BREVO_API_KEY não configurada. Email não enviado.");
