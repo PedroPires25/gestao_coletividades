@@ -9,6 +9,7 @@ import com.gestaoclubes.api.model.Staff;
 import com.gestaoclubes.api.model.Utilizador;
 import com.gestaoclubes.api.security.JwtUtil;
 import com.gestaoclubes.api.util.PasswordPolicyUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,21 +18,16 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5173")
 public class AuthRestController {
 
-    private final UtilizadorDAO utilizadorDAO;
-    private final PerfilDAO perfilDAO;
-    private final JwtUtil jwtUtil;
+    private final UtilizadorDAO utilizadorDAO = new UtilizadorDAO();
+    private final PerfilDAO perfilDAO = new PerfilDAO();
     private final ClubeDAO clubeDAO = new ClubeDAO();
     private final ColetividadeDAO coletividadeDAO = new ColetividadeDAO();
     private final StaffDAO staffDAO = new StaffDAO();
 
-    public AuthRestController(UtilizadorDAO utilizadorDAO, PerfilDAO perfilDAO, JwtUtil jwtUtil) {
-        this.utilizadorDAO = utilizadorDAO;
-        this.perfilDAO = perfilDAO;
-        this.jwtUtil = jwtUtil;
-    }
+    @Autowired
+    private JwtUtil jwtUtil;
 
     public static class LoginRequest {
         public String email;
