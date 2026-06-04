@@ -13,6 +13,10 @@ services:
       - key: JWT_SECRET
         generateValue: true
 
+      # URL do Frontend (Para os emails de recuperação)
+      - key: FRONTEND_URL
+        sync: false
+
       # Base de dados (Aiven)
       # Exemplo: jdbc:mysql://host:port/db?useSSL=true&requireSSL=true&serverSslCert=classpath:cert/ca.pem
       - key: DB_URL
