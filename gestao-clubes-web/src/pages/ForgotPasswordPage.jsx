@@ -1,14 +1,11 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // 1. Adicionado useNavigate aqui
-
-const API_URL = "http://localhost:8080/api";
+import { Link } from "react-router-dom";
+import { apiForgotPassword } from "../api"; // Importar a função correta
 
 export default function ForgotPasswordPage() {
-    const navigate = useNavigate(); // 2. Inicializado o hook de navegação
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState("");
-    // 3. Removido o estado 'ok' pois já não vamos mostrar a caixa verde aqui
 
     async function onSubmit(e) {
         e.preventDefault();
@@ -16,23 +13,13 @@ export default function ForgotPasswordPage() {
         setLoading(true);
 
         try {
-            const res = await fetch(`${API_URL}/auth/forgot-password`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: email.trim() }),
-            });
-
-            // 4. Se a resposta for positiva, saltamos logo para a página de sucesso
-            if (res.ok) {
-                window.location.href = "/recuperar-password/confirmar";
-                return;
-            }
-
-            // Se chegou aqui, houve um erro
-            const text = await res.text();
-            throw new Error(text || "Não foi possível iniciar a recuperação.");
+            await apiForgotPassword(email.trim());
+            // Se a API não der erro, o pedido foi aceite.
+            // Redirecionamos para a página de confirmação.
+            window.location.href = "/recuperar-password/confirmar";
 
         } catch (e) {
+            // O erro pode ser de rede ('Failed to fetch') ou da API
             setErro(e.message || "Erro ao processar o pedido.");
         } finally {
             setLoading(false);
@@ -60,7 +47,6 @@ export default function ForgotPasswordPage() {
                     </div>
 
                     {erro && <div className="alert error">{erro}</div>}
-                    {/* 5. A div do 'ok' foi removida para garantir que não aparece a caixa verde */}
 
                     <form className="row" onSubmit={onSubmit}>
                         <input
