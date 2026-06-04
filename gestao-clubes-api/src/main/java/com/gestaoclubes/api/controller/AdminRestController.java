@@ -22,7 +22,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
-@CrossOrigin(origins = "http://localhost:5173")
 public class AdminRestController {
 
     private final UtilizadorDAO utilizadorDAO = new UtilizadorDAO();

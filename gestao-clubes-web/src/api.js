@@ -47,6 +47,13 @@ export async function apiLogin(email, password) {
     });
 }
 
+export async function apiForgotPassword(email) {
+    return http("/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+    });
+}
+
 export async function apiRegister(payload) {
     return http("/auth/register", {
         method: "POST",

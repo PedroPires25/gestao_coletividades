@@ -6,6 +6,7 @@ import com.gestaoclubes.api.model.PasswordResetToken;
 import com.gestaoclubes.api.model.Utilizador;
 import com.gestaoclubes.api.service.EmailService;
 import com.gestaoclubes.api.util.PasswordPolicyUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,21 +17,15 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5173")
 public class PasswordRecoveryRestController {
 
-    private final UtilizadorDAO utilizadorDAO;
-    private final PasswordResetTokenDAO passwordResetTokenDAO;
-    private final EmailService emailService;
+    private final UtilizadorDAO utilizadorDAO = new UtilizadorDAO();
+    private final PasswordResetTokenDAO passwordResetTokenDAO = new PasswordResetTokenDAO();
 
-    public PasswordRecoveryRestController(
-            UtilizadorDAO utilizadorDAO,
-            PasswordResetTokenDAO passwordResetTokenDAO,
-            EmailService emailService
-    ) {
-        this.utilizadorDAO = utilizadorDAO;
-        this.passwordResetTokenDAO = passwordResetTokenDAO;
-        this.emailService = emailService;
+    @Autowired
+    private EmailService emailService;
+
+    public PasswordRecoveryRestController() {
     }
 
     @PostMapping("/forgot-password")
