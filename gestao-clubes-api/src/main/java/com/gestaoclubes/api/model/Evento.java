@@ -17,6 +17,7 @@ public class Evento {
     private Double latitude;
     private Double longitude;
     private Integer escalaoId;
+    private boolean criadoPorTreinador; // NOVO CAMPO
 
     public Evento() {}
 
@@ -77,4 +78,8 @@ public class Evento {
     public void setLongitude(Double longitude) { this.longitude = longitude; }
     public Integer getEscalaoId() { return escalaoId; }
     public void setEscalaoId(Integer escalaoId) { this.escalaoId = escalaoId; }
+    
+    // Getters/Setters para o novo campo
+    public boolean isCriadoPorTreinador() { return criadoPorTreinador; }
+    public void setCriadoPorTreinador(boolean criadoPorTreinador) { this.criadoPorTreinador = criadoPorTreinador; }
 }

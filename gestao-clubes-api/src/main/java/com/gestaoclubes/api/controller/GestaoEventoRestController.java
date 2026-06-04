@@ -83,6 +83,7 @@ public class GestaoEventoRestController {
         String local = (String) body.get("local");
         String observacoes = (String) body.get("observacoes");
         String tipo = (String) body.get("tipo");
+        boolean criadoPorTreinador = Boolean.TRUE.equals(body.get("criadoPorTreinador"));
 
         if (titulo == null || titulo.isBlank() || dataHoraStr == null || local == null || local.isBlank()) {
             return ResponseEntity.badRequest()
@@ -130,6 +131,7 @@ public class GestaoEventoRestController {
                 clubeModalidadeId, coletividadeAtividadeId, criadoPor);
         evento.setLatitude(latitude);
         evento.setLongitude(longitude);
+        evento.setCriadoPorTreinador(criadoPorTreinador);
 
         // Data/hora fim (opcional)
         String dataHoraFimStr = (String) body.get("dataHoraFim");
@@ -178,6 +180,12 @@ public class GestaoEventoRestController {
                     .body(Map.of("erro", "Evento não encontrado."));
         }
         if (!canManageEvento(existente)) return forbidden();
+
+        // Regra: Treinador só pode editar eventos que ele próprio criou
+        if (isTreinadorPrincipal() && !(Boolean) existente.get("criadoPorTreinador")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("erro", "Treinadores só podem editar os seus próprios eventos/convocatórias."));
+        }
 
         String titulo = (String) body.get("titulo");
         String descricao = (String) body.get("descricao");
@@ -257,6 +265,12 @@ public class GestaoEventoRestController {
         }
         if (!canManageEvento(existente)) return forbidden();
 
+        // Regra: Treinador só pode apagar eventos que ele próprio criou
+        if (isTreinadorPrincipal() && !(Boolean) existente.get("criadoPorTreinador")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("erro", "Treinadores só podem apagar os seus próprios eventos/convocatórias."));
+        }
+
         // Remove convocados first (also handled by CASCADE, but explicit for safety)
         String tipo = (String) existente.get("tipo");
         if ("MODALIDADE".equals(tipo)) {
@@ -333,6 +347,11 @@ public class GestaoEventoRestController {
             for (Object item : list) {
                 if (item instanceof Number n) ids.add(n.intValue());
             }
+        } else if (obj instanceof String str) {
+             // as vezes o frontend manda como string
+             try {
+                 ids.add(Integer.parseInt(str));
+             } catch (NumberFormatException ignored) {}
         }
         return ids;
     }

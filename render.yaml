@@ -22,10 +22,10 @@ services:
       - key: DB_PASSWORD
         sync: false
 
-      # Email Gmail
-      - key: MAIL_USERNAME
+      # Email (Brevo)
+      - key: BREVO_API_KEY
         sync: false
-      - key: MAIL_PASSWORD
+      - key: BREVO_SENDER_EMAIL
         sync: false
 
       # Cloudinary (uploads de imagens)
