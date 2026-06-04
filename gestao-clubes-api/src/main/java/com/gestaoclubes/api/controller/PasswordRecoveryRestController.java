@@ -7,6 +7,7 @@ import com.gestaoclubes.api.model.Utilizador;
 import com.gestaoclubes.api.service.EmailService;
 import com.gestaoclubes.api.util.PasswordPolicyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,9 @@ public class PasswordRecoveryRestController {
 
     @Autowired
     private EmailService emailService;
+
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
 
     public PasswordRecoveryRestController() {
     }
@@ -43,7 +47,7 @@ public class PasswordRecoveryRestController {
 
                 passwordResetTokenDAO.inserir(u.getId(), token, expiresAt);
 
-                String link = "http://localhost:5173/reset-password?token=" + token;
+                String link = frontendUrl.replaceAll("/$", "") + "/reset-password?token=" + token;
                 emailService.enviarEmailRecuperacao(obterEmailDestino(u), link);
             }
         }
