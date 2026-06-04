@@ -26,6 +26,7 @@ public class TreinadorService {
         return treinadorDAO.listarSessoes(clubeId);
     }
 
+    @SuppressWarnings("unchecked")
     public boolean criarSessao(int clubeId, Map<String, Object> payload) {
         try {
             String dataStr = (String) payload.get("dataTreino");

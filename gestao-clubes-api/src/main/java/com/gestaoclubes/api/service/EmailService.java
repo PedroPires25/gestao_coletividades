@@ -1,32 +1,82 @@
 package com.gestaoclubes.api.service;
 
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    @Value("${brevo.api.key:}")
+    private String brevoApiKey;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    @Value("${brevo.sender.email:plataforma.gcdc@gmail.com}")
+    private String senderEmail;
+
+    @Value("${brevo.sender.name:Gestão de Coletividades}")
+    private String senderName;
+
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+
+    public EmailService() {
+        this.restTemplate = new RestTemplate();
+        this.objectMapper = new ObjectMapper();
+    }
+
+    private void sendBrevoEmail(String emailDestino, String nomeDestinatario, String subject, String textContent) {
+        if (brevoApiKey == null || brevoApiKey.trim().isBlank()) {
+            System.err.println("ERRO: BREVO_API_KEY não configurada. Email não enviado.");
+            return;
+        }
+
+        String url = "https://api.brevo.com/v3/smtp/email";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("api-key", brevoApiKey.trim());
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+
+        String htmlContent = textContent.replace("\n", "<br/>");
+
+        Map<String, Object> body = Map.of(
+                "sender", Map.of("name", senderName, "email", senderEmail),
+                "to", List.of(Map.of("email", emailDestino, "name", nomeDestinatario != null ? nomeDestinatario : "")),
+                "subject", subject,
+                "htmlContent", htmlContent
+        );
+
+        try {
+            String jsonBody = objectMapper.writeValueAsString(body);
+            HttpEntity<String> request = new HttpEntity<>(jsonBody, headers);
+            
+            restTemplate.postForEntity(url, request, String.class);
+        } catch (Exception e) {
+            System.err.println("Erro ao enviar email via Brevo para " + emailDestino + ": " + e.getMessage());
+            throw new RuntimeException("Falha ao enviar email via Brevo", e);
+        }
     }
 
     public void enviarEmailRecuperacao(String emailDestino, String link) {
-        SimpleMailMessage mensagem = new SimpleMailMessage();
-        mensagem.setTo(emailDestino);
-        mensagem.setSubject("Recuperação de Palavra-passe - Plataforma de Gestão de Coletividades");
-        mensagem.setText("Olá,\n\n" +
+        String subject = "Recuperação de Palavra-passe - Plataforma de Gestão de Coletividades";
+        String text = "Olá,\n\n" +
                 "Recebemos um pedido para recuperar a sua palavra-passe.\n" +
                 "Clique no link abaixo para criar uma nova:\n\n" +
                 link + "\n\n" +
                 "Este link é válido por 30 minutos. Se não fez este pedido, pode ignorar este email.\n\n" +
                 "Cumprimentos,\n" +
-                "Equipa Gestão de Coletividades");
+                "Equipa Gestão de Coletividades";
 
-        mailSender.send(mensagem);
+        sendBrevoEmail(emailDestino, "", subject, text);
     }
+
     public void enviarConvocatoria(String emailDestino, String nomeDestinatario,
                                     String nomeEvento, String dataHora, String local) {
         enviarConvocatoria(emailDestino, nomeDestinatario, nomeEvento, dataHora, local, null, null);
@@ -35,12 +85,10 @@ public class EmailService {
     public void enviarConvocatoria(String emailDestino, String nomeDestinatario,
                                     String nomeEvento, String dataHora, String local,
                                     String descricao, String subtipo) {
-        SimpleMailMessage mensagem = new SimpleMailMessage();
-        mensagem.setTo(emailDestino);
-        mensagem.setSubject("Convocatória - " + nomeEvento);
+        String subject = "Convocatória - " + nomeEvento;
 
         StringBuilder texto = new StringBuilder();
-        texto.append("Olá").append(nomeDestinatario != null ? " " + nomeDestinatario : "").append(",\n\n");
+        texto.append("Olá").append(nomeDestinatario != null && !nomeDestinatario.isBlank() ? " " + nomeDestinatario : "").append(",\n\n");
         texto.append("Foi convocado(a) para o seguinte evento:\n\n");
         texto.append("  Evento   : ").append(nomeEvento).append("\n");
         if (subtipo != null && !subtipo.isBlank()) {
@@ -55,36 +103,31 @@ public class EmailService {
         texto.append("Cumprimentos,\n");
         texto.append("Equipa Gestão de Coletividades");
 
-        mensagem.setText(texto.toString());
-        mailSender.send(mensagem);
+        sendBrevoEmail(emailDestino, nomeDestinatario, subject, texto.toString());
     }
 
     public void enviarEmailConfirmacaoAlteracao(String emailDestino) {
-        SimpleMailMessage mensagem = new SimpleMailMessage();
-        mensagem.setTo(emailDestino);
-        mensagem.setSubject("Palavra-passe Alterada com Sucesso - Gestão de Coletividades");
-        mensagem.setText("Olá,\n\n" +
+        String subject = "Palavra-passe Alterada com Sucesso - Gestão de Coletividades";
+        String text = "Olá,\n\n" +
                 "A palavra-passe da sua conta foi alterada com sucesso.\n\n" +
                 "Se não realizou esta alteração, por favor contacte o suporte imediatamente.\n\n" +
                 "Cumprimentos,\n" +
-                "Equipa Gestão de Coletividades");
+                "Equipa Gestão de Coletividades";
 
-        mailSender.send(mensagem);
+        sendBrevoEmail(emailDestino, "", subject, text);
     }
 
     public void enviarPlanoTreino(String emailDestino, String nomeAtleta, String conteudoPlano) {
-        SimpleMailMessage mensagem = new SimpleMailMessage();
-        mensagem.setTo(emailDestino);
-        mensagem.setSubject("O seu novo Plano de Treino Individual");
-        mensagem.setText("Olá " + nomeAtleta + ",\n\n" +
+        String subject = "O seu novo Plano de Treino Individual";
+        String text = "Olá " + nomeAtleta + ",\n\n" +
                 "O seu treinador enviou-lhe um novo plano de treino individual.\n\n" +
                 "--------------------------------------------------\n" +
                 conteudoPlano + "\n" +
                 "--------------------------------------------------\n\n" +
                 "Bons treinos!\n\n" +
                 "Cumprimentos,\n" +
-                "A sua Equipa Técnica");
+                "A sua Equipa Técnica";
 
-        mailSender.send(mensagem);
+        sendBrevoEmail(emailDestino, nomeAtleta, subject, text);
     }
 }
