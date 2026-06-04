@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +21,7 @@ public class EmailService {
     @Value("${brevo.sender.email:plataforma.gcdc@gmail.com}")
     private String senderEmail;
 
-    @Value("${brevo.sender.name:Gestão de Coletividades}")
+    @Value("${brevo.sender.name:Gestao de Coletividades}")
     private String senderName;
 
     private final RestTemplate restTemplate;
@@ -46,9 +47,15 @@ public class EmailService {
 
         String htmlContent = textContent.replace("\n", "<br/>");
 
+        Map<String, String> toObj = new HashMap<>();
+        toObj.put("email", emailDestino);
+        if (nomeDestinatario != null && !nomeDestinatario.isBlank()) {
+            toObj.put("name", nomeDestinatario);
+        }
+
         Map<String, Object> body = Map.of(
                 "sender", Map.of("name", senderName, "email", senderEmail),
-                "to", List.of(Map.of("email", emailDestino, "name", nomeDestinatario != null ? nomeDestinatario : "")),
+                "to", List.of(toObj),
                 "subject", subject,
                 "htmlContent", htmlContent
         );
@@ -74,7 +81,8 @@ public class EmailService {
                 "Cumprimentos,\n" +
                 "Equipa Gestão de Coletividades";
 
-        sendBrevoEmail(emailDestino, "", subject, text);
+        // Passar o próprio email como nome, caso o nome não esteja disponível
+        sendBrevoEmail(emailDestino, emailDestino, subject, text);
     }
 
     public void enviarConvocatoria(String emailDestino, String nomeDestinatario,
@@ -114,7 +122,8 @@ public class EmailService {
                 "Cumprimentos,\n" +
                 "Equipa Gestão de Coletividades";
 
-        sendBrevoEmail(emailDestino, "", subject, text);
+        // Passar o próprio email como nome, caso o nome não esteja disponível
+        sendBrevoEmail(emailDestino, emailDestino, subject, text);
     }
 
     public void enviarPlanoTreino(String emailDestino, String nomeAtleta, String conteudoPlano) {
