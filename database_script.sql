@@ -1126,3 +1126,7 @@ ALTER TABLE evento
 ADD CONSTRAINT fk_evento_escalao
 FOREIGN KEY (escalao_id)
 REFERENCES escalao(id);
+
+-- Permite clube de destino nulo (transferência para clube externo/desconhecido)
+ALTER TABLE transferencia_atleta
+MODIFY COLUMN clube_destino_id INT NULL;
