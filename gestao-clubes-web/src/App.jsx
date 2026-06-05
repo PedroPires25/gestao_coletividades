@@ -6,7 +6,6 @@ import RequireNotMedico from "./auth/RequireNotMedico";
 import RequireNotTreinador from "./auth/RequireNotTreinador";
 import TomorrowReminder from "./components/TomorrowReminder";
 
-// páginas base
 import LoginPage from "./pages/LoginPage";
 const MenuPage = lazy(() => import("./pages/MenuPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
@@ -44,7 +43,6 @@ const AreaAcessoColetividadePage = lazy(() => import("./pages/AreaAcessoColetivi
 const PerfilPage = lazy(() => import("./pages/PerfilPage"));
 const PoliticaPrivacidadePage = lazy(() => import("./pages/PoliticaPrivacidadePage"));
 
-// Módulo Médico
 const ClubeModuloMedicoPage = lazy(() => import("./pages/ClubeModuloMedicoPage"));
 const RegistosLesaoPage = lazy(() => import("./pages/RegistosLesaoPage"));
 const ConsultasMedicasPage = lazy(() => import("./pages/ConsultasMedicasPage"));
@@ -53,7 +51,6 @@ const PrescricoesPage = lazy(() => import("./pages/PrescricoesPage"));
 const RelatoriosMedicosPage = lazy(() => import("./pages/RelatoriosMedicosPage"));
 const AtletaFichaMedicaPage = lazy(() => import("./pages/AtletaFichaMedicaPage"));
 
-// Módulo Treinador
 const ClubeModuloTreinadorPage = lazy(() => import("./pages/ClubeModuloTreinadorPage"));
 const SessoesTreinoPage = lazy(() => import("./pages/SessoesTreinoPage"));
 const AssiduidadePage = lazy(() => import("./pages/AssiduidadePage"));
@@ -75,15 +72,16 @@ function RequireAuth({ children }) {
     const raw = localStorage.getItem("gc_user");
     if (!raw) return <Navigate to="/login" replace />;
 
+    let parsed = null;
     try {
-        const parsed = JSON.parse(raw);
-        if (!parsed?.token) return <Navigate to="/login" replace />;
-        // Se não está aprovado, redirecionar para pending-approval
-        if (parsed?.user?.estadoRegisto !== "APROVADO") {
-            return <Navigate to="/pending-approval" replace />;
-        }
+        parsed = JSON.parse(raw);
     } catch {
         return <Navigate to="/login" replace />;
+    }
+
+    if (!parsed?.token) return <Navigate to="/login" replace />;
+    if (parsed?.user?.estadoRegisto !== "APROVADO") {
+        return <Navigate to="/pending-approval" replace />;
     }
 
     return children;
@@ -102,7 +100,6 @@ export default function App() {
         <Suspense fallback={<RouteLoadingFallback />}>
             <TomorrowReminder />
             <Routes>
-                {/* rotas públicas */}
                 <Route path="/" element={<LoginPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -111,10 +108,8 @@ export default function App() {
                 <Route path="/reset-password/success" element={<ResetSuccessPage />} />
                 <Route path="/politica-privacidade" element={<PoliticaPrivacidadePage />} />
 
-                {/* Página de registo pendente */}
                 <Route path="/pending-approval" element={<PendingApprovalPage />} />
 
-                {/* Acesso negado */}
                 <Route path="/acesso-negado" element={<RequireAuth><AcessoNegadoPage /></RequireAuth>} />
 
                 <Route

@@ -9,8 +9,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 public class NoDefaultUserConfig {
 
     /**
-     * Este bean faz o Spring Boot "desistir" de criar o utilizador default
-     * (e de imprimir "Using generated security password").
+     * Este bean faz o Spring Boot "desistir" de criar o utilizador predefinido
+     * e de imprimir a palavra-passe de segurança gerada.
      *
      * Como usamos JWT, não queremos autenticação por UserDetails aqui.
      */

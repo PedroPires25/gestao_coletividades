@@ -5,19 +5,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 /**
- * Implementação real do SmsService via Twilio.
+ * Implementação do SmsService via Twilio.
  * Ativa quando notificacoes.sms.ativo=true.
- *
- * Para ativar, adicionar ao pom.xml:
- *   <dependency>
- *       <groupId>com.twilio.sdk</groupId>
- *       <artifactId>twilio</artifactId>
- *       <version>10.1.0</version>
- *   </dependency>
- *
- * E definir as variáveis de ambiente:
- *   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
- *   NOTIFICACOES_SMS_ATIVO=true
+ * Requer a dependência Twilio no pom.xml e as variáveis de ambiente:
+ * TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
  */
 @Service
 @ConditionalOnProperty(name = "notificacoes.sms.ativo", havingValue = "true")
@@ -34,15 +25,6 @@ public class SmsTwilioService implements SmsService {
 
     @Override
     public void enviarSms(String numero, String mensagem) {
-        // Integração Twilio — descomentar após adicionar a dependência ao pom.xml:
-        //
-        // Twilio.init(accountSid, authToken);
-        // Message.creator(
-        //     new PhoneNumber(numero),
-        //     new PhoneNumber(fromNumber),
-        //     mensagem
-        // ).create();
-
         throw new UnsupportedOperationException(
             "SmsTwilioService não configurado. Adicione a dependência Twilio ao pom.xml.");
     }

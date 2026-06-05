@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.logging.Logger;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -23,6 +24,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin")
 public class AdminRestController {
+
+    private static final Logger LOGGER = Logger.getLogger(AdminRestController.class.getName());
 
     private final UtilizadorDAO utilizadorDAO = new UtilizadorDAO();
     private final PerfilDAO perfilDAO = new PerfilDAO();
@@ -637,7 +640,7 @@ public class AdminRestController {
                 if (rs.next()) return rs.getInt("id");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -661,7 +664,7 @@ public class AdminRestController {
                 if (rs.next()) return rs.getInt("id");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -685,7 +688,7 @@ public class AdminRestController {
                 if (rs.next()) return rs.getInt("id");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;

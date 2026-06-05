@@ -2,11 +2,14 @@ package com.gestaoclubes.api.dao;
 
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AtletaClubeModalidadeDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(AtletaClubeModalidadeDAO.class.getName());
 
     public boolean inserirInscricao(int atletaId, int clubeModalidadeId, Date dataInscricao) {
         String sql = """
@@ -21,7 +24,7 @@ public class AtletaClubeModalidadeDAO {
             ps.setDate(3, dataInscricao);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -39,7 +42,7 @@ public class AtletaClubeModalidadeDAO {
             ps.setInt(2, atletaId);
             return ps.executeUpdate() >= 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -67,7 +70,7 @@ public class AtletaClubeModalidadeDAO {
             ps.setInt(5, clubeModalidadeId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -107,7 +110,7 @@ public class AtletaClubeModalidadeDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return rows;
     }

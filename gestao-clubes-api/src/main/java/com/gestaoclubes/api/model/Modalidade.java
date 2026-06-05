@@ -13,12 +13,11 @@ public class Modalidade {
         this.ativo = ativo;
     }
 
-    // Para inserts
+    // Para inserções sem escalão
     public Modalidade(String nome, String descricao) {
         this(0, nome, descricao, true);
     }
 
-    // Se quiseres manter compatibilidade com o construtor antigo:
     public Modalidade(int id, String nome, String descricao) {
         this(id, nome, descricao, true);
     }

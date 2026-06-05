@@ -9,9 +9,12 @@ import org.springframework.stereotype.Repository;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 @Repository
 public class UtilizadorDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(UtilizadorDAO.class.getName());
 
     public Utilizador autenticar(String email, String palavraChave) {
         String sql = "SELECT * FROM utilizadores WHERE utilizador = ? AND ativo = 1";
@@ -37,8 +40,8 @@ public class UtilizadorDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Erro ao autenticar utilizador: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.warning("Erro ao autenticar utilizador: " + e.getMessage());
+            LOGGER.severe(e.toString());
             return null;
         }
     }
@@ -56,8 +59,8 @@ public class UtilizadorDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Erro ao verificar email: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.warning("Erro ao verificar email: " + e.getMessage());
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -103,7 +106,7 @@ public class UtilizadorDAO {
             return stmt.executeUpdate() == 1;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -123,7 +126,7 @@ public class UtilizadorDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -144,7 +147,7 @@ public class UtilizadorDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -165,8 +168,8 @@ public class UtilizadorDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Erro ao buscar utilizador por email: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.warning("Erro ao buscar utilizador por email: " + e.getMessage());
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -183,7 +186,7 @@ public class UtilizadorDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -199,7 +202,7 @@ public class UtilizadorDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -215,7 +218,7 @@ public class UtilizadorDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -231,7 +234,7 @@ public class UtilizadorDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -254,7 +257,7 @@ public class UtilizadorDAO {
             return ps.executeUpdate() > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -309,7 +312,7 @@ public class UtilizadorDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -359,7 +362,7 @@ public class UtilizadorDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -402,7 +405,7 @@ public class UtilizadorDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -455,7 +458,7 @@ public class UtilizadorDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -496,7 +499,7 @@ public class UtilizadorDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -537,7 +540,7 @@ public class UtilizadorDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -580,7 +583,7 @@ public class UtilizadorDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -623,7 +626,7 @@ public class UtilizadorDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -666,7 +669,7 @@ public class UtilizadorDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -709,7 +712,7 @@ public class UtilizadorDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -764,7 +767,7 @@ public class UtilizadorDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -781,7 +784,7 @@ public class UtilizadorDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -797,7 +800,7 @@ public class UtilizadorDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -815,7 +818,7 @@ public class UtilizadorDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -831,7 +834,7 @@ public class UtilizadorDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }

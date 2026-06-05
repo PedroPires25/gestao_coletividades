@@ -125,7 +125,7 @@ export default function ClubeDepartamentoStaffPage() {
     const [erro, setErro] = useState("");
     const [msg, setMsg] = useState("");
 
-    // Create form
+    // Formulário de criação
     const [showForm, setShowForm] = useState(false);
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState({

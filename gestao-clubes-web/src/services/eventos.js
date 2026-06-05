@@ -1,4 +1,4 @@
-const API_BASE = `${(import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "")}/api`;
+import { API_BASE } from "../config/apiBase";
 const LS_KEY = "gc_user";
 
 function getStoredToken() {
@@ -113,9 +113,8 @@ export async function atualizarEvento(clubeId, clubeModalidadeId, eventoId, payl
   });
 }
 
-export async function deletarEvento(clubeId, clubeModalidadeId, eventoId) {
+export async function eliminarEvento(clubeId, clubeModalidadeId, eventoId) {
   return http(`/gestao/eventos/${eventoId}`, {
     method: "DELETE",
   });
 }
-

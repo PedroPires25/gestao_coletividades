@@ -3,11 +3,14 @@ package com.gestaoclubes.api.dao;
 import com.gestaoclubes.api.model.EstadoAtleta;
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EstadoAtletaDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(EstadoAtletaDAO.class.getName());
 
     public List<EstadoAtleta> listarTodos() {
         List<EstadoAtleta> lista = new ArrayList<>();
@@ -21,7 +24,7 @@ public class EstadoAtletaDAO {
                 lista.add(new EstadoAtleta(rs.getInt("id"), rs.getString("descricao")));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return lista;
     }

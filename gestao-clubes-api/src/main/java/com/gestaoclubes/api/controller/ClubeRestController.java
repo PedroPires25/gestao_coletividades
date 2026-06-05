@@ -10,11 +10,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.logging.Logger;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/clubes")
 public class ClubeRestController {
+
+    private static final Logger LOGGER = Logger.getLogger(ClubeRestController.class.getName());
 
     private final ClubeDAO clubeDAO = new ClubeDAO();
     private final AuditLogDAO auditLogDAO = new AuditLogDAO();
@@ -53,7 +56,7 @@ public class ClubeRestController {
                 String depois = mapper.writeValueAsString(clube);
                 auditLogDAO.inserir(adminId, "CREATE", "clube", null, null, depois);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.severe(e.toString());
             }
         }
 
