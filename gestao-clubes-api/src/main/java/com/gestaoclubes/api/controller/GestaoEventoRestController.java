@@ -238,7 +238,7 @@ public class GestaoEventoRestController {
                     .body(Map.of("erro", "Erro ao atualizar evento."));
         }
 
-        // Replace convocados if provided
+        // Atualiza convocados se fornecidos
         if (body.containsKey("convocados")) {
             List<Integer> convocados = extrairIds(body.get("convocados"));
             if ("MODALIDADE".equals(tipo)) {
@@ -271,7 +271,7 @@ public class GestaoEventoRestController {
                     .body(Map.of("erro", "Treinadores só podem apagar os seus próprios eventos/convocatórias."));
         }
 
-        // Remove convocados first (also handled by CASCADE, but explicit for safety)
+        // Remove convocados primeiro (também tratado pelo CASCADE, mas explicitado por segurança)
         String tipo = (String) existente.get("tipo");
         if ("MODALIDADE".equals(tipo)) {
             eventoAtletaDAO.removerTodos(id);

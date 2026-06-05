@@ -5,6 +5,7 @@ import com.gestaoclubes.api.model.ColetividadeAtividade;
 import com.gestaoclubes.api.util.ConexoBD;
 import org.springframework.stereotype.Repository;
 
+import java.util.logging.Logger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,6 +15,8 @@ import java.util.List;
 
 @Repository
 public class ColetividadeAtividadeDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(ColetividadeAtividadeDAO.class.getName());
 
     public List<ColetividadeAtividade> listarPorColetividade(int coletividadeId, boolean apenasAtivas, String ano) {
         List<ColetividadeAtividade> lista = new ArrayList<>();
@@ -74,7 +77,7 @@ public class ColetividadeAtividadeDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -99,7 +102,7 @@ public class ColetividadeAtividadeDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -115,7 +118,7 @@ public class ColetividadeAtividadeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -163,7 +166,7 @@ public class ColetividadeAtividadeDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;

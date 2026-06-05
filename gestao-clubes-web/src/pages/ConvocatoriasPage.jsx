@@ -128,7 +128,6 @@ export default function ConvocatoriasPage() {
             const modalidadeInicial = isTreinador
                 ? modalidadeAtualId
                 : getClubeModalidadeId(modalidadesLista[0]);
-            // Default athletes: load for first escalão if available, else no filter
             if (escaloesLista.length > 0) {
                 const atletasData = await getAtletasConvocatoriasTreinador(clubeId, escaloesLista[0].id, modalidadeInicial);
                 setAtletas(Array.isArray(atletasData) ? atletasData : []);
@@ -174,7 +173,6 @@ export default function ConvocatoriasPage() {
             const ids = (Array.isArray(conv) ? conv : []).map((a) => a.id);
             const escalaoId = evento.escalaoId ?? "";
             const clubeModalidadeId = evento.clubeModalidadeId ?? "";
-            // Load athletes for the event's escalão (or all if none)
             if (escalaoId) {
                 const atletasData = await getAtletasConvocatoriasTreinador(clubeId, escalaoId, clubeModalidadeId);
                 setAtletas(Array.isArray(atletasData) ? atletasData : []);

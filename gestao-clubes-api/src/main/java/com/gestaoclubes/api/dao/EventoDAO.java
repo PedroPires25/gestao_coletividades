@@ -3,6 +3,7 @@ package com.gestaoclubes.api.dao;
 import com.gestaoclubes.api.model.Evento;
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -10,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 public class EventoDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(EventoDAO.class.getName());
 
     public List<Map<String, Object>> listarTodos() {
         List<Map<String, Object>> lista = new ArrayList<>();
@@ -47,7 +50,7 @@ public class EventoDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -86,7 +89,7 @@ public class EventoDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -131,7 +134,7 @@ public class EventoDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -176,7 +179,7 @@ public class EventoDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -222,7 +225,7 @@ public class EventoDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -267,7 +270,7 @@ public class EventoDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -310,7 +313,7 @@ public class EventoDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -376,7 +379,7 @@ public class EventoDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -421,7 +424,7 @@ public class EventoDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -465,7 +468,7 @@ public class EventoDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -502,7 +505,7 @@ public class EventoDAO {
             return ps.executeUpdate() > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -514,7 +517,7 @@ public class EventoDAO {
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }

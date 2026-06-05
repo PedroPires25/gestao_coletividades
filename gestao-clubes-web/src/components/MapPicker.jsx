@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents, useMap, LayersControl } 
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Fix default marker icon (Leaflet + bundlers issue)
+// Correção do ícone predefinido do marcador (problema Leaflet + bundlers)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -78,10 +78,10 @@ export default function MapPicker({ latitude, longitude, onLocationChange, readO
         }
     }, []);
 
-    // Sync externally controlled searchValue → internal search field.
-    // When the parent changes the "Local" text field, the map search updates accordingly.
-    // The ignoreNextSyncRef flag prevents re-triggering a search when the parent's
-    // state is simply echoing back an address we just selected (result selection flow).
+    // Sincroniza o valor de pesquisa controlado externamente com o campo de pesquisa interno.
+    // Quando o campo "Local" do componente pai muda, a pesquisa no mapa atualiza em conformidade.
+    // O ignoreNextSyncRef evita desencadear uma nova pesquisa quando o pai está apenas
+    // a refletir um endereço que acabou de ser selecionado no mapa.
     useEffect(() => {
         if (searchValue === undefined) return;
         if (searchValue !== prevSearchValue.current) {

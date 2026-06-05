@@ -1,4 +1,4 @@
-const API_URL = ((import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "")) + "/api";
+import { API_BASE as API_URL } from "../config/apiBase";
 const LS_KEY = "gc_user";
 
 function getStoredToken() {

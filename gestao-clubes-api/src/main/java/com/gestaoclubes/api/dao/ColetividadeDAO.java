@@ -3,11 +3,14 @@ package com.gestaoclubes.api.dao;
 import com.gestaoclubes.api.model.Coletividade;
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ColetividadeDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(ColetividadeDAO.class.getName());
 
     private Date toSql(java.util.Date d) {
         return (d == null) ? null : new Date(d.getTime());
@@ -31,7 +34,7 @@ public class ColetividadeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -61,7 +64,7 @@ public class ColetividadeDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -94,7 +97,7 @@ public class ColetividadeDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -120,7 +123,7 @@ public class ColetividadeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -150,7 +153,7 @@ public class ColetividadeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }

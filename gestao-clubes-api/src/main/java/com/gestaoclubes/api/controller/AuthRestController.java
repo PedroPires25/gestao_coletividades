@@ -241,7 +241,7 @@ public class AuthRestController {
 
         if (redirectUrl == null || redirectUrl.isBlank()) {
             return ResponseEntity.ok(
-                    new GetRedirectUrlResponse("/menu", "Redirecionamento para menu padrão.", true)
+                    new GetRedirectUrlResponse("/menu", "Redirecionamento para menu predefinido.", true)
             );
         }
 

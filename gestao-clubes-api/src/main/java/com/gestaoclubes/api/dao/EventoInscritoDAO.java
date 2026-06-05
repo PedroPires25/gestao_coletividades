@@ -2,6 +2,7 @@ package com.gestaoclubes.api.dao;
 
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -9,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 public class EventoInscritoDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(EventoInscritoDAO.class.getName());
 
     public List<Map<String, Object>> listarPorEvento(int eventoId) {
         List<Map<String, Object>> lista = new ArrayList<>();
@@ -41,7 +44,7 @@ public class EventoInscritoDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -65,7 +68,7 @@ public class EventoInscritoDAO {
             return true;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -78,7 +81,7 @@ public class EventoInscritoDAO {
             ps.executeUpdate();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }

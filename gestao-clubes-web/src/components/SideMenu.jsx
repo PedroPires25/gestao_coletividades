@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { useTheme } from "../theme/ThemeContext";
-import { useAuth } from "../auth/AuthContext"; // Importar o useAuth
+import { useAuth } from "../auth/AuthContext";
 import UserAvatar from "./UserAvatar";
 
 import homeIcon from "../assets/home.svg";
@@ -45,7 +45,6 @@ const MENU_ICONS = {
     "Voltar ao Clube": clubesIcon,
     "Voltar": homeIcon,
     "Direção": direcaoIcon,
-    // Novos mapeamentos para o Treinador
     "Treinos": treinoIcon,
     "Plano de Treino": planoTreinoIcon,
     "Estatísticas": estatisticasIcon,

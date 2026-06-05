@@ -2,6 +2,7 @@ package com.gestaoclubes.api.dao;
 
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 public class StaffAfetacaoEscalaoDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(StaffAfetacaoEscalaoDAO.class.getName());
 
     /**
      * Returns the escalões assigned to the trainer (identified by {@code utilizadorId})
@@ -43,7 +46,7 @@ public class StaffAfetacaoEscalaoDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -59,7 +62,7 @@ public class StaffAfetacaoEscalaoDAO {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) ids.add(rs.getInt(1));
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return ids;
@@ -90,7 +93,7 @@ public class StaffAfetacaoEscalaoDAO {
 
             conn.commit();
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
     }
 }
