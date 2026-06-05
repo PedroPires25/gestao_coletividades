@@ -86,3 +86,15 @@ export async function updateAtleta(clubeId, modalidadeId, atletaId, payload) {
         body: JSON.stringify(payload),
     });
 }
+
+export async function getTransferencias(clubeId) {
+    const data = await authFetch(`/clubes/${clubeId}/transferencias`);
+    return extractArray(data);
+}
+
+export async function registarTransferencia(clubeId, atletaId, payload) {
+    return authFetch(`/clubes/${clubeId}/atletas/${atletaId}/transferir`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+}
