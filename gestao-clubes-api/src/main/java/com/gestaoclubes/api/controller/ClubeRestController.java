@@ -31,6 +31,14 @@ public class ClubeRestController {
         return clubeDAO.listarTodos();
     }
 
+    @GetMapping("/pesquisar")
+    public List<Clube> pesquisarPorNome(@RequestParam String nome) {
+        if (nome == null || nome.isBlank()) {
+            return List.of();
+        }
+        return clubeDAO.pesquisarPorNome(nome);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Clube> buscarPorId(@PathVariable int id) {
         Clube c = clubeDAO.buscarPorId(id);

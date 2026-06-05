@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getTransferencias, registarTransferencia } from "../services/atletas";
+import { getTransferencias, registarTransferencia, pesquisarClubes } from "../services/atletas";
 
 const ROLES_TRANSFERENCIA = ["SUPER_ADMIN", "ADMINISTRADOR", "SECRETARIO"];
 
@@ -25,7 +25,11 @@ export default function ClubeTransferenciasPage() {
     // Formulário de transferência
     const [mostrarForm, setMostrarForm] = useState(!!atletaInicial);
     const [atletaForm, setAtletaForm] = useState(atletaInicial ?? null);
-    const [clubeDestinoId, setClubeDestinoId] = useState("");
+    const [clubeDestinoId, setClubeDestinoId] = useState(null);
+    const [clubeDestinoNome, setClubeDestinoNome] = useState("");
+    const [resultadosPesquisa, setResultadosPesquisa] = useState([]);
+    const [pesquisando, setPesquisando] = useState(false);
+    const pesquisaTimeout = useRef(null);
     const [dataTransferencia, setDataTransferencia] = useState(
         new Date().toISOString().slice(0, 10)
     );
@@ -43,6 +47,31 @@ export default function ClubeTransferenciasPage() {
         return () => { activo = false; };
     }, [clubeId, refetchKey]);
 
+    function handlePesquisaClube(valor) {
+        setClubeDestinoNome(valor);
+        setClubeDestinoId(null);
+        setResultadosPesquisa([]);
+        clearTimeout(pesquisaTimeout.current);
+        if (!valor.trim()) return;
+        pesquisaTimeout.current = setTimeout(async () => {
+            setPesquisando(true);
+            try {
+                const res = await pesquisarClubes(valor);
+                setResultadosPesquisa(res);
+            } catch {
+                setResultadosPesquisa([]);
+            } finally {
+                setPesquisando(false);
+            }
+        }, 350);
+    }
+
+    function selecionarClubeDestino(clube) {
+        setClubeDestinoId(clube.id);
+        setClubeDestinoNome(clube.nome);
+        setResultadosPesquisa([]);
+    }
+
     async function submeterTransferencia(e) {
         e.preventDefault();
         if (!atletaForm) return;
@@ -50,14 +79,16 @@ export default function ClubeTransferenciasPage() {
         setAGuardar(true);
         try {
             await registarTransferencia(clubeId, atletaForm.id, {
-                clubeDestinoId: clubeDestinoId ? Number(clubeDestinoId) : null,
+                clubeDestinoId: clubeDestinoId ?? null,
                 dataTransferencia,
                 observacoes: observacoes || null,
             });
             setMsgSucesso(`Atleta "${atletaForm.nome}" transferido com sucesso.`);
             setMostrarForm(false);
             setAtletaForm(null);
-            setClubeDestinoId("");
+            setClubeDestinoId(null);
+            setClubeDestinoNome("");
+            setResultadosPesquisa([]);
             setObservacoes("");
             navigate(location.pathname, { replace: true, state: null });
             setCarregando(true);
@@ -132,19 +163,43 @@ export default function ClubeTransferenciasPage() {
                                     onChange={e => setDataTransferencia(e.target.value)}
                                 />
                             </div>
-                            <div className="form-group" style={{ marginTop: 12 }}>
-                                <label htmlFor="clubeDestinoId">
-                                    ID do Clube de Destino <span className="hint">(opcional)</span>
+                            <div className="form-group" style={{ marginTop: 12, position: "relative" }}>
+                                <label htmlFor="clubeDestinoNome">
+                                    Clube de Destino <span className="hint">(opcional — pesquisar por nome)</span>
                                 </label>
                                 <input
-                                    id="clubeDestinoId"
-                                    type="number"
-                                    min="1"
+                                    id="clubeDestinoNome"
+                                    type="text"
                                     className="form-control"
-                                    placeholder="Deixar em branco se desconhecido"
-                                    value={clubeDestinoId}
-                                    onChange={e => setClubeDestinoId(e.target.value)}
+                                    placeholder="Digite o nome do clube de destino..."
+                                    value={clubeDestinoNome}
+                                    onChange={e => handlePesquisaClube(e.target.value)}
+                                    autoComplete="off"
                                 />
+                                {pesquisando && (
+                                    <p className="subtle" style={{ marginTop: 4 }}>A pesquisar...</p>
+                                )}
+                                {resultadosPesquisa.length > 0 && (
+                                    <ul style={{
+                                        position: "absolute", zIndex: 10, background: "#fff",
+                                        border: "1px solid #ccc", borderRadius: 4, width: "100%",
+                                        margin: 0, padding: 0, listStyle: "none", maxHeight: 180, overflowY: "auto"
+                                    }}>
+                                        {resultadosPesquisa.map(c => (
+                                            <li key={c.id}
+                                                style={{ padding: "8px 12px", cursor: "pointer" }}
+                                                onMouseDown={() => selecionarClubeDestino(c)}
+                                            >
+                                                {c.nome}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                                {clubeDestinoId && (
+                                    <p className="subtle" style={{ marginTop: 4 }}>
+                                        ✓ Clube selecionado: <strong>{clubeDestinoNome}</strong>
+                                    </p>
+                                )}
                             </div>
                             <div className="form-group" style={{ marginTop: 12 }}>
                                 <label htmlFor="observacoes">
@@ -176,6 +231,9 @@ export default function ClubeTransferenciasPage() {
                                     onClick={() => {
                                         setMostrarForm(false);
                                         setAtletaForm(null);
+                                        setClubeDestinoId(null);
+                                        setClubeDestinoNome("");
+                                        setResultadosPesquisa([]);
                                         setErroForm(null);
                                         navigate(location.pathname, { replace: true, state: null });
                                     }}
