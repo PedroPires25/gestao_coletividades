@@ -58,22 +58,24 @@ public class TransferenciaAtletaDAO {
                    t.data_transferencia,
                    t.observacoes,
                    e.nome                   AS escalao,
-                   m.nome                   AS modalidade
+                   ultima.modalidade_nome   AS modalidade
             FROM transferencia_atleta t
             JOIN atleta a  ON a.id  = t.atleta_id
             LEFT JOIN utilizadores u ON u.id = a.utilizador_id
             JOIN clube co ON co.id  = t.clube_origem_id
             LEFT JOIN clube cd ON cd.id = t.clube_destino_id
             LEFT JOIN escalao e ON e.id = a.escalao_id
-            LEFT JOIN atleta_clube_modalidade acm
-                   ON acm.atleta_id = a.id
-                  AND acm.clube_modalidade_id = (
-                          SELECT cm2.id FROM clube_modalidade cm2
-                          WHERE cm2.clube_id = t.clube_origem_id
-                          ORDER BY cm2.id DESC LIMIT 1
-                      )
-            LEFT JOIN clube_modalidade cm ON cm.id = acm.clube_modalidade_id
-            LEFT JOIN modalidade m ON m.id = cm.modalidade_id
+            LEFT JOIN (
+                SELECT acm2.atleta_id, m2.nome AS modalidade_nome
+                FROM atleta_clube_modalidade acm2
+                JOIN clube_modalidade cm2 ON cm2.id = acm2.clube_modalidade_id
+                JOIN modalidade m2 ON m2.id = cm2.modalidade_id
+                WHERE acm2.id IN (
+                    SELECT MAX(acm3.id)
+                    FROM atleta_clube_modalidade acm3
+                    GROUP BY acm3.atleta_id
+                )
+            ) ultima ON ultima.atleta_id = a.id
             WHERE t.clube_origem_id = ? OR t.clube_destino_id = ?
             ORDER BY t.data_transferencia DESC, atleta_nome
         """;
