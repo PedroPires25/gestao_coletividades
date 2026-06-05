@@ -26,6 +26,7 @@ const ClubeStaffPage = lazy(() => import("./pages/ClubeStaffPage"));
 const ClubeStaffModalidadePage = lazy(() => import("./pages/ClubeStaffModalidadePage"));
 const ClubeDepartamentoStaffPage = lazy(() => import("./pages/ClubeDepartamentoStaffPage"));
 const ClubeModalidadesPage = lazy(() => import("./pages/ClubeModalidadesPage"));
+const ClubeTransferenciasPage = lazy(() => import("./pages/ClubeTransferenciasPage"));
 const ClubeEventosPage = lazy(() => import("./pages/ClubeEventosPage"));
 const EventosPage = lazy(() => import("./pages/EventosPage"));
 const GestaoEventosPage = lazy(() => import("./pages/GestaoEventosPage"));
@@ -272,6 +273,19 @@ export default function App() {
                             <RequireNotTreinador>
                                 <ClubeDepartamentoStaffPage />
                             </RequireNotTreinador>
+                        </RequireAuth>
+                    }
+                />
+
+                <Route
+                    path="/clubes/:clubeId/transferencias"
+                    element={
+                        <RequireAuth>
+                            <RequireNotMedico>
+                                <RequireNotTreinador>
+                                    <ClubeTransferenciasPage />
+                                </RequireNotTreinador>
+                            </RequireNotMedico>
                         </RequireAuth>
                     }
                 />
