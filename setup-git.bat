@@ -1,14 +1,14 @@
 @echo off
-cd /d "C:\Users\Pedro Pires\Desktop\Projeto-final"
+cd /d "%~dp0"
 
-echo Inicializando repositorio Git...
+echo A inicializar repositorio Git...
 git init
 
-echo Configurando Git user...
+echo A configurar utilizador Git...
 git config user.name "Pedro Pires"
 git config user.email "seu.email@example.com"
 
-echo Criando .gitignore...
+echo A criar .gitignore...
 (
 echo node_modules/
 echo .idea/
@@ -19,14 +19,14 @@ echo build/
 echo *.log
 ) > .gitignore
 
-echo Adicionando ficheiros...
+echo A adicionar ficheiros...
 git add .
 
-echo Fazendo primeiro commit...
+echo A criar primeiro commit...
 git commit -m "Initial commit"
 
 echo.
-echo DONE! Repositorio Git criado.
+echo Concluido! Repositorio Git criado.
 echo.
 echo Proximos passos:
 echo 1. Ir a https://github.com/new

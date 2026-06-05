@@ -4,6 +4,7 @@ import com.gestaoclubes.api.model.Atividade;
 import com.gestaoclubes.api.util.ConexoBD;
 import org.springframework.stereotype.Repository;
 
+import java.util.logging.Logger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,6 +13,8 @@ import java.util.List;
 
 @Repository
 public class AtividadeDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(AtividadeDAO.class.getName());
 
     public List<Atividade> listarAtivas() {
         List<Atividade> lista = new ArrayList<>();
@@ -37,7 +40,7 @@ public class AtividadeDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -67,7 +70,7 @@ public class AtividadeDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -91,7 +94,7 @@ public class AtividadeDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -114,7 +117,7 @@ public class AtividadeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }

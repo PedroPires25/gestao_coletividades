@@ -12,7 +12,6 @@ public class Atleta {
     private int clubeAtualId;
     private int estadoId;
 
-    // NOVOS CAMPOS
     private int escalaoId;
     private double remuneracao;
     private String fotoPath;
@@ -43,7 +42,6 @@ public class Atleta {
         this(0, nome, dataNascimento, email, telefone, morada, clubeAtualId, estadoId, escalaoId, remuneracao);
     }
 
-    // Construtores antigos (compatibilidade com código antigo)
     public Atleta(int id, String nome, Date dataNascimento, String email, String telefone, String morada,
                   int clubeAtualId, int estadoId) {
         this(id, nome, dataNascimento, email, telefone, morada, clubeAtualId, estadoId, 0, 0.0);

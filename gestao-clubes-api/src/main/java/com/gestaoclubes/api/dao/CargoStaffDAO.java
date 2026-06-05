@@ -3,11 +3,14 @@ package com.gestaoclubes.api.dao;
 import com.gestaoclubes.api.model.CargoStaff;
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CargoStaffDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(CargoStaffDAO.class.getName());
 
     public List<CargoStaff> listarTodos() {
         List<CargoStaff> lista = new ArrayList<>();
@@ -26,7 +29,7 @@ public class CargoStaffDAO {
                 ));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return lista;
     }

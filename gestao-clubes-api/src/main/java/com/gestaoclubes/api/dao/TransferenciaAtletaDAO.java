@@ -2,11 +2,14 @@ package com.gestaoclubes.api.dao;
 
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TransferenciaAtletaDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(TransferenciaAtletaDAO.class.getName());
 
     public boolean inserir(int atletaId, int clubeOrigemId, int clubeDestinoId, Date data, String obs) {
         String sql = """
@@ -57,7 +60,7 @@ public class TransferenciaAtletaDAO {
                 });
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return rows;
     }

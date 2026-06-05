@@ -25,9 +25,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 @Service
 public class FileUploadService {
+
+    private static final Logger LOGGER = Logger.getLogger(FileUploadService.class.getName());
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp");
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -51,7 +54,18 @@ public class FileUploadService {
 
     @PostConstruct
     public void init() {
-        useCloudinary = cloudName != null && !cloudName.isBlank();
+        boolean hasCloudName = cloudName != null && !cloudName.isBlank();
+        boolean hasApiKey = apiKey != null && !apiKey.isBlank();
+        boolean hasApiSecret = apiSecret != null && !apiSecret.isBlank();
+
+        if (hasCloudName || hasApiKey || hasApiSecret) {
+            if (!hasCloudName || !hasApiKey || !hasApiSecret) {
+                throw new IllegalStateException(
+                        "CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY e CLOUDINARY_API_SECRET devem estar todos configurados.");
+            }
+        }
+
+        useCloudinary = hasCloudName;
         if (useCloudinary) {
             cloudinary = new Cloudinary(ObjectUtils.asMap(
                     "cloud_name", cloudName,
@@ -59,15 +73,12 @@ public class FileUploadService {
                     "api_secret", apiSecret,
                     "secure", true
             ));
-            System.out.println("FileUploadService: Cloudinary configurado (" + cloudName + ")");
+            LOGGER.info("FileUploadService: Cloudinary configurado (" + cloudName + ")");
         } else {
-            System.out.println("FileUploadService: Usando armazenamento local ('" + uploadDir + "')");
+            LOGGER.info("FileUploadService: Usando armazenamento local ('" + uploadDir + "')");
         }
     }
 
-    /**
-     * Guarda um ficheiro (qualquer formato permitido) e devolve o caminho/URL.
-     */
     public String guardarFicheiro(MultipartFile file, String subpasta) throws IOException {
         validar(file);
         String extension = getExtension(file.getOriginalFilename());
@@ -80,9 +91,6 @@ public class FileUploadService {
         return guardarLocal(file, subpasta, extension);
     }
 
-    /**
-     * Guarda uma imagem de avatar: recorta ao centro, redimensiona e comprime.
-     */
     public String guardarAvatar(MultipartFile file, String subpasta) throws IOException {
         validar(file);
         String extension = getExtension(file.getOriginalFilename());
@@ -102,9 +110,6 @@ public class FileUploadService {
         return guardarAvatarLocal(processed, subpasta);
     }
 
-    /**
-     * Remove um ficheiro (local ou Cloudinary).
-     */
     public void removerFicheiro(String path) {
         if (path == null || path.isBlank()) return;
         if (useCloudinary && path.startsWith("http")) {
@@ -114,25 +119,20 @@ public class FileUploadService {
                     cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
                 }
             } catch (Exception e) {
-                System.err.println("Erro ao remover ficheiro do Cloudinary: " + e.getMessage());
+                LOGGER.warning("Erro ao remover ficheiro do Cloudinary: " + e.getMessage());
             }
         } else {
             try {
                 Files.deleteIfExists(Paths.get(uploadDir, path));
             } catch (IOException e) {
-                System.err.println("Erro ao remover ficheiro local: " + e.getMessage());
+                LOGGER.warning("Erro ao remover ficheiro local: " + e.getMessage());
             }
         }
     }
 
-    /**
-     * Devolve o Path absoluto de um ficheiro local (usado para servir ficheiros via HTTP).
-     */
     public Path resolverCaminho(String relativePath) {
         return Paths.get(uploadDir, relativePath);
     }
-
-    // ── Cloudinary ──────────────────────────────────────────────────────────
 
     private String uploadParaCloudinary(byte[] bytes, String folder, String resourceType) throws IOException {
         try {
@@ -147,20 +147,15 @@ public class FileUploadService {
         }
     }
 
-    /** Extrai o public_id de uma URL Cloudinary para permitir a eliminação. */
     private String extractPublicId(String url) {
         int idx = url.indexOf("/upload/");
         if (idx < 0) return null;
         String after = url.substring(idx + 8);
-        // remove segmento de versão (v1234567/)
         if (after.matches("v\\d+/.*")) after = after.substring(after.indexOf('/') + 1);
-        // remove extensão
         int dot = after.lastIndexOf('.');
         if (dot > 0 && dot > after.lastIndexOf('/')) after = after.substring(0, dot);
         return after;
     }
-
-    // ── Armazenamento local ──────────────────────────────────────────────────
 
     private String guardarLocal(MultipartFile file, String subpasta, String extension) throws IOException {
         String uniqueName = UUID.randomUUID() + "." + extension.toLowerCase();
@@ -179,8 +174,6 @@ public class FileUploadService {
         }
         return subpasta + "/" + uniqueName;
     }
-
-    // ── Processamento de imagem ──────────────────────────────────────────────
 
     private BufferedImage cropToSquare(BufferedImage img) {
         int w = img.getWidth(), h = img.getHeight(), size = Math.min(w, h);
@@ -213,8 +206,6 @@ public class FileUploadService {
             writer.dispose();
         }
     }
-
-    // ── Validação ────────────────────────────────────────────────────────────
 
     private void validar(MultipartFile file) {
         if (file == null || file.isEmpty()) throw new IllegalArgumentException("Ficheiro vazio.");

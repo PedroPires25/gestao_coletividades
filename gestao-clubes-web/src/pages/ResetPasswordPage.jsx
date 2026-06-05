@@ -4,8 +4,7 @@ import PasswordChecklist from "../components/PasswordChecklist";
 import ConfirmPasswordStatus from "../components/ConfirmPasswordStatus";
 import { evaluatePassword } from "../utils/passwordStrength";
 import { extractApiErrorMessage } from "../utils/apiError";
-
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "") + "/api";
+import { API_BASE as API_URL } from "../config/apiBase";
 
 const EyeOpenIcon = () => (
     <svg

@@ -1,74 +1,49 @@
 package com.gestaoclubes.api.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class EmailService {
 
-    @Value("${brevo.api.key:}")
-    private String brevoApiKey;
+    private final JavaMailSender mailSender;
 
-    @Value("${brevo.sender.email:plataforma.gcdc@gmail.com}")
+    @Value("${spring.mail.username:}")
+    private String brevoUsername;
+
+    @Value("${spring.mail.password:}")
+    private String brevoPassword;
+
+    @Value("${brevo.sender.email:}")
     private String senderEmail;
 
-    @Value("${brevo.sender.name:Gestao de Coletividades}")
+    @Value("${brevo.sender.name:Gestão de Coletividades}")
     private String senderName;
 
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
-
-    public EmailService() {
-        this.restTemplate = new RestTemplate();
-        this.objectMapper = new ObjectMapper();
+    public EmailService(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
     }
 
-
     private void sendBrevoEmail(String emailDestino, String nomeDestinatario, String subject, String textContent) {
-        if (brevoApiKey == null || brevoApiKey.trim().isBlank()) {
-            System.err.println("ERRO: BREVO_API_KEY não configurada. Email não enviado.");
-            return;
+        if (brevoUsername == null || brevoUsername.isBlank() || brevoPassword == null || brevoPassword.isBlank()) {
+            throw new IllegalStateException("BREVO_USERNAME e BREVO_PASSWORD devem estar configurados para envio de email.");
         }
-
-        String url = "https://api.brevo.com/v3/smtp/email";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("api-key", brevoApiKey.trim());
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-
-        String htmlContent = textContent.replace("\n", "<br/>");
-
-        Map<String, String> toObj = new HashMap<>();
-        toObj.put("email", emailDestino);
-        if (nomeDestinatario != null && !nomeDestinatario.isBlank()) {
-            toObj.put("name", nomeDestinatario);
-        }
-
-        Map<String, Object> body = Map.of(
-                "sender", Map.of("name", senderName, "email", senderEmail),
-                "to", List.of(toObj),
-                "subject", subject,
-                "htmlContent", htmlContent
-        );
+        String fromEmail = senderEmail != null && !senderEmail.isBlank() ? senderEmail.trim() : brevoUsername.trim();
 
         try {
-            String jsonBody = objectMapper.writeValueAsString(body);
-            HttpEntity<String> request = new HttpEntity<>(jsonBody, headers);
-            
-            restTemplate.postForEntity(url, request, String.class);
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setFrom(fromEmail, senderName);
+            helper.setTo(emailDestino);
+            helper.setSubject(subject);
+            helper.setText(textContent, false);
+            mailSender.send(message);
         } catch (Exception e) {
-            System.err.println("Erro ao enviar email via Brevo para " + emailDestino + ": " + e.getMessage());
-            throw new RuntimeException("Falha ao enviar email via Brevo", e);
+            throw new RuntimeException("Falha ao enviar email via Brevo SMTP", e);
         }
     }
 
@@ -82,7 +57,6 @@ public class EmailService {
                 "Cumprimentos,\n" +
                 "Equipa Gestão de Coletividades";
 
-        // Passar o próprio email como nome, caso o nome não esteja disponível
         sendBrevoEmail(emailDestino, emailDestino, subject, text);
     }
 
@@ -123,7 +97,6 @@ public class EmailService {
                 "Cumprimentos,\n" +
                 "Equipa Gestão de Coletividades";
 
-        // Passar o próprio email como nome, caso o nome não esteja disponível
         sendBrevoEmail(emailDestino, emailDestino, subject, text);
     }
 
