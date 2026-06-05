@@ -57,12 +57,10 @@ export default function SessoesTreinoPage() {
             try {
                 const [clubeData, atletasData, sessoesData] = await Promise.all([
                     getClubeById(clubeId),
-                    getAtletasTreinador(clubeId).catch(() => []), // Endpoint atualizado
-                    getSessoesTreino(clubeId).catch(() => []), 
+                    getAtletasTreinador(clubeId).catch(() => []),
+                    getSessoesTreino(clubeId).catch(() => []),
                 ]);
                 setClube(clubeData || null);
-                // The API might return the array directly or inside a wrapper. 
-                // We'll extract it robustly, just like extractArray did.
                 const parseArray = (d) => Array.isArray(d) ? d : (Array.isArray(d?.data) ? d.data : []);
                 
                 setAtletasList(parseArray(atletasData));

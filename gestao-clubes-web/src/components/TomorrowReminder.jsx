@@ -5,7 +5,6 @@ import * as eventosService from "../services/eventos";
 
 const REMINDER_KEY = "gc-tomorrow-reminder-dismissed";
 
-// Never show on these paths (public/unauthenticated pages)
 const PUBLIC_PREFIXES = [
     "/login",
     "/forgot-password",
@@ -14,7 +13,7 @@ const PUBLIC_PREFIXES = [
     "/pending-approval",
     "/politica-privacidade",
     "/acesso-negado",
-    "/",          // root redirect
+    "/",
 ];
 
 function isTomorrow(val) {
@@ -41,29 +40,23 @@ export default function TomorrowReminder() {
     const { isAuthenticated, isSuperAdmin, clubeId } = useAuth();
     const { pathname } = useLocation();
 
-    // Do not render on public pages at all
     const isPublicPage =
         pathname === "/" ||
         PUBLIC_PREFIXES.some((p) => p !== "/" && pathname.startsWith(p));
 
-    // dismissed reads sessionStorage on mount; reset when user logs out
-    const [dismissed, setDismissed] = useState(
+    const [dismissedByUser, setDismissedByUser] = useState(
         () => sessionStorage.getItem(REMINDER_KEY) === "1"
     );
+    const dismissed = dismissedByUser || !isAuthenticated;
     const [eventos, setEventos] = useState([]);
     const [idx, setIdx] = useState(0);
 
-    // On logout: clear sessionStorage + reset all state so next login shows again
     useEffect(() => {
         if (!isAuthenticated) {
             sessionStorage.removeItem(REMINDER_KEY);
-            setDismissed(false);
-            setEventos([]);
-            setIdx(0);
         }
     }, [isAuthenticated]);
 
-    // Fetch once conditions are met
     useEffect(() => {
         if (!isAuthenticated || isSuperAdmin || !clubeId || dismissed || isPublicPage) {
             return;
@@ -84,15 +77,11 @@ export default function TomorrowReminder() {
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated, isSuperAdmin, clubeId, isPublicPage]);
-    // Note: `dismissed` intentionally excluded — we only fetch once per session login,
-    // not every time the user opens/closes the popup.
-
     const eventosAmanha = useMemo(
         () => eventos.filter((e) => isTomorrow(e.dataHora)),
         [eventos]
     );
 
-    // Guard: never show on public pages, unauthenticated, super admin, dismissed, or no events
     if (isPublicPage || !isAuthenticated || isSuperAdmin || dismissed || eventosAmanha.length === 0) {
         return null;
     }
@@ -103,7 +92,7 @@ export default function TomorrowReminder() {
 
     function dismiss() {
         sessionStorage.setItem(REMINDER_KEY, "1");
-        setDismissed(true);
+        setDismissedByUser(true);
     }
 
     return (

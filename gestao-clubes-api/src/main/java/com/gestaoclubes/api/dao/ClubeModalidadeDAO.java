@@ -4,12 +4,16 @@ import com.gestaoclubes.api.model.Clube;
 import com.gestaoclubes.api.model.ClubeModalidade;
 import com.gestaoclubes.api.model.Modalidade;
 import com.gestaoclubes.api.util.ConexoBD;
+import java.util.logging.Logger;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class ClubeModalidadeDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(ClubeModalidadeDAO.class.getName());
 
     public boolean inserir(int clubeId, int modalidadeId, String epoca) {
         String sql = "INSERT INTO clube_modalidade (clube_id, modalidade_id, epoca, ativo) VALUES (?, ?, ?, 1)";
@@ -25,7 +29,7 @@ public class ClubeModalidadeDAO {
 
         } catch (SQLException e) {
             // Pode falhar por UNIQUE (clube_id, modalidade_id, epoca)
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -75,7 +79,7 @@ public class ClubeModalidadeDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -126,7 +130,7 @@ public class ClubeModalidadeDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -178,7 +182,7 @@ public class ClubeModalidadeDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -196,7 +200,7 @@ public class ClubeModalidadeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -243,15 +247,12 @@ public class ClubeModalidadeDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
     }
 
-    // ============================================================
-    // ATIVA/CRIA associação para uma época (UPSERT)
-    // ============================================================
     public boolean ativarOuInserir(int clubeId, int modalidadeId, String epoca) {
         String sql = """
             INSERT INTO clube_modalidade (clube_id, modalidade_id, epoca, ativo)
@@ -269,7 +270,7 @@ public class ClubeModalidadeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -290,7 +291,7 @@ public class ClubeModalidadeDAO {
                 while (rs.next()) ids.add(rs.getInt("modalidade_id"));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return ids;
     }
@@ -323,7 +324,7 @@ public class ClubeModalidadeDAO {
             return true;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -341,7 +342,7 @@ public class ClubeModalidadeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }

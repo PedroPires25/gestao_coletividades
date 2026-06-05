@@ -2,31 +2,31 @@
 setlocal enabledelayedexpansion
 
 echo ========================================
-echo BACKEND VALIDATION (Maven)
+echo VALIDACAO DO BACKEND (Maven)
 echo ========================================
-cd /d "C:\Users\Pedro Pires\OneDrive - Colégio Marista Carcavelos\Ambiente de Trabalho\Projeto-final\gestao-clubes-api"
+cd /d "%~dp0gestao-clubes-api"
 call mvnw.cmd clean test
 set MAVEN_RESULT=!ERRORLEVEL!
 
 echo.
 echo ========================================
-echo FRONTEND LINTING (npm run lint)
+echo LINT DO FRONTEND (npm run lint)
 echo ========================================
-cd /d "C:\Users\Pedro Pires\OneDrive - Colégio Marista Carcavelos\Ambiente de Trabalho\Projeto-final\gestao-clubes-web"
+cd /d "%~dp0gestao-clubes-web"
 call npm run lint
 set LINT_RESULT=!ERRORLEVEL!
 
 echo.
 echo ========================================
-echo FRONTEND BUILD (npm run build)
+echo BUILD DO FRONTEND (npm run build)
 echo ========================================
 call npm run build
 set BUILD_RESULT=!ERRORLEVEL!
 
 echo.
 echo ========================================
-echo SUMMARY
+echo RESUMO
 echo ========================================
-echo Maven Test Result: !MAVEN_RESULT!
-echo npm Lint Result: !LINT_RESULT!
-echo npm Build Result: !BUILD_RESULT!
+echo Resultado dos testes Maven: !MAVEN_RESULT!
+echo Resultado do lint npm: !LINT_RESULT!
+echo Resultado do build npm: !BUILD_RESULT!

@@ -2,11 +2,14 @@ package com.gestaoclubes.api.dao;
 
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class FichaMedicaDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(FichaMedicaDAO.class.getName());
 
     public Map<String, Object> buscarPorAtletaEClube(int atletaId, int clubeId) {
         String sql = """
@@ -25,7 +28,7 @@ public class FichaMedicaDAO {
                 if (rs.next()) return mapRow(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return null;
     }
@@ -66,7 +69,7 @@ public class FichaMedicaDAO {
             Map<String, Object> existing = buscarPorAtletaEClube(atletaId, clubeId);
             return existing != null ? ((Number) existing.get("id")).intValue() : 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return 0;
         }
     }

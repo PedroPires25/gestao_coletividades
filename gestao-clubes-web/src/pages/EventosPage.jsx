@@ -8,7 +8,7 @@ import {
   listarEventos,
   criarEvento,
   atualizarEvento,
-  deletarEvento,
+  eliminarEvento,
 } from "../services/eventos";
 import modalidadesIcon from "../assets/modalidades.svg";
 
@@ -195,7 +195,7 @@ export default function EventosPage() {
     if (!ok) return;
 
     try {
-      await deletarEvento(
+      await eliminarEvento(
         parseInt(clubeId),
         parseInt(clubeModalidadeId),
         eventoId

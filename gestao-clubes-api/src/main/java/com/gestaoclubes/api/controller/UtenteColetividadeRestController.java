@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/coletividades")
-@CrossOrigin(origins = "http://localhost:5173")
 public class UtenteColetividadeRestController {
 
     private final UtenteDAO utenteDAO;

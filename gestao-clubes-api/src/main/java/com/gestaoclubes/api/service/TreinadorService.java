@@ -11,8 +11,11 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class TreinadorService {
+
+    private static final Logger LOGGER = Logger.getLogger(TreinadorService.class.getName());
 
     private final TreinadorDAO treinadorDAO;
     private final AtletaDAO atletaDAO;
@@ -52,7 +55,7 @@ public class TreinadorService {
             }
             return sessaoId > 0;
         } catch (DateTimeParseException | ClassCastException | NumberFormatException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -63,7 +66,7 @@ public class TreinadorService {
             Date endDate = Date.valueOf(LocalDate.parse(endDateStr));
             return treinadorDAO.obterAssiduidade(clubeId, startDate, endDate);
         } catch (DateTimeParseException | NullPointerException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return new java.util.ArrayList<>();
         }
     }
@@ -87,17 +90,17 @@ public class TreinadorService {
                         try {
                             emailService.enviarPlanoTreino(emailDestino, atleta.getNome(), conteudo);
                         } catch (Exception e) {
-                            System.err.println("Erro ao enviar email de plano de treino para atleta " + atletaId + ": " + e.getMessage());
+                            LOGGER.warning("Erro ao enviar email de plano de treino para atleta " + atletaId + ": " + e.getMessage());
                         }
                     } else {
-                        System.err.println("Atleta " + atletaId + " não tem email configurado.");
+                        LOGGER.warning("Atleta " + atletaId + " não tem email configurado.");
                     }
                 }
             }
             
             return planoId > 0;
         } catch (ClassCastException e) {
-            e.printStackTrace();
+            LOGGER.severe("Erro ao criar plano de treino: " + e.getMessage());
             return false;
         }
     }

@@ -26,10 +26,14 @@ services:
       - key: DB_PASSWORD
         sync: false
 
-      # Email (Brevo)
-      - key: BREVO_API_KEY
+      # Email SMTP (Brevo)
+      - key: BREVO_USERNAME
+        sync: false
+      - key: BREVO_PASSWORD
         sync: false
       - key: BREVO_SENDER_EMAIL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
         sync: false
 
       # Cloudinary (uploads de imagens)

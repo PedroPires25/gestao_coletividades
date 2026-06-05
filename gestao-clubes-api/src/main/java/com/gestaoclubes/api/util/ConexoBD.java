@@ -9,36 +9,24 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 /**
- * Classe utilitária para gerir conexões com a base de dados MySQL.
- * Lê as configurações do ficheiro db.properties.
- * Suporta conexões SSL com certificado.
- *
- * ✅ IMPORTANTE:
- * - NÃO usa Connection singleton.
- * - Cada getConnection() devolve uma Connection nova (thread-safe para API).
+ * Classe utilitária para gerir ligações à base de dados MySQL.
+ * As variáveis de ambiente têm prioridade sobre o ficheiro local db.properties.
  */
 public class ConexoBD {
 
     private static final Logger LOGGER = Logger.getLogger(ConexoBD.class.getName());
 
-    // Configurações da base de dados (carregadas do ficheiro properties)
     private static String URL;
     private static String USERNAME;
     private static String PASSWORD;
     private static String DRIVER;
 
-    // Flag para indicar se as propriedades já foram carregadas
     private static boolean propertiesLoaded = false;
 
-    // Construtor privado (utilitário)
     private ConexoBD() {
         loadProperties();
     }
 
-    /**
-     * Carrega as propriedades do ficheiro db.properties.
-     * Este método é executado apenas uma vez.
-     */
     private static void loadProperties() {
         if (propertiesLoaded) return;
 
@@ -47,32 +35,19 @@ public class ConexoBD {
         try (InputStream input = ConexoBD.class.getClassLoader()
                 .getResourceAsStream("db.properties")) {
 
-            if (input == null) {
-                System.err.println("Aviso: db.properties não encontrado, usando variáveis de ambiente.");
-                URL      = System.getenv("DB_URL")      != null ? System.getenv("DB_URL")      : "jdbc:mysql://localhost:3306/ci-java";
-                USERNAME = System.getenv("DB_USERNAME") != null ? System.getenv("DB_USERNAME") : "root";
-                PASSWORD = System.getenv("DB_PASSWORD") != null ? System.getenv("DB_PASSWORD") : "";
-                DRIVER   = "com.mysql.cj.jdbc.Driver";
-                propertiesLoaded = true;
-                return;
+            if (input != null) {
+                props.load(input);
             }
 
-            props.load(input);
-
-            // Env vars têm prioridade sobre db.properties (produção no Render)
-            String envUrl      = System.getenv("DB_URL");
-            String envUser     = System.getenv("DB_USERNAME");
-            String envPassword = System.getenv("DB_PASSWORD");
-
-            URL      = (envUrl      != null) ? envUrl      : props.getProperty("db.url",      "jdbc:mysql://localhost:3306/ci-java");
-            USERNAME = (envUser     != null) ? envUser     : props.getProperty("db.username", "root");
-            PASSWORD = (envPassword != null) ? envPassword : props.getProperty("db.password", "");
+            URL      = firstNonBlank(System.getenv("DB_URL"), props.getProperty("db.url"));
+            USERNAME = firstNonBlank(System.getenv("DB_USERNAME"), props.getProperty("db.username"));
+            PASSWORD = firstNonBlank(System.getenv("DB_PASSWORD"), props.getProperty("db.password"));
             DRIVER   = props.getProperty("db.driver", "com.mysql.cj.jdbc.Driver");
             String sslCertPath = props.getProperty("db.ssl.cert.path", "");
 
-            // Se o certificado não estiver na URL e o caminho estiver definido, adiciona à URL
+            validarConfiguracao();
+
             if (!URL.contains("serverSslCert") && sslCertPath != null && !sslCertPath.isEmpty()) {
-                // Tenta usar o certificado do classpath primeiro
                 InputStream certStream = ConexoBD.class.getClassLoader()
                         .getResourceAsStream(sslCertPath);
 
@@ -85,10 +60,9 @@ public class ConexoBD {
                         URL += "&useSSL=true&requireSSL=true&serverSslCert=classpath:" + sslCertPath;
                     }
                 } else {
-                    // Tenta usar como arquivo do sistema
                     File certFile = new File("src/" + sslCertPath);
                     if (certFile.exists()) {
-                        String certPath = certFile.getAbsolutePath().replace("\\", "/");
+                        String certPath = certFile.getAbsolutePath();
                         if (!URL.contains("?")) {
                             URL += "?useSSL=true&requireSSL=true&serverSslCert=" + certPath;
                         } else {
@@ -101,23 +75,14 @@ public class ConexoBD {
             }
 
             propertiesLoaded = true;
-            System.out.println("Configurações da base de dados carregadas com sucesso!");
-            System.out.println("Conectando a: " + URL.split("\\?")[0]);
+            LOGGER.info("Configurações da base de dados carregadas.");
 
         } catch (Exception e) {
-            LOGGER.severe("Erro ao carregar db.properties: " + e.getMessage());
-            URL      = System.getenv("DB_URL")      != null ? System.getenv("DB_URL")      : "jdbc:mysql://localhost:3306/ci-java";
-            USERNAME = System.getenv("DB_USERNAME") != null ? System.getenv("DB_USERNAME") : "root";
-            PASSWORD = System.getenv("DB_PASSWORD") != null ? System.getenv("DB_PASSWORD") : "";
-            DRIVER   = "com.mysql.cj.jdbc.Driver";
-            propertiesLoaded = true;
+            LOGGER.severe("Erro ao carregar configuração da base de dados: " + e.getMessage());
+            throw new IllegalStateException("Configuração da base de dados inválida.", e);
         }
     }
 
-    /**
-     * Obtém uma NOVA conexão com a base de dados (sem singleton).
-     * Cada chamada cria uma Connection nova (seguro para múltiplos requests).
-     */
     public static Connection getConnection() throws SQLException {
         if (!propertiesLoaded) loadProperties();
 
@@ -127,22 +92,25 @@ public class ConexoBD {
             throw new SQLException("Driver MySQL não encontrado: " + e.getMessage());
         }
 
-        // ✅ devolve sempre uma NOVA connection
         return DriverManager.getConnection(URL, USERNAME, PASSWORD);
     }
 
-    /**
-     * Mantido por compatibilidade.
-     * Como já não existe singleton, este método não é necessário.
-     */
     public static void closeConnection() {
-        // no-op (as connections são fechadas nos DAOs via try-with-resources)
     }
 
-    /**
-     * Mantido por compatibilidade.
-     */
     public static boolean isConnectionActive() {
-        return false; // já não há singleton para verificar
+        return false;
+    }
+
+    private static String firstNonBlank(String first, String second) {
+        if (first != null && !first.isBlank()) return first;
+        if (second != null && !second.isBlank()) return second;
+        return null;
+    }
+
+    private static void validarConfiguracao() {
+        if (URL == null || USERNAME == null || PASSWORD == null) {
+            throw new IllegalStateException("DB_URL, DB_USERNAME e DB_PASSWORD devem estar configurados.");
+        }
     }
 }

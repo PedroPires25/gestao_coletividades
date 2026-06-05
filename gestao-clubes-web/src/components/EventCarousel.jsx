@@ -41,8 +41,8 @@ function isTomorrow(val) {
  *   onVerMapa          {Function?} Callback(evento) — chamado ao clicar "Ver Mapa".
  *                                  Só aparece quando o evento tem latitude/longitude.
  *   emptyMessage       {string?}  Mensagem quando não há eventos.
- *   showModalidade     {boolean?} Mostrar badge de modalidade/atividade (padrão: true).
- *   showAtletas        {boolean?} Mostrar contagem de atletas (padrão: true).
+ *   showModalidade     {boolean?} Mostrar badge de modalidade/atividade (predefinido: true).
+ *   showAtletas        {boolean?} Mostrar contagem de atletas (predefinido: true).
  */
 export default function EventCarousel({
     eventos = [],
@@ -67,7 +67,6 @@ export default function EventCarousel({
     const [detalhes, setDetalhes] = useState(null);
     const wrapRef = useRef(null);
 
-    // Observe container width to recalculate cardsPerPage responsively
     useEffect(() => {
         const el = wrapRef.current;
         if (!el) return;
@@ -88,7 +87,6 @@ export default function EventCarousel({
     const totalPages = sorted.length > 0 ? Math.ceil(sorted.length / cardsPerPage) : 0;
     const safePage = totalPages > 0 ? Math.min(pageIdx, totalPages - 1) : 0;
 
-    // Auto-advance by full page
     useEffect(() => {
         if (totalPages <= 1) return;
         const interval = setInterval(() => {
@@ -97,7 +95,6 @@ export default function EventCarousel({
         return () => clearInterval(interval);
     }, [totalPages]);
 
-    // Close detail modal on Escape
     useEffect(() => {
         if (!detalhes) return;
         function onKey(e) { if (e.key === "Escape") setDetalhes(null); }
@@ -109,7 +106,6 @@ export default function EventCarousel({
         return <p className="subtle">{emptyMessage}</p>;
     }
 
-    // Only render the cards for the current page — no partial cards ever visible
     const pageCards = sorted.slice(safePage * cardsPerPage, (safePage + 1) * cardsPerPage);
 
     return (

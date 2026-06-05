@@ -3,7 +3,7 @@ REM Script para limpar ficheiros duplicados
 
 setlocal enabledelayedexpansion
 
-set DAO_PATH=C:\Users\Pedro Pires\Desktop\Projeto-final\gestao-clubes-api\src\main\java\com\gestaoclubes\api\dao
+set DAO_PATH=%~dp0gestao-clubes-api\src\main\java\com\gestaoclubes\api\dao
 
 echo Limpando ficheiros duplicados...
 echo.

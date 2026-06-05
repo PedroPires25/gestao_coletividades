@@ -15,10 +15,13 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/api/auth")
 public class PasswordRecoveryRestController {
+
+    private static final Logger LOGGER = Logger.getLogger(PasswordRecoveryRestController.class.getName());
 
     private final UtilizadorDAO utilizadorDAO = new UtilizadorDAO();
     private final PasswordResetTokenDAO passwordResetTokenDAO = new PasswordResetTokenDAO();
@@ -26,7 +29,7 @@ public class PasswordRecoveryRestController {
     @Autowired
     private EmailService emailService;
 
-    @Value("${app.frontend.url:http://localhost:5173}")
+    @Value("${app.frontend.url:}")
     private String frontendUrl;
 
     public PasswordRecoveryRestController() {
@@ -40,6 +43,10 @@ public class PasswordRecoveryRestController {
             Utilizador u = utilizadorDAO.buscarPorEmail(email);
 
             if (u != null) {
+                if (frontendUrl == null || frontendUrl.isBlank()) {
+                    throw new IllegalStateException("FRONTEND_URL deve estar configurada para emails de recuperação.");
+                }
+
                 passwordResetTokenDAO.invalidarTokensDoUtilizador(u.getId());
 
                 String token = UUID.randomUUID().toString();
@@ -105,7 +112,7 @@ public class PasswordRecoveryRestController {
                 emailService.enviarEmailConfirmacaoAlteracao(obterEmailDestino(u));
             }
         } catch (Exception e) {
-            System.err.println("Erro ao enviar email de confirmação: " + e.getMessage());
+            LOGGER.warning("Erro ao enviar email de confirmação: " + e.getMessage());
         }
 
         return ResponseEntity.ok("Palavra-passe atualizada com sucesso.");

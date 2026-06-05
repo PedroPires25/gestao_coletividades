@@ -3,6 +3,7 @@ package com.gestaoclubes.api.dao;
 import com.gestaoclubes.api.model.Escalao;
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -10,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 public class EscalaoDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(EscalaoDAO.class.getName());
 
     /** Canonical hierarchy from youngest (index 0) to oldest. */
     public static final List<String> ESCALAO_ORDEM = List.of(
@@ -65,7 +68,7 @@ public class EscalaoDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -83,7 +86,7 @@ public class EscalaoDAO {
             if (rs.next()) return new Escalao(rs.getInt("id"), rs.getString("nome"));
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;

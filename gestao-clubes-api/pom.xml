@@ -61,7 +61,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ✅ FIX: Jackson 2 para suportar com.fasterxml.jackson.databind.ObjectMapper -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>

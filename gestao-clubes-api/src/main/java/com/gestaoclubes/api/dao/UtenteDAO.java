@@ -4,12 +4,15 @@ import com.gestaoclubes.api.model.Utente;
 import com.gestaoclubes.api.util.ConexoBD;
 import org.springframework.stereotype.Repository;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Repository
 public class UtenteDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(UtenteDAO.class.getName());
 
     public List<Utente> listarPorColetividadeAtividade(int coletividadeId, int coletividadeAtividadeId) {
         List<Utente> lista = new ArrayList<>();
@@ -57,7 +60,7 @@ public class UtenteDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -118,7 +121,7 @@ public class UtenteDAO {
             conn.commit();
             return inscritoId;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             try {
                 if (conn != null) conn.rollback();
             } catch (Exception ignored) {
