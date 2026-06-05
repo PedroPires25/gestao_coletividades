@@ -1134,3 +1134,4 @@ MODIFY COLUMN clube_destino_id INT NULL;
 -- Guarda o nome textual do clube de destino (pode ser externo à plataforma)
 ALTER TABLE transferencia_atleta
 ADD COLUMN clube_destino_nome VARCHAR(120) NULL;
+
