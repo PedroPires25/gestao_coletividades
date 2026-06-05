@@ -88,6 +88,7 @@ public class AtletaDAO {
               AND cm.modalidade_id = ?
               AND cm.ativo = 1
               AND acm.ativo = 1
+              AND a.estado_id <> 2
             ORDER BY nome
         """;
 
@@ -139,6 +140,7 @@ public class AtletaDAO {
             JOIN escalao e ON e.id = a.escalao_id
             WHERE cm.clube_id = ?
               AND cm.id = ?
+              AND a.estado_id <> 2
             ORDER BY nome
         """;
 
@@ -191,6 +193,7 @@ public class AtletaDAO {
             WHERE cm.clube_id = ?
               AND cm.ativo = 1
               AND acm.ativo = 1
+              AND a.estado_id <> 2
             ORDER BY nome
         """;
 
@@ -248,6 +251,7 @@ public class AtletaDAO {
               AND cm.id = ?
               AND a.escalao_id IN (%s)
               AND acm.ativo = 1
+              AND a.estado_id <> 2
             ORDER BY nome
         """.formatted(placeholders);
 
