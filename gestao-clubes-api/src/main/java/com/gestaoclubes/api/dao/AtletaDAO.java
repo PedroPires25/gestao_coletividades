@@ -572,6 +572,19 @@ public class AtletaDAO {
         }
     }
 
+    public boolean atualizarEstado(int atletaId, int estadoId) {
+        String sql = "UPDATE atleta SET estado_id=? WHERE id=?";
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, estadoId);
+            ps.setInt(2, atletaId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.severe(e.toString());
+            return false;
+        }
+    }
+
     public boolean remover(int id) {
         String sql = "DELETE FROM atleta WHERE id=?";
         try (Connection conn = ConexoBD.getConnection();
