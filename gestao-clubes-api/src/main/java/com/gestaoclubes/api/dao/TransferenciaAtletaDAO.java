@@ -14,13 +14,13 @@ public class TransferenciaAtletaDAO {
     private static final Logger LOGGER = Logger.getLogger(TransferenciaAtletaDAO.class.getName());
 
     /**
-     * Regista uma transferência. clubeDestinoId pode ser null se o destino for desconhecido.
+     * Regista uma transferência. clubeDestinoId e clubeDestinoNome são opcionais.
      */
-    public boolean inserir(int atletaId, int clubeOrigemId, Integer clubeDestinoId, Date data, String obs) {
+    public boolean inserir(int atletaId, int clubeOrigemId, Integer clubeDestinoId, String clubeDestinoNome, Date data, String obs) {
         String sql = """
             INSERT INTO transferencia_atleta
-            (atleta_id, clube_origem_id, clube_destino_id, data_transferencia, observacoes)
-            VALUES (?, ?, ?, ?, ?)
+            (atleta_id, clube_origem_id, clube_destino_id, clube_destino_nome, data_transferencia, observacoes)
+            VALUES (?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = ConexoBD.getConnection();
@@ -32,8 +32,9 @@ public class TransferenciaAtletaDAO {
             } else {
                 ps.setNull(3, Types.INTEGER);
             }
-            ps.setDate(4, data);
-            ps.setString(5, obs);
+            ps.setString(4, (clubeDestinoNome != null && !clubeDestinoNome.isBlank()) ? clubeDestinoNome.trim() : null);
+            ps.setDate(5, data);
+            ps.setString(6, obs);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.severe(e.toString());
@@ -52,9 +53,9 @@ public class TransferenciaAtletaDAO {
                    COALESCE(u.nome, a.nome) AS atleta_nome,
                    a.id                     AS atleta_id,
                    co.nome                  AS clube_origem,
-                   cd.nome                  AS clube_destino,
                    t.clube_origem_id,
                    t.clube_destino_id,
+                   COALESCE(t.clube_destino_nome, cd.nome) AS clube_destino,
                    t.data_transferencia,
                    t.observacoes,
                    e.nome                   AS escalao,
