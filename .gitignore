@@ -1,6 +1,8 @@
 node_modules/
 .idea/
 .env
+.env.local
+.env.*.local
 .DS_Store
 dist/
 build/
@@ -12,3 +14,6 @@ yarn.lock
 *.swo
 .DS_Store
 db.properties
+gestao-clubes-api/src/main/resources/db.properties
+gestao-clubes-api/src/main/resources/application-local.properties
+uploads/

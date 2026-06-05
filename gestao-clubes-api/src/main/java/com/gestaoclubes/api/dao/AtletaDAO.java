@@ -3,6 +3,7 @@ package com.gestaoclubes.api.dao;
 import com.gestaoclubes.api.model.Atleta;
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class AtletaDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(AtletaDAO.class.getName());
 
     private Date toSql(java.util.Date d) {
         return d == null ? null : new Date(d.getTime());
@@ -49,7 +52,7 @@ public class AtletaDAO {
                 });
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return rows;
     }
@@ -101,7 +104,7 @@ public class AtletaDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -152,7 +155,7 @@ public class AtletaDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -203,7 +206,7 @@ public class AtletaDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -261,7 +264,7 @@ public class AtletaDAO {
                 while (rs.next()) lista.add(mapAthleteRow(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return lista;
     }
@@ -301,7 +304,7 @@ public class AtletaDAO {
                 if (rs.next()) return rs.getInt("total") == idsUnicos.size();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return false;
     }
@@ -342,7 +345,7 @@ public class AtletaDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return false;
@@ -381,7 +384,7 @@ public class AtletaDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return null;
         }
         return null;
@@ -410,7 +413,7 @@ public class AtletaDAO {
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -448,7 +451,7 @@ public class AtletaDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return null;
     }
@@ -490,7 +493,7 @@ public class AtletaDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -516,7 +519,7 @@ public class AtletaDAO {
                     lista.add(row);
                 }
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { LOGGER.severe(e.toString()); }
         return lista;
     }
 
@@ -551,7 +554,7 @@ public class AtletaDAO {
             ps.setInt(2, atletaId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -564,7 +567,7 @@ public class AtletaDAO {
             ps.setInt(2, atletaId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -576,7 +579,7 @@ public class AtletaDAO {
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -605,7 +608,7 @@ public class AtletaDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return null;
     }

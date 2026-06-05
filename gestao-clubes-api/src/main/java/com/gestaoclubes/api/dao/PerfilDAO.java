@@ -3,6 +3,7 @@ package com.gestaoclubes.api.dao;
 import com.gestaoclubes.api.util.ConexoBD;
 import org.springframework.stereotype.Repository;
 
+import java.util.logging.Logger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,6 +14,8 @@ import java.util.Set;
 
 @Repository
 public class PerfilDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(PerfilDAO.class.getName());
 
     private static final String LEGACY_ADMIN = "ADMIN";
     public static final String SUPER_ADMIN = "SUPER_ADMIN";
@@ -63,7 +66,7 @@ public class PerfilDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return -1;
@@ -85,7 +88,7 @@ public class PerfilDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -109,7 +112,7 @@ public class PerfilDAO {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return new ArrayList<>(perfis);
@@ -173,7 +176,7 @@ public class PerfilDAO {
                 insert.executeUpdate();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
     }
 }

@@ -6,7 +6,7 @@ echo COMPILANDO BACKEND
 echo ========================================
 echo.
 
-cd C:\Users\Pedro Pires\Desktop\Projeto-final\gestao-clubes-api
+cd /d "%~dp0gestao-clubes-api"
 
 echo Limpando build anterior...
 mvn clean -q
@@ -18,7 +18,7 @@ mvn compile -q
 if %ERRORLEVEL% EQU 0 (
     echo.
     echo ========================================
-    echo [SUCCESS] Backend compilado com sucesso!
+    echo [SUCESSO] Backend compilado com sucesso!
     echo ========================================
     echo.
     echo Pode agora:

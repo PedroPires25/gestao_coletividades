@@ -1,6 +1,7 @@
 package com.gestaoclubes.api.dao;
 
 import com.gestaoclubes.api.util.ConexoBD;
+import java.util.logging.Logger;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -13,8 +14,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class StaffAfetacaoDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(StaffAfetacaoDAO.class.getName());
 
     public boolean inserirPorIds(int staffId, int clubeId, Integer clubeModalidadeId, int cargoId,
                                  java.util.Date dataInicio, java.util.Date dataFim, String observacoes) {
@@ -63,7 +67,7 @@ public class StaffAfetacaoDAO {
             return 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return 0;
         }
     }
@@ -104,7 +108,7 @@ public class StaffAfetacaoDAO {
                 });
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return rows;
@@ -158,7 +162,7 @@ public class StaffAfetacaoDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -198,7 +202,7 @@ public class StaffAfetacaoDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return null;
     }
@@ -231,7 +235,7 @@ public class StaffAfetacaoDAO {
             ps.setInt(7, afetacaoId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -249,7 +253,7 @@ public class StaffAfetacaoDAO {
             ps.setInt(2, afetacaoId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -263,7 +267,7 @@ public class StaffAfetacaoDAO {
             ps.setInt(2, afetacaoId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }

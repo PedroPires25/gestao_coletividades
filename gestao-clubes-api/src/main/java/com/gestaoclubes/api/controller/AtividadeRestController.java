@@ -9,7 +9,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/atividades")
-@CrossOrigin(origins = "http://localhost:5173")
 public class AtividadeRestController {
 
     private final AtividadeDAO atividadeDAO;

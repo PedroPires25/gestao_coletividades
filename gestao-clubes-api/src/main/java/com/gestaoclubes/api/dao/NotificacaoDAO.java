@@ -3,6 +3,7 @@ package com.gestaoclubes.api.dao;
 import com.gestaoclubes.api.model.Notificacao;
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 public class NotificacaoDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(NotificacaoDAO.class.getName());
 
     public void inserir(Notificacao n) {
         String sql = """
@@ -44,7 +47,7 @@ public class NotificacaoDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("NotificacaoDAO.inserir: " + e.getMessage());
+            LOGGER.warning("NotificacaoDAO.inserir: " + e.getMessage());
         }
     }
 
@@ -70,7 +73,7 @@ public class NotificacaoDAO {
                 while (rs.next()) lista.add(mapRow(rs));
             }
         } catch (SQLException e) {
-            System.err.println("NotificacaoDAO.listarTodos: " + e.getMessage());
+            LOGGER.warning("NotificacaoDAO.listarTodos: " + e.getMessage());
         }
         return lista;
     }
@@ -92,7 +95,7 @@ public class NotificacaoDAO {
                 while (rs.next()) lista.add(mapRow(rs));
             }
         } catch (SQLException e) {
-            System.err.println("NotificacaoDAO.listar: " + e.getMessage());
+            LOGGER.warning("NotificacaoDAO.listar: " + e.getMessage());
         }
         return lista;
     }

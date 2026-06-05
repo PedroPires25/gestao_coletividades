@@ -1,4 +1,4 @@
-const API_BASE = `${(import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "")}/api`;
+import { API_BASE } from "./config/apiBase";
 const LS_KEY = "gc_user";
 
 function getStoredToken() {
@@ -39,7 +39,6 @@ async function http(path, options = {}) {
     return res.text();
 }
 
-// AUTH
 export async function apiLogin(email, password) {
     return http("/auth/login", {
         method: "POST",
@@ -69,7 +68,6 @@ export async function getRegisterContext() {
     return http("/auth/register/context");
 }
 
-// ADMIN USERS
 export async function getAdminUsers(estado) {
     const q = estado ? `?estado=${encodeURIComponent(estado)}` : "";
     return http(`/admin/users${q}`);
@@ -112,7 +110,6 @@ export async function updateUserAfetacao(userId, clubeId, modalidadeId, coletivi
     });
 }
 
-// CLUBES
 export async function getClubes() {
     return http("/clubes");
 }
@@ -174,7 +171,6 @@ export async function removerModalidadeDoClube(id) {
     });
 }
 
-// COLETIVIDADES
 export async function getColetividades() {
     return http("/coletividades");
 }
@@ -218,7 +214,6 @@ export async function getAtividadesDaColetividade(coletividadeId) {
     return http(`/coletividades/${coletividadeId}/atividades`);
 }
 
-// MODALIDADES / ATIVIDADES GERAIS
 export async function getModalidades({ ativas = true } = {}) {
     const q = ativas ? "?ativas=true" : "?ativas=false";
     return http(`/modalidades${q}`);
@@ -247,8 +242,6 @@ export async function editarModalidade(id, { nome, descricao = "" }) {
 export async function getAtividades() {
     return http("/atividades");
 }
-
-// ---- UPLOAD DE LOGO / AVATAR ----
 
 async function httpUpload(path, file) {
     const token = getStoredToken();
@@ -298,14 +291,12 @@ export async function uploadStaffFoto(id, file) {
 
 export function getUploadUrl(relativePath) {
     if (!relativePath) return null;
-    // Cloudinary (ou outra CDN) já devolve URL completa
     if (relativePath.startsWith("http://") || relativePath.startsWith("https://")) {
         return relativePath;
     }
     return `${API_BASE}/uploads/${relativePath}`;
 }
 
-// PERFIL DO UTILIZADOR
 export async function getMyProfile() {
     return http("/auth/me");
 }

@@ -3,6 +3,7 @@ package com.gestaoclubes.api.dao;
 import com.gestaoclubes.api.model.Staff;
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 public class StaffDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(StaffDAO.class.getName());
 
     public boolean inserir(Staff s) {
         return inserirRetornarId(s) > 0;
@@ -45,7 +48,7 @@ public class StaffDAO {
             return 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return 0;
         }
     }
@@ -68,7 +71,7 @@ public class StaffDAO {
                 lista.add(mapStaffComJoin(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return lista;
     }
@@ -92,7 +95,7 @@ public class StaffDAO {
                 return mapStaffComJoin(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return null;
     }
@@ -117,7 +120,7 @@ public class StaffDAO {
                 return mapStaffComJoin(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return null;
     }
@@ -142,7 +145,7 @@ public class StaffDAO {
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -157,7 +160,7 @@ public class StaffDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -200,7 +203,7 @@ public class StaffDAO {
                 });
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return rows;
@@ -392,7 +395,7 @@ public class StaffDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -459,7 +462,7 @@ public class StaffDAO {
             ps.setInt(2, staffId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }

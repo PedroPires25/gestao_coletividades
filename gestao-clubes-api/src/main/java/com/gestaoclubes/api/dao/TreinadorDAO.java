@@ -2,6 +2,7 @@ package com.gestaoclubes.api.dao;
 
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -9,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 public class TreinadorDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(TreinadorDAO.class.getName());
 
     public List<Map<String, Object>> listarSessoes(int clubeId) {
         String sql = """
@@ -36,7 +39,7 @@ public class TreinadorDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return lista;
     }
@@ -56,7 +59,7 @@ public class TreinadorDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return 0;
     }
@@ -66,7 +69,7 @@ public class TreinadorDAO {
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             for (Map.Entry<Integer, Boolean> entry : presencas.entrySet()) {
-                if (entry.getValue()) { // Inserir apenas os presentes para poupar espaco, ou inserir false também
+                if (entry.getValue()) {
                     ps.setInt(1, sessaoId);
                     ps.setInt(2, entry.getKey());
                     ps.setBoolean(3, entry.getValue());
@@ -75,7 +78,7 @@ public class TreinadorDAO {
             }
             ps.executeBatch();
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
     }
 
@@ -121,7 +124,7 @@ public class TreinadorDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return lista;
     }
@@ -140,7 +143,7 @@ public class TreinadorDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
         return 0;
     }
