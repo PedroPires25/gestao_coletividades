@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Envia (ou simula) notificações de convocatória para cada convocado.
@@ -21,6 +22,8 @@ import java.util.Map;
  */
 @Service
 public class ConvocatoriaNotificacaoService {
+
+    private static final Logger LOGGER = Logger.getLogger(ConvocatoriaNotificacaoService.class.getName());
 
     @Value("${notificacoes.sms.ativo:false}")
     private boolean smsAtivo;
@@ -90,11 +93,11 @@ public class ConvocatoriaNotificacaoService {
                 emailService.enviarConvocatoria(email, nome, nomeEvento, dataHora, local);
                 estado = Estado.ENVIADA;
             } catch (Exception e) {
-                System.err.println("[EMAIL] Erro ao enviar para " + email + ": " + e.getMessage());
+                LOGGER.warning("[EMAIL] Erro ao enviar para " + email + ": " + e.getMessage());
                 estado = Estado.ERRO;
             }
         } else {
-            System.out.println("[EMAIL SIMULADO] Para: " + email + " | " + mensagem);
+            LOGGER.info("[EMAIL SIMULADO] Para: " + email + " | " + mensagem);
             estado = Estado.SIMULADA;
         }
 
@@ -113,7 +116,7 @@ public class ConvocatoriaNotificacaoService {
                 smsService.enviarSms(telefone, mensagem);
                 estado = Estado.ENVIADA;
             } catch (Exception e) {
-                System.err.println("[SMS] Erro ao enviar para " + telefone + ": " + e.getMessage());
+                LOGGER.warning("[SMS] Erro ao enviar para " + telefone + ": " + e.getMessage());
                 estado = Estado.ERRO;
             }
         } else {
@@ -153,7 +156,7 @@ public class ConvocatoriaNotificacaoService {
             String email = (String) atleta.get("email");
 
             if (!emailValido(email)) {
-                System.err.println("[EMAIL] Atleta sem email válido (id=" + atletaId + ", nome=" + nome + ")");
+                LOGGER.warning("[EMAIL] Atleta sem email válido (id=" + atletaId + ", nome=" + nome + ")");
                 semEmail++;
                 continue;
             }
@@ -165,12 +168,12 @@ public class ConvocatoriaNotificacaoService {
                     estado = Estado.ENVIADA;
                     enviados++;
                 } catch (Exception e) {
-                    System.err.println("[EMAIL] Erro ao enviar para " + email + ": " + e.getMessage());
+                    LOGGER.warning("[EMAIL] Erro ao enviar para " + email + ": " + e.getMessage());
                     estado = Estado.ERRO;
                     erros++;
                 }
             } else {
-                System.out.println("[EMAIL SIMULADO] Para: " + email + " | " + mensagemLog);
+                LOGGER.info("[EMAIL SIMULADO] Para: " + email + " | " + mensagemLog);
                 estado = Estado.SIMULADA;
                 enviados++;
             }

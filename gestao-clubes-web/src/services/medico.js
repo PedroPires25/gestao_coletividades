@@ -1,4 +1,4 @@
-const API_URL = ((import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "")) + "/api";
+import { API_BASE as API_URL } from "../config/apiBase";
 const LS_KEY = "gc_user";
 
 function getStoredToken() {
@@ -37,7 +37,6 @@ async function authFetch(path, options = {}) {
     return response.text();
 }
 
-// ---- Ficha Médica ----
 
 export async function getFichaMedica(clubeId, atletaId) {
     try {
@@ -179,8 +178,7 @@ export async function uploadExameFicheiro(clubeId, exameId, file) {
 
 export function getExameFileUrl(ficheiroPath) {
     if (!ficheiroPath) return null;
-    const base = (import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "");
-    return `${base}/api/uploads/${ficheiroPath}`;
+    return `${API_URL}/uploads/${ficheiroPath}`;
 }
 
 export async function getRelatorios(clubeId) {

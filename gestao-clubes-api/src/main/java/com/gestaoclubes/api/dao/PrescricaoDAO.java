@@ -2,6 +2,7 @@ package com.gestaoclubes.api.dao;
 
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -9,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 public class PrescricaoDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(PrescricaoDAO.class.getName());
 
     public List<Map<String, Object>> listarPorClube(int clubeId) {
         String sql = """
@@ -47,7 +50,7 @@ public class PrescricaoDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapRow(rs));
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { LOGGER.severe(e.toString()); }
         return lista;
     }
 
@@ -69,7 +72,7 @@ public class PrescricaoDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return mapRow(rs);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { LOGGER.severe(e.toString()); }
         return null;
     }
 
@@ -98,7 +101,7 @@ public class PrescricaoDAO {
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) return keys.getInt(1);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { LOGGER.severe(e.toString()); }
         return 0;
     }
 
@@ -123,7 +126,7 @@ public class PrescricaoDAO {
             ps.setString(8, notas);
             ps.setInt(9, id);
             return ps.executeUpdate() > 0;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
+        } catch (SQLException e) { LOGGER.severe(e.toString()); return false; }
     }
 
     private List<Map<String, Object>> listar(String sql, int clubeId) {
@@ -134,7 +137,7 @@ public class PrescricaoDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapRow(rs));
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) { LOGGER.severe(e.toString()); }
         return lista;
     }
 

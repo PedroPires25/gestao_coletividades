@@ -50,10 +50,6 @@ public class TreinadorRestController {
         this.notificacaoService = notificacaoService;
     }
 
-    // ==========================================
-    // LISTAR ATLETAS DO CLUBE (para dropdowns)
-    // ==========================================
-
     @GetMapping("/clubes/{clubeId}/treinador/atletas")
     public List<Map<String, Object>> listarAtletasDoClube(@PathVariable int clubeId) {
         exigirAcessoTreinador(clubeId);
@@ -61,9 +57,9 @@ public class TreinadorRestController {
     }
 
     /**
-     * Returns athletes eligible to be convoked for the trainer's modality.
-     * If escalaoId is provided, returns athletes from that escalão and the one immediately below.
-     * If escalaoId is absent, returns all athletes of the modality (fallback).
+     * Devolve atletas elegíveis para convocatória do treinador na modalidade.
+     * Se escalaoId for fornecido, devolve atletas desse escalão e do imediatamente abaixo.
+     * Se escalaoId estiver ausente, devolve todos os atletas da modalidade.
      */
     @GetMapping("/clubes/{clubeId}/treinador/convocatorias/atletas")
     public List<Map<String, Object>> listarAtletasConvocatorias(
@@ -93,14 +89,6 @@ public class TreinadorRestController {
         return atletaDAO.listarPorClubeModalidadeEEscaloes(clubeId, modalidadeTreinadorId, escalaoIds);
     }
 
-    // ==========================================
-    // ESCALÕES DO TREINADOR
-    // ==========================================
-
-    /**
-     * Returns the escalões assigned to the authenticated trainer in the given clube,
-     * sorted by the canonical hierarchy (youngest → oldest).
-     */
     @GetMapping("/clubes/{clubeId}/treinador/escaloes")
     public List<Map<String, Object>> listarEscaloesTreinador(@PathVariable int clubeId) {
         exigirAcessoConvocatorias(clubeId);
@@ -114,7 +102,7 @@ public class TreinadorRestController {
         List<Map<String, Object>> escaloes = staffAfetacaoEscalaoDAO
                 .listarEscaloesPorTreinador(utilizadorId, clubeId, clubeModalidadeId);
 
-        // Sort by the canonical hierarchy
+        // Ordena pela hierarquia canónica
         List<String> ordem = EscalaoDAO.ESCALAO_ORDEM;
         escaloes.sort((a, b) -> {
             int posA = ordem.indexOf(((String) a.get("nome")).toLowerCase());
@@ -125,10 +113,6 @@ public class TreinadorRestController {
         });
         return escaloes;
     }
-
-    // ==========================================
-    // CONVOCATÓRIAS
-    // ==========================================
 
     @GetMapping("/clubes/{clubeId}/treinador/convocatorias")
     public List<Map<String, Object>> listarConvocatorias(@PathVariable int clubeId) {
@@ -180,7 +164,6 @@ public class TreinadorRestController {
                 ? exigirClubeModalidadeDoClube(clubeId, numeroParaInt(payload.get("clubeModalidadeId")))
                 : exigirModalidadeTreinadorNoClube(clubeId);
 
-        // Validate escalão
         Integer escalaoId = numeroParaInt(payload.get("escalaoId"));
         List<Integer> escalaoIds = gestaoTotal
                 ? validarEscalaoGestor(escalaoId)
@@ -280,7 +263,6 @@ public class TreinadorRestController {
             eventoExistente = validarEventoTreinador(eventoId, clubeId, clubeModalidadeId, utilizadorId);
         }
 
-        // Validate escalão
         Integer escalaoId = numeroParaInt(payload.get("escalaoId"));
         List<Integer> escalaoIds = gestaoTotal
                 ? validarEscalaoGestor(escalaoId)
@@ -365,10 +347,6 @@ public class TreinadorRestController {
         return ResponseEntity.ok(resposta);
     }
 
-    // ==========================================
-    // SESSÕES DE TREINO
-    // ==========================================
-
     @GetMapping("/clubes/{clubeId}/treinador/sessoes")
     public List<Map<String, Object>> listarSessoes(@PathVariable int clubeId) {
         exigirAcessoTreinador(clubeId);
@@ -388,10 +366,6 @@ public class TreinadorRestController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
-    // ==========================================
-    // ASSIDUIDADE
-    // ==========================================
-
     @GetMapping("/clubes/{clubeId}/treinador/assiduidade")
     public List<Map<String, Object>> obterAssiduidade(
             @PathVariable int clubeId,
@@ -405,10 +379,6 @@ public class TreinadorRestController {
         return treinadorService.obterAssiduidade(clubeId, startDate, endDate);
     }
 
-    // ==========================================
-    // PLANOS DE TREINO
-    // ==========================================
-
     @PostMapping("/clubes/{clubeId}/treinador/planos")
     public ResponseEntity<?> criarPlanoTreino(
             @PathVariable int clubeId,
@@ -421,10 +391,6 @@ public class TreinadorRestController {
         }
         return ResponseEntity.ok(Map.of("ok", true));
     }
-
-    // ==========================================
-    // Helpers
-    // ==========================================
 
     private void exigirAcessoTreinador(int clubeId) {
         if (SecurityUtils.isSuperAdmin()) return;
@@ -508,8 +474,8 @@ public class TreinadorRestController {
     }
 
     /**
-     * Validates that the trainer is assigned to {@code escalaoId} and returns
-     * the list of allowed escalão IDs (selected + immediately below).
+     * Valida que o treinador está afeto ao escalaoId e devolve
+     * a lista de IDs de escalões permitidos (selecionado + imediatamente abaixo).
      */
     private List<Integer> validarEEscaloes(int clubeId, int clubeModalidadeId, Integer escalaoId) {
         if (escalaoId == null) {
@@ -545,8 +511,7 @@ public class TreinadorRestController {
     }
 
     /**
-     * Resolves allowed escalão IDs for athlete listing (same escalão + one below),
-     * without throwing if there are no assigned escalões (just returns all for that escalão).
+     * Resolve os IDs de escalões permitidos para listagem de atletas (mesmo escalão + imediatamente abaixo).
      */
     private List<Integer> resolverEscaloesPermitidos(int clubeId, int clubeModalidadeId, int escalaoId) {
         int utilizadorId = SecurityUtils.currentUserId();
@@ -630,7 +595,7 @@ public class TreinadorRestController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não tem permissão para gerir este evento.");
         }
 
-        // Validate escalão ownership if stored on event
+        // Valida a posse do escalão se presente no evento
         Integer eventoEscalaoId = numeroParaInt(existente.get("escalaoId"));
         if (eventoEscalaoId != null) {
             int utilizadorId = SecurityUtils.currentUserId();

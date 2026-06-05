@@ -3,6 +3,7 @@ package com.gestaoclubes.api.dao;
 import com.gestaoclubes.api.model.EventoAtleta;
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -10,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 public class EventoAtletaDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(EventoAtletaDAO.class.getName());
 
     public List<Map<String, Object>> listarPorEvento(int eventoId) {
         List<Map<String, Object>> lista = new ArrayList<>();
@@ -63,7 +66,7 @@ public class EventoAtletaDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -80,7 +83,7 @@ public class EventoAtletaDAO {
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -100,7 +103,7 @@ public class EventoAtletaDAO {
             int[] results = ps.executeBatch();
             return results.length == atletaIds.size();
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -116,7 +119,7 @@ public class EventoAtletaDAO {
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -131,7 +134,7 @@ public class EventoAtletaDAO {
 
             return ps.executeUpdate() >= 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -152,7 +155,7 @@ public class EventoAtletaDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return false;
@@ -173,7 +176,7 @@ public class EventoAtletaDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;

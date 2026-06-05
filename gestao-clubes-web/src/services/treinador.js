@@ -1,4 +1,4 @@
-const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "")}/api`;
+import { API_BASE as API_URL } from "../config/apiBase";
 const LS_KEY = "gc_user";
 
 function getStoredToken() {
@@ -86,12 +86,10 @@ export async function updateConvocatoriaTreinador(clubeId, eventoId, payload) {
 // =======================
 
 export async function getSessoesTreino(clubeId) {
-    // Ex: GET /api/clubes/:id/treinador/sessoes
     return authFetch(`/clubes/${clubeId}/treinador/sessoes`);
 }
 
 export async function createSessaoTreino(clubeId, payload) {
-    // Ex: POST /api/clubes/:id/treinador/sessoes
     return authFetch(`/clubes/${clubeId}/treinador/sessoes`, {
         method: "POST",
         body: JSON.stringify(payload),
@@ -99,7 +97,6 @@ export async function createSessaoTreino(clubeId, payload) {
 }
 
 export async function updateSessaoTreino(clubeId, sessaoId, payload) {
-    // Ex: PUT /api/clubes/:id/treinador/sessoes/:sessaoId
     return authFetch(`/clubes/${clubeId}/treinador/sessoes/${sessaoId}`, {
         method: "PUT",
         body: JSON.stringify(payload),
@@ -111,7 +108,6 @@ export async function updateSessaoTreino(clubeId, sessaoId, payload) {
 // =======================
 
 export async function getAssiduidade(clubeId, startDate, endDate) {
-    // Ex: GET /api/clubes/:id/treinador/assiduidade?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
     const params = new URLSearchParams({ startDate, endDate });
     return authFetch(`/clubes/${clubeId}/treinador/assiduidade?${params.toString()}`);
 }
@@ -121,7 +117,6 @@ export async function getAssiduidade(clubeId, startDate, endDate) {
 // =======================
 
 export async function enviarPlanoTreino(clubeId, payload) {
-    // Ex: POST /api/clubes/:id/treinador/planos
     return authFetch(`/clubes/${clubeId}/treinador/planos`, {
         method: "POST",
         body: JSON.stringify(payload),

@@ -49,7 +49,7 @@ public class MedicoRestController {
     }
 
     @PutMapping("/clubes/{clubeId}/medico/atletas/{atletaId}/ficha")
-    public ResponseEntity<?> salvarFichaMedica(
+    public ResponseEntity<?> guardarFichaMedica(
             @PathVariable int clubeId,
             @PathVariable int atletaId,
             @RequestBody FichaMedicaRequest body

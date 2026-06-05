@@ -2,10 +2,13 @@ package com.gestaoclubes.api.dao;
 
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 
 public class AuditLogDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(AuditLogDAO.class.getName());
 
     public boolean inserir(int adminUserId,
                            String acao,
@@ -36,7 +39,7 @@ public class AuditLogDAO {
             return ps.executeUpdate() == 1;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }

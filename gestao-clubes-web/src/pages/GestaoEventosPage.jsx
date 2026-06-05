@@ -9,8 +9,8 @@ import * as eventosService from "../services/eventos";
 import { getModalidadesByClube, getAtletasByClubeModalidade } from "../services/atletas";
 import { getAtividadesByColetividade } from "../services/coletividadeAtividades";
 import { getUtentesByColetividadeAtividade } from "../services/utentes";
+import { API_BASE } from "../config/apiBase";
 
-const API_BASE = `${(import.meta.env.VITE_API_URL || "http://localhost:8080").replace(/\/$/, "")}/api`;
 const LS_KEY = "gc_user";
 
 function getToken() {
@@ -143,14 +143,12 @@ export default function GestaoEventosPage() {
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState(null);
 
-    // Form state
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [form, setForm] = useState(() => criarFormularioBase());
     const [saving, setSaving] = useState(false);
     const [formErro, setFormErro] = useState(null);
 
-    // Lists for selectors
     const [clubes, setClubes] = useState([]);
     const [modalidades, setModalidades] = useState([]);
     const [atletas, setAtletas] = useState([]);
@@ -158,12 +156,9 @@ export default function GestaoEventosPage() {
     const [atividades, setAtividades] = useState([]);
     const [utentes, setUtentes] = useState([]);
 
-    // Convocados search filter
     const [convocadosSearch, setConvocadosSearch] = useState("");
 
-    // Convocados view modal
     const [viewingConvocados, setViewingConvocados] = useState(null);
-    // Map view modal
     const [viewingMap, setViewingMap] = useState(null);
     const [convocadosList, setConvocadosList] = useState([]);
 
@@ -190,7 +185,6 @@ export default function GestaoEventosPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { carregarEventos(); }, [carregarEventos]);
 
-    // Load accessible structures on mount
     useEffect(() => {
         let active = true;
 
@@ -258,7 +252,7 @@ export default function GestaoEventosPage() {
         currentAtividadeId,
     ]);
 
-    // Load modalidades when clube changes
+    // Carrega modalidades quando o clube muda
     useEffect(() => {
         if (form.tipo === "MODALIDADE" && form.clubeId) {
             getModalidadesByClube(form.clubeId)
@@ -276,7 +270,7 @@ export default function GestaoEventosPage() {
         }
     }, [form.clubeId, form.tipo, canChooseEstruturaLivremente, currentModalidadeId]);
 
-    // Load atletas when modalidade changes
+    // Carrega atletas quando a modalidade muda
     useEffect(() => {
         if (form.tipo === "MODALIDADE" && form.clubeId && form.clubeModalidadeId) {
             getAtletasByClubeModalidade(form.clubeId, form.clubeModalidadeId)
@@ -288,7 +282,7 @@ export default function GestaoEventosPage() {
         }
     }, [form.clubeModalidadeId, form.clubeId, form.tipo]);
 
-    // Load atividades when coletividade changes
+    // Carrega atividades quando a coletividade muda
     useEffect(() => {
         if (form.tipo === "ATIVIDADE" && form.coletividadeId) {
             getAtividadesByColetividade(form.coletividadeId, { apenasAtivas: false })
@@ -306,7 +300,7 @@ export default function GestaoEventosPage() {
         }
     }, [form.coletividadeId, form.tipo, canChooseEstruturaLivremente, currentAtividadeId]);
 
-    // Load utentes when atividade changes
+    // Carrega utentes quando a atividade muda
     useEffect(() => {
         if (form.tipo === "ATIVIDADE" && form.coletividadeId && form.coletividadeAtividadeId) {
             getUtentesByColetividadeAtividade(form.coletividadeId, form.coletividadeAtividadeId)
@@ -331,12 +325,13 @@ export default function GestaoEventosPage() {
         setConvocadosSearch("");
         setEditingId(evento.id);
 
-        // Load existing convocados
         let convocadosExistentes = [];
         try {
             const conv = await eventosService.listarConvocadosGestao(evento.id);
             convocadosExistentes = (Array.isArray(conv) ? conv : []).map(c => c.id);
-        } catch { /**/ }
+        } catch {
+            convocadosExistentes = [];
+        }
 
         setForm({
             titulo: evento.titulo || "",

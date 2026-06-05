@@ -3,11 +3,14 @@ package com.gestaoclubes.api.dao;
 import com.gestaoclubes.api.model.Modalidade;
 import com.gestaoclubes.api.util.ConexoBD;
 
+import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ModalidadeDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(ModalidadeDAO.class.getName());
 
     // Lista apenas modalidades ativas (para combobox, associação a clubes, etc.)
     public List<Modalidade> listarAtivas() {
@@ -28,7 +31,7 @@ public class ModalidadeDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -53,7 +56,7 @@ public class ModalidadeDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return lista;
@@ -81,7 +84,7 @@ public class ModalidadeDAO {
             return -1;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return -1;
         }
     }
@@ -105,7 +108,7 @@ public class ModalidadeDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
         }
 
         return null;
@@ -123,7 +126,7 @@ public class ModalidadeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -139,7 +142,7 @@ public class ModalidadeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }
@@ -159,7 +162,7 @@ public class ModalidadeDAO {
 
         } catch (SQLException e) {
             // em caso de erro, assume "sim" para impedir remoção por segurança
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return true;
         }
     }
@@ -177,7 +180,7 @@ public class ModalidadeDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe(e.toString());
             return false;
         }
     }

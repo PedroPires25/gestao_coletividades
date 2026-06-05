@@ -168,7 +168,6 @@ export default function ExamesMedicosPage() {
                 atletaId: Number(form.atletaId),
                 staffId: form.staffId ? Number(form.staffId) : null,
             });
-            // Upload file if selected
             const file = fileInputRef.current?.files?.[0];
             if (file && result?.id) {
                 await uploadExameFicheiro(clubeId, result.id, file);
@@ -208,7 +207,6 @@ export default function ExamesMedicosPage() {
                 ...editForm,
                 staffId: editForm.staffId ? Number(editForm.staffId) : null,
             });
-            // Upload file if selected
             const file = editFileInputRef.current?.files?.[0];
             if (file) {
                 await uploadExameFicheiro(clubeId, editId, file);
