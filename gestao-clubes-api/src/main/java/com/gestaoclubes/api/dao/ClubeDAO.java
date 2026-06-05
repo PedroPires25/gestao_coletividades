@@ -157,4 +157,38 @@ public class ClubeDAO {
             return false;
         }
     }
+
+    public List<Clube> pesquisarPorNome(String nome) {
+        List<Clube> lista = new ArrayList<>();
+        String sql = "SELECT * FROM clube WHERE nome LIKE ? ORDER BY nome LIMIT 20";
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, "%" + nome.trim() + "%");
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Clube clube = new Clube(
+                            rs.getInt("id"),
+                            rs.getString("nome"),
+                            rs.getString("nif"),
+                            rs.getString("email"),
+                            rs.getString("telefone"),
+                            rs.getString("morada"),
+                            rs.getString("codigo_postal"),
+                            rs.getString("localidade"),
+                            rs.getDate("data_fundacao")
+                    );
+                    clube.setLogoPath(rs.getString("logo_path"));
+                    lista.add(clube);
+                }
+            }
+
+        } catch (SQLException e) {
+            LOGGER.severe(e.toString());
+        }
+
+        return lista;
+    }
 }
