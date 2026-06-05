@@ -61,6 +61,9 @@ public class TransferenciaRestController {
             clubeDestinoId = n.intValue();
         }
 
+        String clubeDestinoNome = body.get("clubeDestinoNome") instanceof String s ? s.trim() : null;
+        if (clubeDestinoNome != null && clubeDestinoNome.isBlank()) clubeDestinoNome = null;
+
         String obs = body.get("observacoes") instanceof String s ? s.trim() : null;
         if (obs != null && obs.isBlank()) obs = null;
 
@@ -69,7 +72,7 @@ public class TransferenciaRestController {
                 ? Date.valueOf(LocalDate.parse(dataStr))
                 : Date.valueOf(LocalDate.now());
 
-        boolean registado = transferenciaDAO.inserir(atletaId, clubeId, clubeDestinoId, dataTransferencia, obs);
+        boolean registado = transferenciaDAO.inserir(atletaId, clubeId, clubeDestinoId, clubeDestinoNome, dataTransferencia, obs);
         if (!registado) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Não foi possível registar a transferência.");
