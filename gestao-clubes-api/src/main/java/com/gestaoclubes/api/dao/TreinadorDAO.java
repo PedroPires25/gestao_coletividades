@@ -5,9 +5,11 @@ import com.gestaoclubes.api.util.ConexoBD;
 import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TreinadorDAO {
 
@@ -87,7 +89,7 @@ public class TreinadorDAO {
             SELECT a.id AS atletaId,
                    COALESCE(u.nome, a.nome) AS nomeAtleta,
                    (SELECT COUNT(*) FROM sessoes_treino WHERE clube_id = ? AND data_treino BETWEEN ? AND ?) AS totalTreinos,
-                   COUNT(pt.id) AS presencas
+                   COUNT(st.id) AS presencas
             FROM atleta a
             LEFT JOIN utilizadores u ON a.utilizador_id = u.id
             LEFT JOIN presencas_treino pt ON pt.atleta_id = a.id AND pt.presente = 1
@@ -146,5 +148,43 @@ public class TreinadorDAO {
             LOGGER.severe(e.toString());
         }
         return 0;
+    }
+
+    public List<Map<String, Object>> listarAtletasPorEscaloes(int clubeId, List<Integer> escalaoIds) {
+        if (escalaoIds == null || escalaoIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        String placeholders = String.join(",", Collections.nCopies(escalaoIds.size(), "?"));
+        String sql = String.format("""
+            SELECT a.id, COALESCE(u.nome, a.nome) AS nome
+            FROM atleta a
+            LEFT JOIN utilizadores u ON u.id = a.utilizador_id
+            WHERE a.clube_atual_id = ? AND a.escalao_id IN (%s)
+            ORDER BY nome
+        """, placeholders);
+
+        List<Map<String, Object>> lista = new ArrayList<>();
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, clubeId);
+            int index = 2;
+            for (Integer escalaoId : escalaoIds) {
+                ps.setInt(index++, escalaoId);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", rs.getInt("id"));
+                    row.put("nome", rs.getString("nome"));
+                    lista.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.severe(e.toString());
+        }
+        return lista;
     }
 }
