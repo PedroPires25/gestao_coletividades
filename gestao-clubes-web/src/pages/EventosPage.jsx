@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById } from "../api";
-import { getAtletasByClubeModalidade, getModalidadesByClube } from "../services/atletas";
+import { getAtletasTreinador } from "../services/treinador";
 import {
   listarEventos,
   criarEvento,
   atualizarEvento,
-  eliminarEvento,
+  deletarEvento,
 } from "../services/eventos";
+import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
+
 import modalidadesIcon from "../assets/modalidades.svg";
 
 function formatDateTimeForInput(dateString) {
@@ -44,11 +46,13 @@ function convertToServerFormat(datetimeLocalValue) {
 }
 
 export default function EventosPage() {
-  const { isAdmin, role, clubeId: currentClubeId, modalidadeId: currentModalidadeId } = useAuth();
+  const { isAdmin, isTreinador } = useAuth();
   const { clubeId, clubeModalidadeId } = useParams();
+  const location = useLocation();
+
+  const isConvocatoriasMode = location.pathname.includes("/treinador/convocatorias");
 
   const [clube, setClube] = useState(null);
-  const [modalidade, setModalidade] = useState(null);
   const [eventos, setEventos] = useState([]);
   const [atletas, setAtletas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,23 +78,17 @@ export default function EventosPage() {
         const clubeData = await getClubeById(parseInt(clubeId));
         setClube(clubeData);
 
-        const modalidades = await getModalidadesByClube(parseInt(clubeId));
-        const modalidadeData = modalidades.find(
-          (m) => m.id === parseInt(clubeModalidadeId)
-        );
-        setModalidade(modalidadeData);
-
         const eventosData = await listarEventos(
           parseInt(clubeId),
           parseInt(clubeModalidadeId)
         );
         setEventos(Array.isArray(eventosData) ? eventosData : []);
 
-        const atletasData = await getAtletasByClubeModalidade(
-          parseInt(clubeId),
-          parseInt(clubeModalidadeId)
-        );
-        setAtletas(Array.isArray(atletasData) ? atletasData : []);
+        if (isTreinador) {
+            const atletasData = await getAtletasTreinador(clubeId);
+            setAtletas(Array.isArray(atletasData) ? atletasData : []);
+        }
+
       } catch (e) {
         setErro(e.message);
       } finally {
@@ -98,21 +96,12 @@ export default function EventosPage() {
       }
     }
 
-    if (clubeId && clubeModalidadeId) {
+    if (clubeId) {
       carregar();
     }
-  }, [clubeId, clubeModalidadeId]);
+  }, [clubeId, clubeModalidadeId, isTreinador]);
 
-  const isModalidadeAfetada =
-    currentClubeId != null &&
-    currentModalidadeId != null &&
-    Number(currentClubeId) === Number(clubeId) &&
-    Number(currentModalidadeId) === Number(clubeModalidadeId);
-
-  const canManageEventos =
-    isAdmin ||
-    role === "SECRETARIO" ||
-    ((role === "TREINADOR_PRINCIPAL" || role === "PROFESSOR") && isModalidadeAfetada);
+  const canManageEventos = isAdmin || (isTreinador && isConvocatoriasMode);
 
   const atletasFiltrados = atletas.filter((a) =>
     a.nome.toLowerCase().includes(atletasSearch.toLowerCase())
@@ -151,7 +140,10 @@ export default function EventosPage() {
         titulo: form.titulo.trim(),
         dataHora: convertToServerFormat(form.dataHora),
         local: form.local.trim() || null,
-        atletaIds: form.atletaIds,
+        convocados: form.atletaIds,
+        criadoPorTreinador: true,
+        clubeModalidadeId: parseInt(clubeModalidadeId),
+        tipo: 'MODALIDADE'
       };
 
       if (editingId) {
@@ -195,7 +187,7 @@ export default function EventosPage() {
     if (!ok) return;
 
     try {
-      await eliminarEvento(
+      await deletarEvento(
         parseInt(clubeId),
         parseInt(clubeModalidadeId),
         eventoId
@@ -218,7 +210,7 @@ export default function EventosPage() {
       titulo: evento.titulo || "",
       dataHora: formatDateTimeForInput(evento.dataHora) || "",
       local: evento.local || "",
-      atletaIds: [],
+      atletaIds: [], // TODO: Carregar os atletas já convocados se a API fornecer
     });
     setShowForm(true);
     setTimeout(() => {
@@ -235,6 +227,37 @@ export default function EventosPage() {
     setShowForm(false);
     setAtletasSearch("");
   }
+
+  const prepareExportData = () => {
+    const columns = [
+        { key: 'titulo', label: 'Título' },
+        { key: 'dataHoraFormatada', label: 'Data e Hora' },
+        { key: 'local', label: 'Local' },
+        { key: 'totalAtletas', label: 'Atletas (Nº)' },
+    ];
+    const dataToExport = eventos.map(e => ({
+        ...e,
+        dataHoraFormatada: formatDateTimeForDisplay(e.dataHora) || "-",
+        local: e.local || "-",
+        totalAtletas: e.totalAtletas || 0,
+    }));
+    return { columns, dataToExport };
+  };
+
+  const handleExportCsv = () => {
+    const { columns, dataToExport } = prepareExportData();
+    exportToCsv(dataToExport, columns, `eventos_${clube?.nome || clubeId}.csv`);
+  };
+
+  const handleExportPdf = () => {
+    const { columns, dataToExport } = prepareExportData();
+    exportToPdf(dataToExport, columns, isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube", clube?.nome, `eventos_${clube?.nome || clubeId}.pdf`);
+  };
+
+  const handlePrint = () => {
+    const { columns, dataToExport } = prepareExportData();
+    printPdf(dataToExport, columns, isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube", clube?.nome);
+  };
 
   if (loading) {
     return (
@@ -272,36 +295,39 @@ export default function EventosPage() {
           maxWidth: "100%",
         }}
       >
-        <div className="page-title page-title-with-icon">
+        <div className="page-title page-title-with-icon no-print">
           <div className="page-title-main-wrap">
             <span className="page-title-icon-circle">
               <img src={modalidadesIcon} alt="Eventos" className="page-title-icon" />
             </span>
 
             <div className="page-title-texts">
-              <h1>Eventos</h1>
+              <h1>{isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube"}</h1>
             </div>
           </div>
-
-          <div className="hint">{modalidade?.nome || "Modalidade"}</div>
         </div>
 
-        {erro ? <div className="alert error">{erro}</div> : null}
-        {msg ? <div className="alert ok">{msg}</div> : null}
+        {erro ? <div className="alert error no-print">{erro}</div> : null}
+        {msg ? <div className="alert ok no-print">{msg}</div> : null}
 
         <div className="stack-sections">
           {/* LISTA DE EVENTOS */}
           <section className="card">
             <div className="modalidades-toolbar">
               <div className="toolbar-title-group">
-                <h2>Eventos</h2>
+                <h2>{isConvocatoriasMode ? "Minhas Convocatórias" : "Próximos Eventos"}</h2>
                 <span className="toolbar-count">{eventos.length}</span>
               </div>
-              {canManageEventos && !showForm && (
-                <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-                  + Novo
-                </button>
-              )}
+              <div className="actions no-print">
+                 <button className="btn" onClick={handleExportPdf} disabled={eventos.length === 0}>Exportar PDF</button>
+                 <button className="btn" onClick={handleExportCsv} disabled={eventos.length === 0}>Exportar CSV</button>
+                 <button className="btn" onClick={handlePrint} disabled={eventos.length === 0}>Imprimir</button>
+                 {canManageEventos && !showForm && (
+                  <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+                    + {isConvocatoriasMode ? "Nova Convocatória" : "Novo Evento"}
+                  </button>
+                )}
+              </div>
             </div>
 
             {eventos.length === 0 ? (
@@ -315,7 +341,7 @@ export default function EventosPage() {
                       <th>Data e Hora</th>
                       <th>Local</th>
                       <th className="text-center">Atletas</th>
-                      {canManageEventos && <th className="text-center">Ações</th>}
+                      {canManageEventos && <th className="text-center no-print">Ações</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -326,7 +352,7 @@ export default function EventosPage() {
                         <td>{evento.local || "-"}</td>
                         <td className="text-center">{evento.totalAtletas || 0}</td>
                         {canManageEventos && (
-                          <td className="text-center">
+                          <td className="text-center no-print">
                             <button
                               className="btn btn-sm btn-secondary"
                               onClick={() => handleEdit(evento)}
@@ -353,9 +379,9 @@ export default function EventosPage() {
           </section>
 
           {/* FORMULÁRIO */}
-          {showForm && (
-            <section className="card evento-form">
-              <h2>{editingId ? "Editar Evento" : "Novo Evento"}</h2>
+          {showForm && canManageEventos && (
+            <section className="card evento-form no-print">
+              <h2>{editingId ? "Editar Convocatória" : "Nova Convocatória"}</h2>
 
               <div className="form-scroll">
               <form onSubmit={handleSubmit} className="row">
@@ -410,7 +436,7 @@ export default function EventosPage() {
                 <div className="form-section">
                   <h3 className="form-section-title">Participantes</h3>
                   <div className="row">
-                    <label className="field-label">Selecionar Atletas</label>
+                    <label className="field-label">Selecionar Atletas {isTreinador ? "(do seu escalão)" : ""}</label>
                   <input
                     type="text"
                     placeholder="Procurar atleta..."
@@ -455,7 +481,7 @@ export default function EventosPage() {
 
                 <div className="actions">
                   <button type="submit" className="btn btn-primary">
-                    {editingId ? "Atualizar" : "Criar"} Evento
+                    {editingId ? "Atualizar" : "Criar"} {isConvocatoriasMode ? "Convocatória" : "Evento"}
                   </button>
                   <button
                     type="button"

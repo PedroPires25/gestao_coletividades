@@ -11,6 +11,7 @@ import {
     updateStaff,
     updateStaffAfetacao,
 } from "../services/staff";
+import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 
 import atletasIcon from "../assets/atletas.svg";
 
@@ -290,6 +291,43 @@ export default function ClubeStaffModalidadePage() {
         }
     }
 
+    const prepareExportData = () => {
+        const columns = [
+            { key: 'nome', label: 'Nome' },
+            { key: 'email', label: 'Email' },
+            { key: 'telefone', label: 'Telefone' },
+            { key: 'morada', label: 'Morada' },
+            { key: 'numRegisto', label: 'Nº Registo' },
+            { key: 'remuneracao', label: 'Remuneração' },
+            { key: 'cargo', label: 'Cargo' },
+            { key: 'escaloes', label: 'Escalões' },
+            { key: 'epoca', label: 'Época' },
+            { key: 'dataInicio', label: 'Data Início' },
+        ];
+        const dataToExport = staffRows.map(row => ({
+            ...row,
+            escaloes: displayEscaloes(row),
+            dataInicio: formatDateOnly(row.dataInicio || row.data_inicio) || "-",
+            numRegisto: row.numRegisto || row.num_registo || "-",
+        }));
+        return { columns, dataToExport };
+    };
+
+    const handleExportCsv = () => {
+        const { columns, dataToExport } = prepareExportData();
+        exportToCsv(dataToExport, columns, `staff_${modalidadeAtiva?.modalidade?.nome || 'modalidade'}.csv`);
+    };
+
+    const handlePrint = () => {
+        const { columns, dataToExport } = prepareExportData();
+        printPdf(dataToExport, columns, `Staff - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`, clube?.nome);
+    };
+
+    const handleExportPdf = () => {
+        const { columns, dataToExport } = prepareExportData();
+        exportToPdf(dataToExport, columns, `Staff - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`, clube?.nome, `staff_${modalidadeAtiva?.modalidade?.nome || 'modalidade'}.pdf`);
+    };
+
     return (
         <>
             <input
@@ -308,7 +346,7 @@ export default function ClubeStaffModalidadePage() {
             />
 
             <div className="container" style={{ paddingTop: 24 }}>
-                <div className="page-title page-title-with-icon">
+                <div className="page-title page-title-with-icon no-print">
                     <div className="page-title-main-wrap">
                         <span className="page-title-icon-circle">
                             <img src={atletasIcon} alt="Staff" className="page-title-icon" />
@@ -325,14 +363,19 @@ export default function ClubeStaffModalidadePage() {
                     </div>
                 </div>
 
-                {erro ? <div className="alert error">{erro}</div> : null}
-                {msg ? <div className="alert ok">{msg}</div> : null}
+                {erro ? <div className="alert error no-print">{erro}</div> : null}
+                {msg ? <div className="alert ok no-print">{msg}</div> : null}
 
                 <div className="card">
                     <div className="modalidades-toolbar">
                         <div className="toolbar-title-group">
                             <h2>Listagem de staff</h2>
                             <span className="toolbar-count">{staffRows.length} registo(s)</span>
+                        </div>
+                        <div className="actions no-print">
+                            <button className="btn" onClick={handleExportPdf}>Exportar PDF</button>
+                            <button className="btn" onClick={handleExportCsv}>Exportar CSV</button>
+                            <button className="btn" onClick={handlePrint}>Imprimir</button>
                         </div>
                     </div>
 
@@ -355,7 +398,7 @@ export default function ClubeStaffModalidadePage() {
                                     <th>Escalões</th>
                                     <th>Época</th>
                                     <th>Data Início</th>
-                                    <th>Ações</th>
+                                    <th className="no-print">Ações</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -405,7 +448,7 @@ export default function ClubeStaffModalidadePage() {
                                             <td>{displayEscaloes(row)}</td>
                                             <td>{row.epoca || "-"}</td>
                                             <td>{formatDateOnly(row.dataInicio || row.data_inicio) || "-"}</td>
-                                            <td>
+                                            <td className="no-print">
                                                 <div className="table-actions">
                                                     <button type="button" className="btn" onClick={() => abrirEditar(row)}>
                                                         Editar

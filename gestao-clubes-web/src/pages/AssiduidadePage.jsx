@@ -3,11 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getAssiduidade } from "../services/treinador";
+import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 
 export default function AssiduidadePage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout } = useAuth();
+    const { logout, clube } = useAuth();
 
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
@@ -21,7 +22,6 @@ export default function AssiduidadePage() {
             { label: "Treinos", to: `/clubes/${clubeId}/treinador/sessoes` },
             { label: "Plano de Treino", to: `/clubes/${clubeId}/treinador/planos` },
             { label: "Estatísticas", to: `/clubes/${clubeId}/treinador/assiduidade` },
-            { label: "Convocatórias", to: `/clubes/${clubeId}/treinador/convocatorias` },
             { label: "Eventos do Clube", to: `/clubes/${clubeId}/eventos` },
             {
                 label: "Logout",
@@ -51,12 +51,41 @@ export default function AssiduidadePage() {
         }
     }
 
+    const prepareExportData = () => {
+        const columns = [
+            { key: 'nomeAtleta', label: 'Atleta' },
+            { key: 'totalTreinos', label: 'Nº de Treinos no Período' },
+            { key: 'presencas', label: 'Presenças' },
+            { key: 'assiduidade', label: 'Assiduidade (%)' },
+        ];
+        const dataToExport = resultados.map(r => ({
+            ...r,
+            assiduidade: r.percentagem.toFixed(1),
+        }));
+        return { columns, dataToExport };
+    };
+
+    const handleExportCsv = () => {
+        const { columns, dataToExport } = prepareExportData();
+        exportToCsv(dataToExport, columns, `assiduidade_${startDate}_a_${endDate}.csv`);
+    };
+
+    const handleExportPdf = () => {
+        const { columns, dataToExport } = prepareExportData();
+        exportToPdf(dataToExport, columns, `Relatório de Assiduidade (${startDate} a ${endDate})`, clube?.nome, `assiduidade_${startDate}_a_${endDate}.pdf`);
+    };
+
+    const handlePrint = () => {
+        const { columns, dataToExport } = prepareExportData();
+        printPdf(dataToExport, columns, `Relatório de Assiduidade (${startDate} a ${endDate})`, clube?.nome);
+    };
+
     return (
         <>
             <SideMenu title="Gestão de Clubes" subtitle="Estatísticas" logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
 
             <div className="container" style={{ paddingTop: 24 }}>
-                <div className="page-title page-title-with-icon">
+                <div className="page-title page-title-with-icon no-print">
                     <div className="page-title-main-wrap">
                         <span className="page-title-icon-circle" style={{ fontSize: "1.6rem" }}>📊</span>
                         <div className="page-title-texts">
@@ -69,10 +98,19 @@ export default function AssiduidadePage() {
                     </div>
                 </div>
 
-                {erro && <div className="alert error">{erro}</div>}
+                {erro && <div className="alert error no-print">{erro}</div>}
 
                 <div className="card">
-                    <h2>Filtrar por Período</h2>
+                    <div className="modalidades-toolbar">
+                        <div className="toolbar-title-group">
+                            <h2>Filtrar por Período</h2>
+                        </div>
+                        <div className="actions no-print">
+                            <button className="btn" onClick={handleExportPdf} disabled={resultados.length === 0}>Exportar PDF</button>
+                            <button className="btn" onClick={handleExportCsv} disabled={resultados.length === 0}>Exportar CSV</button>
+                            <button className="btn" onClick={handlePrint} disabled={resultados.length === 0}>Imprimir</button>
+                        </div>
+                    </div>
                     <div className="row2" style={{ alignItems: "flex-end", marginBottom: 16 }}>
                         <div className="row">
                             <label className="field-label">Data de Início</label>
