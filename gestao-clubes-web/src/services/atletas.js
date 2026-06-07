@@ -98,3 +98,8 @@ export async function registarTransferencia(clubeId, atletaId, payload) {
         body: JSON.stringify(payload),
     });
 }
+
+export async function pesquisarClubes(nome) {
+    const data = await authFetch(`/clubes/pesquisar?nome=${encodeURIComponent(nome)}`);
+    return Array.isArray(data) ? data : [];
+}
