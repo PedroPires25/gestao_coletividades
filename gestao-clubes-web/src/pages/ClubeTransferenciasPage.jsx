@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getTransferencias, registarTransferencia } from "../services/atletas";
+import { getClubeById } from "../api";
 
 const ROLES_TRANSFERENCIA = ["SUPER_ADMIN", "ADMINISTRADOR", "SECRETARIO"];
 
@@ -15,17 +16,17 @@ export default function ClubeTransferenciasPage() {
     const podeTransferir = ROLES_TRANSFERENCIA.includes(user?.role);
 
     const atletaInicial = location.state?.atleta ?? null;
-    const clubeNome = location.state?.clube?.nome ?? `Clube #${clubeId}`;
+
+    const [clubeNome, setClubeNome] = useState(location.state?.clube?.nome ?? null);
 
     const [transferencias, setTransferencias] = useState([]);
     const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState(null);
     const [refetchKey, setRefetchKey] = useState(0);
 
-    // Formulário de transferência
     const [mostrarForm, setMostrarForm] = useState(!!atletaInicial);
     const [atletaForm, setAtletaForm] = useState(atletaInicial ?? null);
-    const [clubeDestinoId, setClubeDestinoId] = useState("");
+    const [clubeDestinoNome, setClubeDestinoNome] = useState("");
     const [dataTransferencia, setDataTransferencia] = useState(
         new Date().toISOString().slice(0, 10)
     );
@@ -33,6 +34,13 @@ export default function ClubeTransferenciasPage() {
     const [a_guardar, setAGuardar] = useState(false);
     const [msgSucesso, setMsgSucesso] = useState(location.state?.msg ?? null);
     const [erroForm, setErroForm] = useState(null);
+
+    useEffect(() => {
+        if (clubeNome) return;
+        getClubeById(clubeId)
+            .then(c => { if (c?.nome) setClubeNome(c.nome); })
+            .catch(() => {});
+    }, [clubeId, clubeNome]);
 
     useEffect(() => {
         let activo = true;
@@ -50,14 +58,14 @@ export default function ClubeTransferenciasPage() {
         setAGuardar(true);
         try {
             await registarTransferencia(clubeId, atletaForm.id, {
-                clubeDestinoId: clubeDestinoId ? Number(clubeDestinoId) : null,
+                clubeDestinoNome: clubeDestinoNome.trim() || null,
                 dataTransferencia,
                 observacoes: observacoes || null,
             });
             setMsgSucesso(`Atleta "${atletaForm.nome}" transferido com sucesso.`);
             setMostrarForm(false);
             setAtletaForm(null);
-            setClubeDestinoId("");
+            setClubeDestinoNome("");
             setObservacoes("");
             navigate(location.pathname, { replace: true, state: null });
             setCarregando(true);
@@ -68,6 +76,8 @@ export default function ClubeTransferenciasPage() {
             setAGuardar(false);
         }
     }
+
+    const tituloPagina = clubeNome ?? `Clube #${clubeId}`;
 
     const menuItems = [
         { label: "Home", to: "/menu" },
@@ -89,7 +99,7 @@ export default function ClubeTransferenciasPage() {
         <>
             <SideMenu
                 title="Gestão de Coletividades"
-                subtitle={`Transferências • ${clubeNome}`}
+                subtitle={`Transferências • ${tituloPagina}`}
                 logoHref="/menu"
                 items={menuItems}
             />
@@ -97,22 +107,16 @@ export default function ClubeTransferenciasPage() {
             <div className="container" style={{ paddingTop: 24 }}>
                 <div className="page-title">
                     <h1>Transferências</h1>
-                    <div className="hint">{clubeNome}</div>
+                    <div className="hint">{tituloPagina}</div>
                 </div>
 
                 {msgSucesso && (
                     <div className="alert alert-success" style={{ marginBottom: 16 }}>
                         {msgSucesso}
-                        <button
-                            type="button"
-                            className="btn-close"
-                            onClick={() => setMsgSucesso(null)}
-                            style={{ marginLeft: 8 }}
-                        >✕</button>
+                        <button type="button" className="btn-close" onClick={() => setMsgSucesso(null)} style={{ marginLeft: 8 }}>✕</button>
                     </div>
                 )}
 
-                {/* Formulário de nova transferência */}
                 {podeTransferir && mostrarForm && atletaForm && (
                     <div className="card" style={{ marginBottom: 24 }}>
                         <h2 style={{ marginBottom: 12 }}>Registar Transferência</h2>
@@ -133,17 +137,17 @@ export default function ClubeTransferenciasPage() {
                                 />
                             </div>
                             <div className="form-group" style={{ marginTop: 12 }}>
-                                <label htmlFor="clubeDestinoId">
-                                    ID do Clube de Destino <span className="hint">(opcional)</span>
+                                    <label htmlFor="clubeDestinoNome">
+                                    Nome do Clube de Destino <span className="hint">(opcional)</span>
                                 </label>
                                 <input
-                                    id="clubeDestinoId"
-                                    type="number"
-                                    min="1"
+                                    id="clubeDestinoNome"
+                                    type="text"
                                     className="form-control"
-                                    placeholder="Deixar em branco se desconhecido"
-                                    value={clubeDestinoId}
-                                    onChange={e => setClubeDestinoId(e.target.value)}
+                                    placeholder="Ex: Benfica, Sporting, clube externo..."
+                                    maxLength={120}
+                                    value={clubeDestinoNome}
+                                    onChange={e => setClubeDestinoNome(e.target.value)}
                                 />
                             </div>
                             <div className="form-group" style={{ marginTop: 12 }}>
@@ -163,11 +167,7 @@ export default function ClubeTransferenciasPage() {
                                 <p className="text-danger" style={{ marginTop: 8 }}>{erroForm}</p>
                             )}
                             <div className="actions" style={{ marginTop: 16 }}>
-                                <button
-                                    type="submit"
-                                    className="btn btn-primary"
-                                    disabled={a_guardar}
-                                >
+                                <button type="submit" className="btn btn-primary" disabled={a_guardar}>
                                     {a_guardar ? "A guardar..." : "Confirmar Transferência"}
                                 </button>
                                 <button
@@ -176,6 +176,7 @@ export default function ClubeTransferenciasPage() {
                                     onClick={() => {
                                         setMostrarForm(false);
                                         setAtletaForm(null);
+                                        setClubeDestinoNome("");
                                         setErroForm(null);
                                         navigate(location.pathname, { replace: true, state: null });
                                     }}
@@ -188,7 +189,6 @@ export default function ClubeTransferenciasPage() {
                     </div>
                 )}
 
-                {/* Histórico de transferências */}
                 <div className="card">
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                         <h2 style={{ margin: 0 }}>Histórico de Transferências</h2>

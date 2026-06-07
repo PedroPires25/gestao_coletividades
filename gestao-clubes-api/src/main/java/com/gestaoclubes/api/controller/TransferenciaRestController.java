@@ -2,6 +2,7 @@ package com.gestaoclubes.api.controller;
 
 import com.gestaoclubes.api.dao.AtletaClubeModalidadeDAO;
 import com.gestaoclubes.api.dao.AtletaDAO;
+import com.gestaoclubes.api.dao.AuditLogDAO;
 import com.gestaoclubes.api.dao.TransferenciaAtletaDAO;
 import com.gestaoclubes.api.model.Atleta;
 import com.gestaoclubes.api.security.SecurityUtils;
@@ -23,6 +24,7 @@ public class TransferenciaRestController {
     private final TransferenciaAtletaDAO transferenciaDAO = new TransferenciaAtletaDAO();
     private final AtletaDAO atletaDAO = new AtletaDAO();
     private final AtletaClubeModalidadeDAO atletaClubeModalidadeDAO = new AtletaClubeModalidadeDAO();
+    private final AuditLogDAO auditLogDAO = new AuditLogDAO();
 
     /**
      * Lista o historial de transferências do clube (como origem ou destino).
@@ -61,6 +63,9 @@ public class TransferenciaRestController {
             clubeDestinoId = n.intValue();
         }
 
+        String clubeDestinoNome = body.get("clubeDestinoNome") instanceof String s ? s.trim() : null;
+        if (clubeDestinoNome != null && clubeDestinoNome.isBlank()) clubeDestinoNome = null;
+
         String obs = body.get("observacoes") instanceof String s ? s.trim() : null;
         if (obs != null && obs.isBlank()) obs = null;
 
@@ -69,7 +74,7 @@ public class TransferenciaRestController {
                 ? Date.valueOf(LocalDate.parse(dataStr))
                 : Date.valueOf(LocalDate.now());
 
-        boolean registado = transferenciaDAO.inserir(atletaId, clubeId, clubeDestinoId, dataTransferencia, obs);
+        boolean registado = transferenciaDAO.inserir(atletaId, clubeId, clubeDestinoId, clubeDestinoNome, dataTransferencia, obs);
         if (!registado) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Não foi possível registar a transferência.");
@@ -77,6 +82,15 @@ public class TransferenciaRestController {
 
         atletaClubeModalidadeDAO.desativarInscricoesAtivas(atletaId, dataTransferencia);
         atletaDAO.atualizarEstado(atletaId, ESTADO_TRANSFERIDO);
+
+        int adminId = SecurityUtils.currentUserId() != null ? SecurityUtils.currentUserId() : 0;
+        String depoisJson = String.format(
+                "{\"atletaId\":%d,\"clubeOrigemId\":%d,\"clubeDestinoNome\":\"%s\",\"dataTransferencia\":\"%s\"}",
+                atletaId, clubeId,
+                clubeDestinoNome != null ? clubeDestinoNome : "Externo/Desconhecido",
+                dataTransferencia
+        );
+        auditLogDAO.inserir(adminId, "TRANSFERENCIA", "transferencia_atleta", atletaId, null, depoisJson);
 
         return Map.of(
                 "mensagem", "Atleta transferido com sucesso.",

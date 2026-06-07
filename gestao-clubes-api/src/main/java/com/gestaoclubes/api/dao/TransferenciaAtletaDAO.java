@@ -14,13 +14,13 @@ public class TransferenciaAtletaDAO {
     private static final Logger LOGGER = Logger.getLogger(TransferenciaAtletaDAO.class.getName());
 
     /**
-     * Regista uma transferência. clubeDestinoId pode ser null se o destino for desconhecido.
+     * Regista uma transferência. clubeDestinoId e clubeDestinoNome são opcionais.
      */
-    public boolean inserir(int atletaId, int clubeOrigemId, Integer clubeDestinoId, Date data, String obs) {
+    public boolean inserir(int atletaId, int clubeOrigemId, Integer clubeDestinoId, String clubeDestinoNome, Date data, String obs) {
         String sql = """
             INSERT INTO transferencia_atleta
-            (atleta_id, clube_origem_id, clube_destino_id, data_transferencia, observacoes)
-            VALUES (?, ?, ?, ?, ?)
+            (atleta_id, clube_origem_id, clube_destino_id, clube_destino_nome, data_transferencia, observacoes)
+            VALUES (?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = ConexoBD.getConnection();
@@ -32,8 +32,9 @@ public class TransferenciaAtletaDAO {
             } else {
                 ps.setNull(3, Types.INTEGER);
             }
-            ps.setDate(4, data);
-            ps.setString(5, obs);
+            ps.setString(4, (clubeDestinoNome != null && !clubeDestinoNome.isBlank()) ? clubeDestinoNome.trim() : null);
+            ps.setDate(5, data);
+            ps.setString(6, obs);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.severe(e.toString());
@@ -52,28 +53,30 @@ public class TransferenciaAtletaDAO {
                    COALESCE(u.nome, a.nome) AS atleta_nome,
                    a.id                     AS atleta_id,
                    co.nome                  AS clube_origem,
-                   cd.nome                  AS clube_destino,
                    t.clube_origem_id,
                    t.clube_destino_id,
+                   COALESCE(t.clube_destino_nome, cd.nome) AS clube_destino,
                    t.data_transferencia,
                    t.observacoes,
                    e.nome                   AS escalao,
-                   m.nome                   AS modalidade
+                   ultima.modalidade_nome   AS modalidade
             FROM transferencia_atleta t
             JOIN atleta a  ON a.id  = t.atleta_id
             LEFT JOIN utilizadores u ON u.id = a.utilizador_id
             JOIN clube co ON co.id  = t.clube_origem_id
             LEFT JOIN clube cd ON cd.id = t.clube_destino_id
             LEFT JOIN escalao e ON e.id = a.escalao_id
-            LEFT JOIN atleta_clube_modalidade acm
-                   ON acm.atleta_id = a.id
-                  AND acm.clube_modalidade_id = (
-                          SELECT cm2.id FROM clube_modalidade cm2
-                          WHERE cm2.clube_id = t.clube_origem_id
-                          ORDER BY cm2.id DESC LIMIT 1
-                      )
-            LEFT JOIN clube_modalidade cm ON cm.id = acm.clube_modalidade_id
-            LEFT JOIN modalidade m ON m.id = cm.modalidade_id
+            LEFT JOIN (
+                SELECT acm2.atleta_id, m2.nome AS modalidade_nome
+                FROM atleta_clube_modalidade acm2
+                JOIN clube_modalidade cm2 ON cm2.id = acm2.clube_modalidade_id
+                JOIN modalidade m2 ON m2.id = cm2.modalidade_id
+                WHERE acm2.id IN (
+                    SELECT MAX(acm3.id)
+                    FROM atleta_clube_modalidade acm3
+                    GROUP BY acm3.atleta_id
+                )
+            ) ultima ON ultima.atleta_id = a.id
             WHERE t.clube_origem_id = ? OR t.clube_destino_id = ?
             ORDER BY t.data_transferencia DESC, atleta_nome
         """;
