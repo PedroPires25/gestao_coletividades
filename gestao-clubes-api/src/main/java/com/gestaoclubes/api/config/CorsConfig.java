@@ -6,9 +6,13 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
+
+    private static final Logger LOGGER = Logger.getLogger(CorsConfig.class.getName());
+
     @Value("${app.cors.allowed-origin-patterns:}")
     private String allowedOriginPatterns;
 
@@ -18,8 +22,10 @@ public class CorsConfig implements WebMvcConfigurer {
                 .map(String::trim)
                 .filter(origin -> !origin.isBlank())
                 .toArray(String[]::new);
+
         if (origins.length == 0) {
-            throw new IllegalStateException("CORS_ALLOWED_ORIGINS deve estar configurada.");
+            origins = new String[]{"http://localhost:5173"};
+            LOGGER.warning("CORS_ALLOWED_ORIGINS não configurada. A usar fallback: http://localhost:5173");
         }
 
         registry.addMapping("/**")
