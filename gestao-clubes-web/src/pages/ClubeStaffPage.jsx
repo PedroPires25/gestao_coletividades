@@ -10,6 +10,7 @@ import {
     getModalidadesByClube,
     getStaffByClube,
 } from "../services/staff";
+import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 
 import atletasIcon from "../assets/atletas.svg";
 import direcaoIcon from "../assets/direcao.svg";
@@ -169,7 +170,7 @@ function getStaffDestination(clubeId, item) {
 export default function ClubeStaffPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin, isDepartamentoMedico, isTreinador } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, isDepartamentoMedico } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [staffRows, setStaffRows] = useState([]);
@@ -344,6 +345,39 @@ export default function ClubeStaffPage() {
         }
     }
 
+    const prepareExportData = () => {
+        const columns = [
+            { key: 'nome', label: 'Nome' },
+            { key: 'cargo', label: 'Cargo' },
+            { key: 'area', label: 'Área' },
+            { key: 'escaloes', label: 'Escalões' },
+            { key: 'epoca', label: 'Época' },
+            { key: 'dataInicio', label: 'Data Início' },
+        ];
+        const dataToExport = staffRows.map(row => ({
+            ...row,
+            area: getStaffAreaLabel(row),
+            escaloes: displayEscaloes(row),
+            dataInicio: formatDateOnly(row.dataInicio) || "-",
+        }));
+        return { columns, dataToExport };
+    };
+
+    const handleExportCsv = () => {
+        const { columns, dataToExport } = prepareExportData();
+        exportToCsv(dataToExport, columns, `staff_${clube?.nome || clubeId}.csv`);
+    };
+
+    const handleExportPdf = () => {
+        const { columns, dataToExport } = prepareExportData();
+        exportToPdf(dataToExport, columns, "Listagem Geral de Staff", clube?.nome, `staff_${clube?.nome || clubeId}.pdf`);
+    };
+
+    const handlePrint = () => {
+        const { columns, dataToExport } = prepareExportData();
+        printPdf(dataToExport, columns, "Listagem Geral de Staff", clube?.nome);
+    };
+
     return (
         <>
             <SideMenu
@@ -355,7 +389,7 @@ export default function ClubeStaffPage() {
             />
 
             <div className="container" style={{ paddingTop: 24 }}>
-                <div className="page-title page-title-with-icon">
+                <div className="page-title page-title-with-icon no-print">
                     <div className="page-title-main-wrap">
                         <span className="page-title-icon-circle">
                             <img src={atletasIcon} alt="Staff" className="page-title-icon" />
@@ -367,12 +401,12 @@ export default function ClubeStaffPage() {
                     <div className="hint">{clube?.nome || ""}</div>
                 </div>
 
-                {erro ? <div className="alert error">{erro}</div> : null}
-                {msg ? <div className="alert ok">{msg}</div> : null}
+                {erro ? <div className="alert error no-print">{erro}</div> : null}
+                {msg ? <div className="alert ok no-print">{msg}</div> : null}
 
                 <div className="stack-sections">
                     {/* Departamentos (sem modalidade) */}
-                    <section className="card card-quick-links">
+                    <section className="card card-quick-links no-print">
                         <h2>Departamentos</h2>
                         <p className="subtle">Secções do clube não afetas a modalidades específicas.</p>
 
@@ -407,7 +441,7 @@ export default function ClubeStaffPage() {
                         </div>
                     </section>
 
-                    <section className="card card-quick-links">
+                    <section className="card card-quick-links no-print">
                         <h2>Modalidades</h2>
                         <p className="subtle">Clica numa modalidade para abrir a listagem do staff dessa modalidade.</p>
 
@@ -449,6 +483,11 @@ export default function ClubeStaffPage() {
                                 <h2>Listagem de staff</h2>
                                 <span className="toolbar-count">{staffRows.length} registo(s)</span>
                             </div>
+                            <div className="actions no-print">
+                                <button className="btn" onClick={handleExportPdf}>Exportar PDF</button>
+                                <button className="btn" onClick={handleExportCsv}>Exportar CSV</button>
+                                <button className="btn" onClick={handlePrint}>Imprimir</button>
+                            </div>
                         </div>
 
                         {loadingPagina ? (
@@ -466,7 +505,7 @@ export default function ClubeStaffPage() {
                                         <th>Escalões</th>
                                         <th>Época</th>
                                         <th>Data Início</th>
-                                        <th>Ações</th>
+                                        <th className="no-print">Ações</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -492,7 +531,7 @@ export default function ClubeStaffPage() {
                                                 <td>{displayEscaloes(row)}</td>
                                                 <td>{row.epoca || "-"}</td>
                                                 <td>{formatDateOnly(row.dataInicio) || "-"}</td>
-                                                <td>
+                                                <td className="no-print">
                                                     {destination ? (
                                                         <button
                                                             type="button"
@@ -514,7 +553,7 @@ export default function ClubeStaffPage() {
                         )}
                     </section>
 
-                    <section className="card">
+                    <section className="card no-print">
                         <div className="modalidades-toolbar">
                             <div className="toolbar-title-group">
                                 <h2>Registar staff</h2>
