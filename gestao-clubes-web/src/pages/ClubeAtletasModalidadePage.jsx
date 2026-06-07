@@ -10,6 +10,7 @@ import {
     getModalidadesByClube,
     updateAtleta,
 } from "../services/atletas";
+import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 
 import atletasIcon from "../assets/atletas.svg";
 
@@ -331,6 +332,44 @@ export default function ClubeAtletasModalidadePage() {
         });
     }
 
+    const prepareExportData = () => {
+        const columns = [
+            { key: 'nome', label: 'Nome' },
+            { key: 'dataNascimento', label: 'Data Nasc.' },
+            { key: 'email', label: 'Email' },
+            { key: 'telefone', label: 'Telefone' },
+            { key: 'morada', label: 'Morada' },
+            { key: 'remuneracao', label: 'Remuneração' },
+            { key: 'escalao', label: 'Escalão' },
+            { key: 'estado', label: 'Estado' },
+            { key: 'epoca', label: 'Época' },
+            { key: 'dataInscricao', label: 'Data Inscrição' },
+        ];
+        const dataToExport = atletas.map(atleta => ({
+            ...atleta,
+            escalao: displayEscalao(atleta),
+            estado: displayEstado(atleta),
+            dataNascimento: formatDateOnly(atleta.dataNascimento || atleta.data_nascimento) || "-",
+            dataInscricao: formatDateOnly(atleta.dataInscricao || atleta.data_inscricao) || "-",
+        }));
+        return { columns, dataToExport };
+    };
+
+    const handleExportCsv = () => {
+        const { columns, dataToExport } = prepareExportData();
+        exportToCsv(dataToExport, columns, `atletas_${modalidadeAtiva?.modalidade?.nome || 'modalidade'}.csv`);
+    };
+
+    const handlePrint = () => {
+        const { columns, dataToExport } = prepareExportData();
+        printPdf(dataToExport, columns, `Atletas - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`, clube?.nome);
+    };
+
+    const handleExportPdf = () => {
+        const { columns, dataToExport } = prepareExportData();
+        exportToPdf(dataToExport, columns, `Atletas - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`, clube?.nome, `atletas_${modalidadeAtiva?.modalidade?.nome || 'modalidade'}.pdf`);
+    };
+
     return (
         <>
             <input
@@ -349,7 +388,7 @@ export default function ClubeAtletasModalidadePage() {
             />
 
             <div className="container" style={{ paddingTop: 24 }}>
-                <div className="page-title page-title-with-icon">
+                <div className="page-title page-title-with-icon no-print">
                     <div className="page-title-main-wrap">
                         <span className="page-title-icon-circle">
                             <img src={atletasIcon} alt="Atletas" className="page-title-icon" />
@@ -370,14 +409,19 @@ export default function ClubeAtletasModalidadePage() {
                     </div>
                 </div>
 
-                {erro ? <div className="alert error">{erro}</div> : null}
-                {msg ? <div className="alert ok">{msg}</div> : null}
+                {erro ? <div className="alert error no-print">{erro}</div> : null}
+                {msg ? <div className="alert ok no-print">{msg}</div> : null}
 
                 <div className="card">
                     <div className="modalidades-toolbar">
                         <div className="toolbar-title-group">
                             <h2>Listagem de atletas</h2>
                             <span className="toolbar-count">{atletas.length} registo(s)</span>
+                        </div>
+                        <div className="actions no-print">
+                            <button className="btn" onClick={handleExportPdf}>Exportar PDF</button>
+                            <button className="btn" onClick={handleExportCsv}>Exportar CSV</button>
+                            <button className="btn" onClick={handlePrint}>Imprimir</button>
                         </div>
                     </div>
 
@@ -400,7 +444,7 @@ export default function ClubeAtletasModalidadePage() {
                                     <th>Estado</th>
                                     <th>Época</th>
                                     <th>Data Inscrição</th>
-                                    <th>Ações</th>
+                                    <th className="no-print">Ações</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -450,7 +494,7 @@ export default function ClubeAtletasModalidadePage() {
                                             <td>{displayEstado(a)}</td>
                                             <td>{a.epoca || "-"}</td>
                                             <td>{formatDateOnly(a.dataInscricao || a.data_inscricao) || "-"}</td>
-                                            <td>
+                                            <td className="no-print">
                                                 <div className="table-actions">
                                                     <button
                                                         type="button"

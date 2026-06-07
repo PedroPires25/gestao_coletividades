@@ -4,6 +4,7 @@ import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById } from "../api";
 import { getSessoesTreino, createSessaoTreino, getAtletasTreinador } from "../services/treinador";
+import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 
 function fmt(val) {
     if (!val) return "-";
@@ -110,12 +111,43 @@ export default function SessoesTreinoPage() {
         }
     }
 
+    const prepareExportData = () => {
+        const columns = [
+            { key: 'dataTreino', label: 'Data' },
+            { key: 'horaTreino', label: 'Hora' },
+            { key: 'observacoes', label: 'Observações' },
+            { key: 'numeroPresencas', label: 'Nº Presenças' },
+        ];
+        const dataToExport = sessoes.map(s => ({
+            ...s,
+            dataTreino: fmt(s.data_treino || s.dataTreino),
+            horaTreino: s.hora_treino || s.horaTreino || "-",
+            numeroPresencas: s.numero_presencas || s.numeroPresencas || 0,
+        }));
+        return { columns, dataToExport };
+    };
+
+    const handleExportCsv = () => {
+        const { columns, dataToExport } = prepareExportData();
+        exportToCsv(dataToExport, columns, `sessoes_treino_${clube?.nome || clubeId}.csv`);
+    };
+
+    const handleExportPdf = () => {
+        const { columns, dataToExport } = prepareExportData();
+        exportToPdf(dataToExport, columns, "Histórico de Treinos", clube?.nome, `sessoes_treino_${clube?.nome || clubeId}.pdf`);
+    };
+
+    const handlePrint = () => {
+        const { columns, dataToExport } = prepareExportData();
+        printPdf(dataToExport, columns, "Histórico de Treinos", clube?.nome);
+    };
+
     return (
         <>
             <SideMenu title="Gestão de Clubes" subtitle="Treinos" logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
 
             <div className="container" style={{ paddingTop: 24 }}>
-                <div className="page-title page-title-with-icon">
+                <div className="page-title page-title-with-icon no-print">
                     <div className="page-title-main-wrap">
                         <span className="page-title-icon-circle" style={{ fontSize: "1.6rem" }}>📅</span>
                         <div className="page-title-texts">
@@ -128,8 +160,8 @@ export default function SessoesTreinoPage() {
                     </div>
                 </div>
 
-                {erro && <div className="alert error">{erro}</div>}
-                {msg && <div className="alert ok">{msg}</div>}
+                {erro && <div className="alert error no-print">{erro}</div>}
+                {msg && <div className="alert ok no-print">{msg}</div>}
 
                 <div className="stack-sections">
                     <div className="card">
@@ -137,6 +169,11 @@ export default function SessoesTreinoPage() {
                             <div className="toolbar-title-group">
                                 <h2>Histórico de Treinos</h2>
                                 <span className="toolbar-count">{sessoes.length} registo(s)</span>
+                            </div>
+                            <div className="actions no-print">
+                                <button className="btn" onClick={handleExportPdf}>Exportar PDF</button>
+                                <button className="btn" onClick={handleExportCsv}>Exportar CSV</button>
+                                <button className="btn" onClick={handlePrint}>Imprimir</button>
                             </div>
                         </div>
                         {loading ? (
@@ -171,7 +208,7 @@ export default function SessoesTreinoPage() {
                         )}
                     </div>
 
-                    <div className="card">
+                    <div className="card no-print">
                         <div className="modalidades-toolbar">
                             <div className="toolbar-title-group"><h2>Registar Sessão de Treino</h2></div>
                             <button type="button" className="btn" onClick={() => setShowForm((p) => !p)}>
