@@ -14,7 +14,7 @@ import {
 } from "../services/tesouraria";
 import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 
-const EPOCAS = ["2024/2025", "2025/2026", "2023/2024", "2022/2023"];
+const EPOCAS = ["2025/2026", "2024/2025", "2023/2024", "2022/2023"];
 const MESES = [
     { v: 1, l: "Janeiro" }, { v: 2, l: "Fevereiro" }, { v: 3, l: "Março" },
     { v: 4, l: "Abril" }, { v: 5, l: "Maio" }, { v: 6, l: "Junho" },
