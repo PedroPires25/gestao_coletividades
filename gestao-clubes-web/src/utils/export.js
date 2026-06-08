@@ -67,10 +67,8 @@ async function imageToData(url) {
     }
 }
 
-const PLATFORM_LOGO_MAX_H = 18;
-const PLATFORM_LOGO_MAX_W = 50;
-const CLUB_LOGO_MAX_H = 15;
-const CLUB_LOGO_MAX_W = 30;
+const LOGO_MAX_H = 15;
+const LOGO_MAX_W = 45;
 const HEADER_TOP = 8;
 const MARGIN = 14;
 const ACCENT_COLOR = [41, 100, 200];
@@ -89,6 +87,7 @@ async function generatePdfDoc(options) {
         clubName, clubLogoUrl,
         summary, filters,
         athletePhotoUrl, athleteInfo,
+        generatedText = "Criado em",
     } = options;
 
     // eslint-disable-next-line new-cap
@@ -104,12 +103,14 @@ async function generatePdfDoc(options) {
 
     // --- Cabeçalho ---
     if (platformLogo) {
-        const { w, h } = fitLogoDimensions(platformLogo.width, platformLogo.height, PLATFORM_LOGO_MAX_H, PLATFORM_LOGO_MAX_W);
-        doc.addImage(platformLogo.data, 'PNG', MARGIN, HEADER_TOP, w, h);
+        const { w, h } = fitLogoDimensions(platformLogo.width, platformLogo.height, LOGO_MAX_H, LOGO_MAX_W);
+        const y = HEADER_TOP + (LOGO_MAX_H - h) / 2;
+        doc.addImage(platformLogo.data, 'PNG', MARGIN, y, w, h);
     }
     if (clubLogo) {
-        const { w, h } = fitLogoDimensions(clubLogo.width, clubLogo.height, CLUB_LOGO_MAX_H, CLUB_LOGO_MAX_W);
-        doc.addImage(clubLogo.data, 'PNG', pageW - MARGIN - w, HEADER_TOP, w, h);
+        const { w, h } = fitLogoDimensions(clubLogo.width, clubLogo.height, LOGO_MAX_H, LOGO_MAX_W);
+        const y = HEADER_TOP + (LOGO_MAX_H - h) / 2;
+        doc.addImage(clubLogo.data, 'PNG', pageW - MARGIN - w, y, w, h);
     }
 
     doc.setFontSize(15);
@@ -129,9 +130,9 @@ async function generatePdfDoc(options) {
     });
     doc.setFontSize(8);
     doc.setTextColor(130, 130, 130);
-    doc.text(`Gerado em ${dateStr}`, pageW / 2, HEADER_TOP + 22, { align: "center" });
+    doc.text(`${generatedText} ${dateStr}`, pageW / 2, HEADER_TOP + 22, { align: "center" });
 
-    const separatorY = HEADER_TOP + PLATFORM_LOGO_MAX_H + 5;
+    const separatorY = HEADER_TOP + LOGO_MAX_H + 5;
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.4);
     doc.line(MARGIN, separatorY, pageW - MARGIN, separatorY);

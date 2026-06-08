@@ -258,6 +258,7 @@ export default function ExamesMedicosPage() {
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
             filename: `exames_medicos_${clube?.nome || clubeId}.pdf`,
+            generatedText: "Documento emitido em",
         });
     }
 
@@ -269,6 +270,7 @@ export default function ExamesMedicosPage() {
             title: "Exames Médicos",
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
+            generatedText: "Documento emitido em",
         });
     }
 

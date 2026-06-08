@@ -374,6 +374,7 @@ export default function ClubeAtletasPage() {
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
             filename: `atletas_${clube?.nome || clubeId}.pdf`,
+            generatedText: "Criado em",
         });
     };
 
@@ -385,6 +386,7 @@ export default function ClubeAtletasPage() {
             title: "Listagem Geral de Atletas",
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
+            generatedText: "Criado em",
         });
     };
 

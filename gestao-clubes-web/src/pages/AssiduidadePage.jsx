@@ -201,6 +201,7 @@ export default function AssiduidadePage() {
             summary,
             filters,
             athletePhotoUrl,
+            generatedText: "Relatório criado em",
         });
     };
 
@@ -220,6 +221,7 @@ export default function AssiduidadePage() {
             summary,
             filters,
             athletePhotoUrl,
+            generatedText: "Relatório criado em",
         });
     };
 
@@ -253,6 +255,7 @@ export default function AssiduidadePage() {
             clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             filename,
             filters,
+            generatedText: "Relatório criado em",
         });
     };
 
@@ -271,6 +274,7 @@ export default function AssiduidadePage() {
             clubName: clubeInfo?.nome,
             clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             filters,
+            generatedText: "Relatório criado em",
         });
     };
 

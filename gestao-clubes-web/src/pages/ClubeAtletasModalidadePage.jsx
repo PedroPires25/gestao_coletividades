@@ -443,6 +443,7 @@ export default function ClubeAtletasModalidadePage() {
             title: `Atletas - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`,
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
+            generatedText: "Criado em",
         });
     };
 
@@ -455,6 +456,7 @@ export default function ClubeAtletasModalidadePage() {
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
             filename: `atletas_${modalidadeAtiva?.modalidade?.nome || 'modalidade'}.pdf`,
+            generatedText: "Criado em",
         });
     };
 

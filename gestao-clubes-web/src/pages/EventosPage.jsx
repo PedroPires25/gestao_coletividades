@@ -258,6 +258,7 @@ export default function EventosPage() {
         clubName: clube?.nome,
         clubLogoUrl: getUploadUrl(clube?.logoPath),
         filename: `eventos_${clube?.nome || clubeId}.pdf`,
+        generatedText: "Criado em",
     });
   };
 
@@ -269,6 +270,7 @@ export default function EventosPage() {
         title: isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube",
         clubName: clube?.nome,
         clubLogoUrl: getUploadUrl(clube?.logoPath),
+        generatedText: "Criado em",
     });
   };
 

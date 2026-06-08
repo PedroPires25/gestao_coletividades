@@ -301,6 +301,7 @@ export default function ConvocatoriasPage() {
             clubName: clubeInfo?.nome,
             clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             filename: `convocatorias_${clubeInfo?.nome || clubeId}.pdf`,
+            generatedText: "Criado em",
         });
     }
 
@@ -312,6 +313,7 @@ export default function ConvocatoriasPage() {
             title: "Convocatórias",
             clubName: clubeInfo?.nome,
             clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
+            generatedText: "Criado em",
         });
     }
 

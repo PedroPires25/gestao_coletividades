@@ -141,6 +141,7 @@ export default function SessoesTreinoPage() {
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
             filename: `sessoes_treino_${clube?.nome || clubeId}.pdf`,
+            generatedText: "Criado em",
         });
     };
 
@@ -152,6 +153,7 @@ export default function SessoesTreinoPage() {
             title: "Histórico de Treinos",
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
+            generatedText: "Criado em",
         });
     };
 

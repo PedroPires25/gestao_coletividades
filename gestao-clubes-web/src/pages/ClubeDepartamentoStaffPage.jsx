@@ -479,6 +479,7 @@ export default function ClubeDepartamentoStaffPage() {
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
             filename: `${tipo}_${clube?.nome || clubeId}.pdf`,
+            generatedText: "Criado em",
         });
     }
 
@@ -490,6 +491,7 @@ export default function ClubeDepartamentoStaffPage() {
             title: `${config.titulo} — Membros`,
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
+            generatedText: "Criado em",
         });
     }
 

@@ -377,6 +377,7 @@ export default function ClubeStaffPage() {
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
             filename: `staff_${clube?.nome || clubeId}.pdf`,
+            generatedText: "Criado em",
         });
     };
 
@@ -388,6 +389,7 @@ export default function ClubeStaffPage() {
             title: "Listagem Geral de Staff",
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
+            generatedText: "Criado em",
         });
     };
 

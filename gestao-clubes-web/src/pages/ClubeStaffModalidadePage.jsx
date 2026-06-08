@@ -362,6 +362,7 @@ export default function ClubeStaffModalidadePage() {
             title: `Staff - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`,
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
+            generatedText: "Criado em",
         });
     };
 
@@ -374,6 +375,7 @@ export default function ClubeStaffModalidadePage() {
             clubName: clube?.nome,
             clubLogoUrl: getUploadUrl(clube?.logoPath),
             filename: `staff_${modalidadeAtiva?.modalidade?.nome || 'modalidade'}.pdf`,
+            generatedText: "Criado em",
         });
     };
 

@@ -259,7 +259,8 @@ export default function PlanoTreinoPage() {
             clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             athletePhotoUrl: getUploadUrl(atleta?.fotoPath || atleta?.foto_path),
             summary: `Atleta: ${atleta?.nome || 'N/A'}`,
-            athleteInfo: `Data: ${formatDate(planoSelecionado.dataCriacao)}`
+            athleteInfo: `Data: ${formatDate(planoSelecionado.dataCriacao)}`,
+            generatedText: "Criado em",
         });
     };
 
@@ -284,7 +285,8 @@ export default function PlanoTreinoPage() {
             filename: `plano_${atleta?.nome || 'atleta'}.pdf`,
             athletePhotoUrl: getUploadUrl(atleta?.fotoPath || atleta?.foto_path),
             summary: `Atleta: ${atleta?.nome || 'N/A'}`,
-            athleteInfo: `Data: ${formatDate(planoSelecionado.dataCriacao)}`
+            athleteInfo: `Data: ${formatDate(planoSelecionado.dataCriacao)}`,
+            generatedText: "Criado em",
         });
     };
 

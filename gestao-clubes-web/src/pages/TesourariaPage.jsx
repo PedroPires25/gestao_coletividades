@@ -388,7 +388,7 @@ export default function TesourariaPage() {
             { key: "estado", label: "Estado" },
         ];
         const data = pagamentos.map((r) => ({ ...r, mes: nomeMes(r.mes) }));
-        exportToPdf({ data, columns: cols, title: "Pagamentos de Mensalidades", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `pagamentos_${clube?.nome || clubeId}.pdf` });
+        exportToPdf({ data, columns: cols, title: "Pagamentos de Mensalidades", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `pagamentos_${clube?.nome || clubeId}.pdf`, generatedText: "Documento emitido em" });
     }
 
     function exportDividasCsv() {
@@ -409,7 +409,7 @@ export default function TesourariaPage() {
             { key: "valorDivida", label: "Dívida €" }, { key: "estado", label: "Estado" },
         ];
         const data = dividas.map((r) => ({ ...r, mes: nomeMes(r.mes) }));
-        exportToPdf({ data, columns: cols, title: "Mensalidades em Dívida", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `dividas_${clube?.nome || clubeId}.pdf` });
+        exportToPdf({ data, columns: cols, title: "Mensalidades em Dívida", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `dividas_${clube?.nome || clubeId}.pdf`, generatedText: "Relatório criado em" });
     }
 
     function exportRecebimentosCsv() {
@@ -427,7 +427,7 @@ export default function TesourariaPage() {
             { key: "totalPrevisto", label: "Previsto €" }, { key: "totalRecebido", label: "Recebido €" },
             { key: "totalDivida", label: "Dívida €" }, { key: "percentagemCobranca", label: "%" },
         ];
-        exportToPdf({ data: recebimentos, columns: cols, title: "Recebimentos por Escalão", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `recebimentos_${clube?.nome || clubeId}.pdf` });
+        exportToPdf({ data: recebimentos, columns: cols, title: "Recebimentos por Escalão", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `recebimentos_${clube?.nome || clubeId}.pdf`, generatedText: "Relatório criado em" });
     }
 
     function exportInscricoesCsv() {
@@ -445,7 +445,7 @@ export default function TesourariaPage() {
             { key: "valorInscricao", label: "Valor €" }, { key: "estado", label: "Estado" },
             { key: "dataPagamento", label: "Data" },
         ];
-        exportToPdf({ data: inscricoes, columns: cols, title: "Inscrições de Atletas", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `inscricoes_${clube?.nome || clubeId}.pdf` });
+        exportToPdf({ data: inscricoes, columns: cols, title: "Inscrições de Atletas", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `inscricoes_${clube?.nome || clubeId}.pdf`, generatedText: "Documento emitido em" });
     }
 
     // ==========================================
@@ -584,7 +584,7 @@ export default function TesourariaPage() {
                                             {inscricoes.length > 0 && <>
                                                 <button type="button" className="btn btn-sm" onClick={exportInscricoesCsv}>CSV</button>
                                                 <button type="button" className="btn btn-sm" onClick={exportInscricoesPdf}>PDF</button>
-                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: inscricoes.map((r) => ({ ...r })), columns: [{ key: "atletaNome", label: "Atleta" }, { key: "estado", label: "Estado" }], title: "Inscrições", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath) })}>Imprimir</button>
+                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: inscricoes.map((r) => ({ ...r })), columns: [{ key: "atletaNome", label: "Atleta" }, { key: "estado", label: "Estado" }], title: "Inscrições", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), generatedText: "Documento emitido em" })}>Imprimir</button>
                                             </>}
                                             <button type="button" className="btn" onClick={() => { setShowFormInsc((p) => !p); setEditInscId(null); }}>
                                                 {showFormInsc ? "Fechar" : "Registar inscrição"}
@@ -700,7 +700,7 @@ export default function TesourariaPage() {
                                             {pagamentos.length > 0 && <>
                                                 <button type="button" className="btn btn-sm" onClick={exportPagamentosCsv}>CSV</button>
                                                 <button type="button" className="btn btn-sm" onClick={exportPagamentosPdf}>PDF</button>
-                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: pagamentos.map((r) => ({ ...r, mes: nomeMes(r.mes) })), columns: [{ key: "atletaNome", label: "Atleta" }, { key: "mes", label: "Mês" }, { key: "ano", label: "Ano" }, { key: "estado", label: "Estado" }], title: "Pagamentos", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath) })}>Imprimir</button>
+                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: pagamentos.map((r) => ({ ...r, mes: nomeMes(r.mes) })), columns: [{ key: "atletaNome", label: "Atleta" }, { key: "mes", label: "Mês" }, { key: "ano", label: "Ano" }, { key: "estado", label: "Estado" }], title: "Pagamentos", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), generatedText: "Documento emitido em" })}>Imprimir</button>
                                             </>}
                                             <button type="button" className="btn" onClick={() => setShowFormPag((p) => !p)}>
                                                 {showFormPag ? "Fechar" : "Registar pagamento"}
@@ -842,7 +842,7 @@ export default function TesourariaPage() {
                                             <div style={{ display: "flex", gap: 6 }}>
                                                 <button type="button" className="btn btn-sm" onClick={exportDividasCsv}>CSV</button>
                                                 <button type="button" className="btn btn-sm" onClick={exportDividasPdf}>PDF</button>
-                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: dividas.map((r) => ({ ...r, mes: nomeMes(r.mes) })), columns: [{ key: "atletaNome", label: "Atleta" }, { key: "mes", label: "Mês" }, { key: "ano", label: "Ano" }, { key: "valorDivida", label: "Dívida €" }], title: "Mensalidades em Dívida", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath) })}>Imprimir</button>
+                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: dividas.map((r) => ({ ...r, mes: nomeMes(r.mes) })), columns: [{ key: "atletaNome", label: "Atleta" }, { key: "mes", label: "Mês" }, { key: "ano", label: "Ano" }, { key: "valorDivida", label: "Dívida €" }], title: "Mensalidades em Dívida", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), generatedText: "Relatório criado em" })}>Imprimir</button>
                                             </div>
                                         )}
                                     </div>
@@ -902,7 +902,7 @@ export default function TesourariaPage() {
                                             {recebimentos.length > 0 && <>
                                                 <button type="button" className="btn btn-sm" onClick={exportRecebimentosCsv}>CSV</button>
                                                 <button type="button" className="btn btn-sm" onClick={exportRecebimentosPdf}>PDF</button>
-                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: recebimentos, columns: [{ key: "escalaoNome", label: "Escalão" }, { key: "totalRecebido", label: "Recebido €" }, { key: "totalDivida", label: "Dívida €" }], title: "Recebimentos", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath) })}>Imprimir</button>
+                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: recebimentos, columns: [{ key: "escalaoNome", label: "Escalão" }, { key: "totalRecebido", label: "Recebido €" }, { key: "totalDivida", label: "Dívida €" }], title: "Recebimentos", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), generatedText: "Relatório criado em" })}>Imprimir</button>
                                             </>}
                                         </div>
                                     </div>
