@@ -506,7 +506,7 @@ public class AtletaDAO {
     public List<Map<String, Object>> listarPorClube(int clubeId) {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """
-            SELECT DISTINCT a.id, COALESCE(u.nome, a.nome) AS nome
+            SELECT DISTINCT a.id, COALESCE(u.nome, a.nome) AS nome, a.escalao_id
             FROM atleta a
             LEFT JOIN utilizadores u ON u.id = a.utilizador_id
             WHERE a.clube_atual_id = ?
@@ -520,6 +520,7 @@ public class AtletaDAO {
                     Map<String, Object> row = new LinkedHashMap<>();
                     row.put("id", rs.getInt("id"));
                     row.put("nome", rs.getString("nome"));
+                    row.put("escalao_id", rs.getInt("escalao_id"));
                     lista.add(row);
                 }
             }
