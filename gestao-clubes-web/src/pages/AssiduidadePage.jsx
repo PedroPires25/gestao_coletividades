@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getClubeById, getUploadUrl } from "../api";
+import { getClubeById, getUploadUrl, getAtletaById } from "../api";
 import { getAssiduidade, getAtletasTreinador, getEscaloesTreinador, getAssiduidadeAtleta } from "../services/treinador";
 import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 
@@ -132,8 +132,14 @@ export default function AssiduidadePage() {
                 }
                 const data = await getAssiduidadeAtleta(clubeId, filtroAtleta, startDate, endDate);
                 setResultadosIndividual(Array.isArray(data) ? data : []);
-                const atletaInfo = atletas.find(a => String(a.id) === String(filtroAtleta));
-                setAtletaSelecionado(atletaInfo);
+                // Find from cached list first; fallback to individual fetch to guarantee fotoPath
+                const atletaFromList = atletas.find(a => String(a.id) === String(filtroAtleta));
+                if (atletaFromList?.fotoPath) {
+                    setAtletaSelecionado(atletaFromList);
+                } else {
+                    const atletaFull = await getAtletaById(filtroAtleta).catch(() => null);
+                    setAtletaSelecionado(atletaFull ?? atletaFromList ?? null);
+                }
             }
         } catch (e) {
             setErro(e.message || "Erro ao carregar assiduidade.");

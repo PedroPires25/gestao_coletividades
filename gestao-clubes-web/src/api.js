@@ -285,6 +285,10 @@ export async function uploadAtletaFoto(id, file) {
     return httpUpload(`/atletas/${id}/foto`, file);
 }
 
+export async function getAtletaById(id) {
+    return http(`/atletas/${id}`);
+}
+
 export async function uploadStaffFoto(id, file) {
     return httpUpload(`/staff/${id}/foto`, file);
 }

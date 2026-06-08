@@ -220,6 +220,19 @@ public class AtletasRestController {
         return estadoAtletaDAO.listarTodos();
     }
 
+    @GetMapping("/atletas/{atletaId}")
+    public Map<String, Object> getAtletaById(@PathVariable int atletaId) {
+        Atleta atleta = atletaDAO.buscarPorId(atletaId);
+        if (atleta == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Atleta não encontrado.");
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("id", atleta.getId());
+        result.put("nome", atleta.getNome());
+        result.put("fotoPath", atleta.getFotoPath());
+        return result;
+    }
+
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
