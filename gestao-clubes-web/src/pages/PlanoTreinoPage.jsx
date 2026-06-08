@@ -85,7 +85,7 @@ export default function PlanoTreinoPage() {
     const [msg, setMsg] = useState("");
     const [erro, setErro] = useState("");
 
-    const [planoSelecionado, setPlanoSelecionado] = useState(null); // null | {} | { ...plano }
+    const [planoSelecionado, setPlanoSelecionado] = useState(null);
     const [form, setForm] = useState({
         id: null,
         atletaId: "",
@@ -150,7 +150,6 @@ export default function PlanoTreinoPage() {
         };
     }, [clubeId]);
 
-    // Added a separate function to re-fetch data after mutations
     async function recarregarPlanos() {
         try {
             const planosData = await getPlanosTreino(clubeId).catch(() => []);
@@ -160,7 +159,6 @@ export default function PlanoTreinoPage() {
              console.error("Erro ao recarregar planos", err);
         }
     }
-
 
     function handleSelectPlano(plano) {
         setPlanoSelecionado(plano);
@@ -176,7 +174,7 @@ export default function PlanoTreinoPage() {
     }
 
     function handleNovoPlano() {
-        setPlanoSelecionado({}); // Objeto vazio para indicar modo de criação
+        setPlanoSelecionado({});
         setForm({ id: null, atletaId: "", conteudo: "", enviarEmail: true });
         setErro("");
         setMsg("");
@@ -259,7 +257,9 @@ export default function PlanoTreinoPage() {
             title: "Plano de Treino Individual",
             clubName: clubeInfo?.nome,
             clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
-            athletePhotoUrl: getUploadUrl(atleta?.fotoPath),
+            athletePhotoUrl: getUploadUrl(atleta?.fotoPath || atleta?.foto_path),
+            summary: `Atleta: ${atleta?.nome || 'N/A'}`,
+            athleteInfo: `Data: ${formatDate(planoSelecionado.dataCriacao)}`
         });
     };
 
@@ -282,7 +282,9 @@ export default function PlanoTreinoPage() {
             clubName: clubeInfo?.nome,
             clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             filename: `plano_${atleta?.nome || 'atleta'}.pdf`,
-            athletePhotoUrl: getUploadUrl(atleta?.fotoPath),
+            athletePhotoUrl: getUploadUrl(atleta?.fotoPath || atleta?.foto_path),
+            summary: `Atleta: ${atleta?.nome || 'N/A'}`,
+            athleteInfo: `Data: ${formatDate(planoSelecionado.dataCriacao)}`
         });
     };
 

@@ -176,15 +176,16 @@ export default function AssiduidadePage() {
             status: r.presente ? 'Presente' : 'Faltou',
         }));
 
-        const title = `Assiduidade Individual - ${atletaSelecionado?.nome || 'Atleta'}`;
+        const title = `Assiduidade Individual`;
         const filename = `assiduidade_${atletaSelecionado?.nome || 'individual'}_${startDate}_a_${endDate}.pdf`;
-        const summary = `Período: ${startDate} a ${endDate} | Escalão: ${nomeEscalaoSelecionado} | Total de Treinos: ${totalTreinos} | Presenças: ${presencas} | Assiduidade: ${percentagem}%`;
+        const summary = `Atleta: ${atletaSelecionado?.nome || 'N/A'}`;
+        const filters = `Período: ${startDate} a ${endDate} | Escalão: ${nomeEscalaoSelecionado} | Total de Treinos: ${totalTreinos} | Presenças: ${presencas} | Assiduidade: ${percentagem}%`;
 
-        return { columns, dataToExport, title, filename, summary, athletePhotoUrl: getUploadUrl(atletaSelecionado?.fotoPath) };
+        return { columns, dataToExport, title, filename, summary, filters, athletePhotoUrl: getUploadUrl(atletaSelecionado?.fotoPath || atletaSelecionado?.foto_path) };
     };
 
     const handleExportPdfIndividual = () => {
-        const { columns, dataToExport, title, filename, summary, athletePhotoUrl } = prepareExportDataIndividual();
+        const { columns, dataToExport, title, filename, summary, filters, athletePhotoUrl } = prepareExportDataIndividual();
         exportToPdf({
             data: dataToExport,
             columns,
@@ -193,6 +194,7 @@ export default function AssiduidadePage() {
             clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             filename,
             summary,
+            filters,
             athletePhotoUrl,
         });
     };
@@ -203,7 +205,7 @@ export default function AssiduidadePage() {
     };
 
     const handlePrintIndividual = () => {
-        const { columns, dataToExport, title, summary, athletePhotoUrl } = prepareExportDataIndividual();
+        const { columns, dataToExport, title, summary, filters, athletePhotoUrl } = prepareExportDataIndividual();
         printPdf({
             data: dataToExport,
             columns,
@@ -211,6 +213,7 @@ export default function AssiduidadePage() {
             clubName: clubeInfo?.nome,
             clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             summary,
+            filters,
             athletePhotoUrl,
         });
     };
@@ -230,13 +233,13 @@ export default function AssiduidadePage() {
 
         const title = "Assiduidade da Equipa";
         const filename = `assiduidade_equipa_${startDate}_a_${endDate}.pdf`;
-        const summary = `Período: ${startDate} a ${endDate} | Escalão: ${nomeEscalaoSelecionado}`;
+        const filters = `Período: ${startDate} a ${endDate} | Escalão: ${nomeEscalaoSelecionado}`;
 
-        return { columns, dataToExport, title, filename, summary };
+        return { columns, dataToExport, title, filename, filters };
     };
 
     const handleExportPdfGeral = () => {
-        const { columns, dataToExport, title, filename, summary } = prepareExportDataGeral();
+        const { columns, dataToExport, title, filename, filters } = prepareExportDataGeral();
         exportToPdf({
             data: dataToExport,
             columns,
@@ -244,7 +247,7 @@ export default function AssiduidadePage() {
             clubName: clubeInfo?.nome,
             clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             filename,
-            summary,
+            filters,
         });
     };
 
@@ -255,14 +258,14 @@ export default function AssiduidadePage() {
     };
 
     const handlePrintGeral = () => {
-        const { columns, dataToExport, title, summary } = prepareExportDataGeral();
+        const { columns, dataToExport, title, filters } = prepareExportDataGeral();
         printPdf({
             data: dataToExport,
             columns,
             title,
             clubName: clubeInfo?.nome,
             clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
-            summary,
+            filters,
         });
     };
 
