@@ -14,7 +14,7 @@ function arrayToCsv(data, columns, separator = ';') {
     const rows = data.map(row => {
         return columns.map(col => {
             const value = row[col.key] ?? '';
-            const strValue = String(value).replace(/"/g, '""'); // Escapar aspas
+            const strValue = String(value).replace(/"/g, '""'); 
             return `"${strValue}"`;
         }).join(separator);
     });
@@ -22,11 +22,6 @@ function arrayToCsv(data, columns, separator = ';') {
     return [header, ...rows].join('\n');
 }
 
-/**
- * Inicia o download de um ficheiro CSV.
- * @param {string} csvString - O conteúdo do CSV.
- * @param {string} filename - O nome do ficheiro.
- */
 export function downloadCsv(csvString, filename = 'export.csv') {
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -42,12 +37,6 @@ export function downloadCsv(csvString, filename = 'export.csv') {
     }
 }
 
-/**
- * Prepara e exporta dados como CSV.
- * @param {Array<Object>} data - Os dados a exportar.
- * @param {Array<{key: string, label: string}>} columns - As colunas.
- * @param {string} filename - O nome do ficheiro.
- */
 export function exportToCsv(data, columns, filename) {
     const csv = arrayToCsv(data, columns);
     downloadCsv(csv, filename);
@@ -56,7 +45,7 @@ export function exportToCsv(data, columns, filename) {
 /**
  * Função auxiliar que gera o documento PDF base formatado.
  */
-function generatePdfDoc(data, columns, title, clubName) {
+function generatePdfDoc(data, columns, title, clubName, summary) {
     const doc = new jsPDF();
     const platformName = "Gestão de Coletividades";
     const dateStr = new Date().toLocaleString("pt-PT");
@@ -72,17 +61,23 @@ function generatePdfDoc(data, columns, title, clubName) {
     const mainTitle = clubName ? `${clubName} - ${title}` : title;
     doc.text(mainTitle, 14, 25);
 
+    if (summary) {
+        doc.setFontSize(10);
+        doc.setTextColor(50);
+        doc.text(summary, 14, 32);
+    }
+
     // Preparar os dados para o AutoTable
     const tableColumnLabels = columns.map(c => c.label);
     const tableData = data.map(row => columns.map(c => String(row[c.key] ?? '')));
 
     autoTable(doc, {
-        startY: 35,
+        startY: summary ? 42 : 35,
         head: [tableColumnLabels],
         body: tableData,
         theme: 'striped',
         headStyles: {
-            fillColor: [41, 128, 185], // Cor azul base (ajustável)
+            fillColor: [41, 128, 185], 
             textColor: 255,
             fontSize: 10,
         },
@@ -111,8 +106,8 @@ function generatePdfDoc(data, columns, title, clubName) {
 /**
  * Exporta dados para um ficheiro PDF formatado com tabela e inicia o download.
  */
-export function exportToPdf(data, columns, title, clubName, filename) {
-    const doc = generatePdfDoc(data, columns, title, clubName);
+export function exportToPdf(data, columns, title, clubName, filename, summary) {
+    const doc = generatePdfDoc(data, columns, title, clubName, summary);
     doc.save(filename);
 }
 
@@ -120,8 +115,8 @@ export function exportToPdf(data, columns, title, clubName, filename) {
  * Gera o documento PDF em memória e abre-o num novo separador 
  * instruindo o browser a abrir imediatamente a janela de impressão.
  */
-export function printPdf(data, columns, title, clubName) {
-    const doc = generatePdfDoc(data, columns, title, clubName);
+export function printPdf(data, columns, title, clubName, summary) {
+    const doc = generatePdfDoc(data, columns, title, clubName, summary);
     
     // Instruir o PDF a imprimir quando for aberto
     doc.autoPrint();
@@ -140,7 +135,7 @@ export function printPdf(data, columns, title, clubName) {
 }
 
 /**
- * Antiga função de impressão da página HTML (mantida para retrocompatibilidade se necessária)
+ * Antiga função de impressão da página HTML
  */
 export function printTable() {
     window.print();

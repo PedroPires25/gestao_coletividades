@@ -112,6 +112,11 @@ export async function getAssiduidade(clubeId, startDate, endDate) {
     return authFetch(`/clubes/${clubeId}/treinador/assiduidade?${params.toString()}`);
 }
 
+export async function getAssiduidadeAtleta(clubeId, atletaId, startDate, endDate) {
+    const params = new URLSearchParams({ startDate, endDate });
+    return authFetch(`/clubes/${clubeId}/treinador/assiduidade/atleta/${atletaId}?${params.toString()}`);
+}
+
 // =======================
 // PLANOS DE TREINO
 // =======================

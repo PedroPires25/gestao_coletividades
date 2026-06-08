@@ -368,6 +368,20 @@ public class TreinadorRestController {
         return treinadorService.obterAssiduidade(clubeId, startDate, endDate);
     }
 
+    @GetMapping("/clubes/{clubeId}/treinador/assiduidade/atleta/{atletaId}")
+    public List<Map<String, Object>> obterAssiduidadeAtleta(
+            @PathVariable int clubeId,
+            @PathVariable int atletaId,
+            @RequestParam String startDate,
+            @RequestParam String endDate
+    ) {
+        exigirAcessoTreinador(clubeId);
+        if (startDate == null || endDate == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "startDate e endDate são obrigatórios.");
+        }
+        return treinadorService.obterAssiduidadeAtleta(atletaId, startDate, endDate);
+    }
+
     // ==========================================
     // PLANOS DE TREINO
     // ==========================================
