@@ -1135,3 +1135,79 @@ MODIFY COLUMN clube_destino_id INT NULL;
 ALTER TABLE transferencia_atleta
 ADD COLUMN clube_destino_nome VARCHAR(120) NULL;
 
+
+
+-- =========================================================
+-- MÓDULO TESOURARIA
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS mensalidade_escalao (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    clube_id INT NOT NULL,
+    escalao_id INT NOT NULL,
+    epoca VARCHAR(20) NOT NULL DEFAULT '2024/2025',
+    valor_mensal DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+    ativo TINYINT(1) NOT NULL DEFAULT 1,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by INT NULL,
+    UNIQUE KEY uq_mensalidade_escalao (clube_id, escalao_id, epoca),
+    CONSTRAINT fk_me_clube FOREIGN KEY (clube_id) REFERENCES clube(id) ON DELETE CASCADE,
+    CONSTRAINT fk_me_escalao FOREIGN KEY (escalao_id) REFERENCES escalao(id) ON DELETE CASCADE,
+    CONSTRAINT fk_me_user FOREIGN KEY (updated_by) REFERENCES utilizadores(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS inscricao_escalao (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    clube_id INT NOT NULL,
+    escalao_id INT NOT NULL,
+    epoca VARCHAR(20) NOT NULL DEFAULT '2024/2025',
+    valor_inscricao DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+    ativo TINYINT(1) NOT NULL DEFAULT 1,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by INT NULL,
+    UNIQUE KEY uq_inscricao_escalao (clube_id, escalao_id, epoca),
+    CONSTRAINT fk_ie_clube FOREIGN KEY (clube_id) REFERENCES clube(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ie_escalao FOREIGN KEY (escalao_id) REFERENCES escalao(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ie_user FOREIGN KEY (updated_by) REFERENCES utilizadores(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS pagamento_mensalidade (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    clube_id INT NOT NULL,
+    atleta_id INT NOT NULL,
+    escalao_id INT NULL,
+    mes TINYINT NOT NULL,
+    ano SMALLINT NOT NULL,
+    valor_devido DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+    valor_pago DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+    data_pagamento DATE NULL,
+    metodo_pagamento ENUM('Dinheiro','Transferência bancária','MB Way','Cartão','Outro') NULL,
+    estado ENUM('Pago','Parcial','Em dívida') NOT NULL DEFAULT 'Em dívida',
+    observacoes TEXT NULL,
+    registado_por INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_pagamento (clube_id, atleta_id, mes, ano),
+    CONSTRAINT fk_pm_clube FOREIGN KEY (clube_id) REFERENCES clube(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pm_atleta FOREIGN KEY (atleta_id) REFERENCES atleta(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pm_reg FOREIGN KEY (registado_por) REFERENCES utilizadores(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS inscricao_atleta (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    clube_id INT NOT NULL,
+    atleta_id INT NOT NULL,
+    epoca VARCHAR(20) NOT NULL DEFAULT '2024/2025',
+    valor_inscricao DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+    estado ENUM('Pago','Em dívida','Isento') NOT NULL DEFAULT 'Em dívida',
+    data_pagamento DATE NULL,
+    metodo_pagamento ENUM('Dinheiro','Transferência bancária','MB Way','Cartão','Outro') NULL,
+    observacoes TEXT NULL,
+    registado_por INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_inscricao_atleta (clube_id, atleta_id, epoca),
+    CONSTRAINT fk_ia_clube FOREIGN KEY (clube_id) REFERENCES clube(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ia_atleta FOREIGN KEY (atleta_id) REFERENCES atleta(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ia_reg FOREIGN KEY (registado_por) REFERENCES utilizadores(id) ON DELETE SET NULL
+);

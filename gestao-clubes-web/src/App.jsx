@@ -59,6 +59,7 @@ const PlanoTreinoPage = lazy(() => import("./pages/PlanoTreinoPage"));
 const EquipasPage = lazy(() => import("./pages/EquipasPage"));
 const AtletasTreinadorPage = lazy(() => import("./pages/AtletasTreinadorPage"));
 const ConvocatoriasPage = lazy(() => import("./pages/ConvocatoriasPage"));
+const TesourariaPage = lazy(() => import("./pages/TesourariaPage"));
 
 
 function NotFoundPage() {
@@ -492,6 +493,9 @@ export default function App() {
                 <Route path="/clubes/:clubeId/treinador/equipas" element={<RequireAuth><EquipasPage /></RequireAuth>} />
                 <Route path="/clubes/:clubeId/treinador/atletas-lista" element={<RequireAuth><AtletasTreinadorPage /></RequireAuth>} />
                 <Route path="/clubes/:clubeId/treinador/convocatorias" element={<RequireAuth><ConvocatoriasPage /></RequireAuth>} />
+
+                {/* TESOURARIA */}
+                <Route path="/clubes/:clubeId/tesouraria" element={<RequireAuth><RequireNotMedico><RequireNotTreinador><TesourariaPage /></RequireNotTreinador></RequireNotMedico></RequireAuth>} />
 
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>

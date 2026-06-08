@@ -135,4 +135,15 @@ public class SecurityUtils {
         if (isSuperAdmin()) return true;
         return isAdministradorEstrutura() && coletividadeId.equals(currentColetividadeId());
     }
+
+    public static boolean isSecretario() {
+        return "ROLE_SECRETARIO".equals(currentRole());
+    }
+
+    public static boolean canAccessTesouraria(Integer clubeId) {
+        if (clubeId == null) return false;
+        if (isSuperAdmin()) return true;
+        if (isAdministradorEstrutura() && clubeId.equals(currentClubeId())) return true;
+        return isSecretario() && clubeId.equals(currentClubeId());
+    }
 }
