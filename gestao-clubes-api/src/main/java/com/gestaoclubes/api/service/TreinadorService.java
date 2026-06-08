@@ -71,10 +71,15 @@ public class TreinadorService {
         }
     }
 
+    public List<Map<String, Object>> listarPlanos(int clubeId) {
+        return treinadorDAO.listarPlanos(clubeId);
+    }
+
     public boolean criarPlanoTreino(int clubeId, Map<String, Object> payload, EmailService emailService) {
         try {
             Integer atletaId = (Integer) payload.get("atletaId");
             String conteudo = (String) payload.get("conteudo");
+            Boolean enviarEmail = (Boolean) payload.get("enviarEmail");
 
             if (atletaId == null || conteudo == null || conteudo.trim().isEmpty()) {
                 return false;
@@ -82,26 +87,57 @@ public class TreinadorService {
 
             int planoId = treinadorDAO.inserirPlanoTreino(clubeId, atletaId, conteudo);
             
-            if (planoId > 0 && emailService != null) {
-                Atleta atleta = atletaDAO.buscarPorId(atletaId);
-                if (atleta != null) {
-                    String emailDestino = atletaDAO.obterEmailEfetivo(atletaId);
-                    if (emailDestino != null && !emailDestino.isBlank()) {
-                        try {
-                            emailService.enviarPlanoTreino(emailDestino, atleta.getNome(), conteudo);
-                        } catch (Exception e) {
-                            LOGGER.warning("Erro ao enviar email de plano de treino para atleta " + atletaId + ": " + e.getMessage());
-                        }
-                    } else {
-                        LOGGER.warning("Atleta " + atletaId + " não tem email configurado.");
-                    }
-                }
+            if (planoId > 0 && Boolean.TRUE.equals(enviarEmail) && emailService != null) {
+                enviarEmailPlano(atletaId, conteudo, emailService);
             }
             
             return planoId > 0;
         } catch (ClassCastException e) {
             LOGGER.severe("Erro ao criar plano de treino: " + e.getMessage());
             return false;
+        }
+    }
+
+    public boolean atualizarPlanoTreino(int planoId, Map<String, Object> payload, EmailService emailService) {
+        try {
+            Integer atletaId = (Integer) payload.get("atletaId");
+            String conteudo = (String) payload.get("conteudo");
+            Boolean enviarEmail = (Boolean) payload.get("enviarEmail");
+
+            if (atletaId == null || conteudo == null || conteudo.trim().isEmpty()) {
+                return false;
+            }
+
+            boolean ok = treinadorDAO.atualizarPlano(planoId, atletaId, conteudo);
+            
+            if (ok && Boolean.TRUE.equals(enviarEmail) && emailService != null) {
+                enviarEmailPlano(atletaId, conteudo, emailService);
+            }
+            
+            return ok;
+        } catch (ClassCastException e) {
+            LOGGER.severe("Erro ao atualizar plano de treino: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean removerPlanoTreino(int planoId) {
+        return treinadorDAO.removerPlano(planoId);
+    }
+
+    private void enviarEmailPlano(int atletaId, String conteudo, EmailService emailService) {
+        Atleta atleta = atletaDAO.buscarPorId(atletaId);
+        if (atleta != null) {
+            String emailDestino = atletaDAO.obterEmailEfetivo(atletaId);
+            if (emailDestino != null && !emailDestino.isBlank()) {
+                try {
+                    emailService.enviarPlanoTreino(emailDestino, atleta.getNome(), conteudo);
+                } catch (Exception e) {
+                    LOGGER.warning("Erro ao enviar email de plano de treino para atleta " + atletaId + ": " + e.getMessage());
+                }
+            } else {
+                LOGGER.warning("Atleta " + atletaId + " não tem email configurado.");
+            }
         }
     }
 }
