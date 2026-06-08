@@ -150,6 +150,63 @@ public class TreinadorDAO {
         return 0;
     }
 
+    public List<Map<String, Object>> listarPlanos(int clubeId) {
+        String sql = """
+            SELECT pt.id, pt.atleta_id, pt.conteudo, pt.data_criacao,
+                   COALESCE(u.nome, a.nome) AS nome_atleta
+            FROM planos_treino pt
+            JOIN atleta a ON a.id = pt.atleta_id
+            LEFT JOIN utilizadores u ON u.id = a.utilizador_id
+            WHERE pt.clube_id = ?
+            ORDER BY pt.data_criacao DESC
+        """;
+        List<Map<String, Object>> lista = new ArrayList<>();
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, clubeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", rs.getInt("id"));
+                    row.put("atletaId", rs.getInt("atleta_id"));
+                    row.put("conteudo", rs.getString("conteudo"));
+                    row.put("dataCriacao", rs.getTimestamp("data_criacao"));
+                    row.put("nomeAtleta", rs.getString("nome_atleta"));
+                    lista.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.severe(e.toString());
+        }
+        return lista;
+    }
+
+    public boolean atualizarPlano(int planoId, int atletaId, String conteudo) {
+        String sql = "UPDATE planos_treino SET atleta_id = ?, conteudo = ? WHERE id = ?";
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, atletaId);
+            ps.setString(2, conteudo);
+            ps.setInt(3, planoId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.severe(e.toString());
+            return false;
+        }
+    }
+
+    public boolean removerPlano(int planoId) {
+        String sql = "DELETE FROM planos_treino WHERE id = ?";
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, planoId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.severe(e.toString());
+            return false;
+        }
+    }
+
     public List<Map<String, Object>> listarAtletasPorEscaloes(int clubeId, List<Integer> escalaoIds) {
         if (escalaoIds == null || escalaoIds.isEmpty()) {
             return Collections.emptyList();

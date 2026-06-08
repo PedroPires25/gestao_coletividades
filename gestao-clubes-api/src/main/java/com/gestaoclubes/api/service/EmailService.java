@@ -1,49 +1,77 @@
 package com.gestaoclubes.api.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import jakarta.mail.internet.MimeMessage;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    @Value("${brevo.api.key:}")
+    private String brevoApiKey;
 
-    @Value("${spring.mail.username:}")
-    private String brevoUsername;
-
-    @Value("${spring.mail.password:}")
-    private String brevoPassword;
-
-    @Value("${brevo.sender.email:}")
+    @Value("${brevo.sender.email:plataforma.gcdc@gmail.com}")
     private String senderEmail;
 
-    @Value("${brevo.sender.name:Gestão de Coletividades}")
+    @Value("${brevo.sender.name:Gestao de Coletividades}")
     private String senderName;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+
+    public EmailService() {
+        this.restTemplate = new RestTemplate();
+        this.objectMapper = new ObjectMapper();
     }
 
     private void sendBrevoEmail(String emailDestino, String nomeDestinatario, String subject, String textContent) {
-        if (brevoUsername == null || brevoUsername.isBlank() || brevoPassword == null || brevoPassword.isBlank()) {
-            throw new IllegalStateException("BREVO_USERNAME e BREVO_PASSWORD devem estar configurados para envio de email.");
+        if (brevoApiKey == null || brevoApiKey.trim().isBlank()) {
+            System.err.println("ERRO: BREVO_API_KEY não configurada. Email não enviado.");
+            return;
         }
-        String fromEmail = senderEmail != null && !senderEmail.isBlank() ? senderEmail.trim() : brevoUsername.trim();
+
+        String url = "https://api.brevo.com/v3/smtp/email";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("api-key", brevoApiKey.trim());
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+
+        // Format HTML simply by replacing newlines with <br>
+        String htmlContent = textContent.replace("\n", "<br/>");
+
+        // O Brevo exige o campo "name" no array "to". 
+        // Se estiver em branco, usamos o email como fallback garantido.
+        String finalName = (nomeDestinatario == null || nomeDestinatario.trim().isBlank()) ? emailDestino : nomeDestinatario.trim();
+
+        Map<String, String> toObj = new HashMap<>();
+        toObj.put("email", emailDestino);
+        toObj.put("name", finalName);
+
+        Map<String, Object> body = Map.of(
+                "sender", Map.of("name", senderName, "email", senderEmail),
+                "to", List.of(toObj),
+                "subject", subject,
+                "htmlContent", htmlContent
+        );
 
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
-            helper.setFrom(fromEmail, senderName);
-            helper.setTo(emailDestino);
-            helper.setSubject(subject);
-            helper.setText(textContent, false);
-            mailSender.send(message);
+            String jsonBody = objectMapper.writeValueAsString(body);
+            HttpEntity<String> request = new HttpEntity<>(jsonBody, headers);
+            
+            restTemplate.postForEntity(url, request, String.class);
+            System.out.println("Email enviado via Brevo com sucesso para: " + emailDestino);
         } catch (Exception e) {
-            throw new RuntimeException("Falha ao enviar email via Brevo SMTP", e);
+            System.err.println("Erro ao enviar email via Brevo para " + emailDestino + ": " + e.getMessage());
+            throw new RuntimeException("Falha ao enviar email via Brevo", e);
         }
     }
 
@@ -55,7 +83,7 @@ public class EmailService {
                 link + "\n\n" +
                 "Este link é válido por 30 minutos. Se não fez este pedido, pode ignorar este email.\n\n" +
                 "Cumprimentos,\n" +
-                "Equipa Gestão de Coletividades";
+                "Equipa Gestao de Coletividades";
 
         sendBrevoEmail(emailDestino, emailDestino, subject, text);
     }
@@ -84,7 +112,7 @@ public class EmailService {
         }
         texto.append("\nPor favor confirme a sua presença na plataforma.\n\n");
         texto.append("Cumprimentos,\n");
-        texto.append("Equipa Gestão de Coletividades");
+        texto.append("Equipa Gestao de Coletividades");
 
         sendBrevoEmail(emailDestino, nomeDestinatario, subject, texto.toString());
     }
@@ -95,7 +123,7 @@ public class EmailService {
                 "A palavra-passe da sua conta foi alterada com sucesso.\n\n" +
                 "Se não realizou esta alteração, por favor contacte o suporte imediatamente.\n\n" +
                 "Cumprimentos,\n" +
-                "Equipa Gestão de Coletividades";
+                "Equipa Gestao de Coletividades";
 
         sendBrevoEmail(emailDestino, emailDestino, subject, text);
     }

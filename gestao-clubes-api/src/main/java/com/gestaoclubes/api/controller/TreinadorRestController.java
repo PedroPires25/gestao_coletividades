@@ -56,11 +56,10 @@ public class TreinadorRestController {
         return atletaDAO.listarPorClube(clubeId);
     }
 
-    /**
-     * Devolve atletas elegíveis para convocatória do treinador na modalidade.
-     * Se escalaoId for fornecido, devolve atletas desse escalão e do imediatamente abaixo.
-     * Se escalaoId estiver ausente, devolve todos os atletas da modalidade.
-     */
+    // ==========================================
+    // CONVOCATÓRIAS
+    // ==========================================
+
     @GetMapping("/clubes/{clubeId}/treinador/convocatorias/atletas")
     public List<Map<String, Object>> listarAtletasConvocatorias(
             @PathVariable int clubeId,
@@ -71,7 +70,7 @@ public class TreinadorRestController {
 
         if (temGestaoTotalConvocatorias()) {
             if (clubeModalidadeId == null) {
-                return atletaDAO.listarAtivosPorClube(clubeId);
+                return atletaDAO.listarPorClube(clubeId);
             }
             Integer modalidadeGerivelId = exigirClubeModalidadeDoClube(clubeId, clubeModalidadeId);
             if (escalaoId == null) {
@@ -118,7 +117,7 @@ public class TreinadorRestController {
     public List<Map<String, Object>> listarConvocatorias(@PathVariable int clubeId) {
         exigirAcessoConvocatorias(clubeId);
         if (temGestaoTotalConvocatorias()) {
-            return eventoDAO.listarModalidadePorClube(clubeId).stream()
+            return eventoDAO.listarPorClube(clubeId).stream()
                     .peek(ev -> ev.put("subtipo", ev.get("observacoes")))
                     .toList();
         }
@@ -210,6 +209,7 @@ public class TreinadorRestController {
         if (fim != null) evento.setDataHoraFim(Timestamp.valueOf(fim));
         evento.setLatitude(extrairDouble(payload.get("latitude")));
         evento.setLongitude(extrairDouble(payload.get("longitude")));
+        evento.setCriadoPorTreinador(true);
 
         Integer eventoId = eventoDAO.inserirEDevolverId(evento);
         if (eventoId == null) {
@@ -223,17 +223,12 @@ public class TreinadorRestController {
         LinkedHashMap<String, Object> resposta = new LinkedHashMap<>();
         resposta.put("id", eventoId);
         if (!atletasConvocados.isEmpty()) {
-            Map<String, Object> emailResult = notificacaoService.enviarEmailsConvocados(
-                    eventoId, titulo, inicio, local, descricao != null ? descricao : "", subtipo);
-            String emailStatus = (String) emailResult.get("status");
-            resposta.put("emailStatus", emailStatus);
-            if ("SUCESSO".equals(emailStatus) || "SEM_DESTINATARIOS".equals(emailStatus)) {
-                resposta.put("mensagem", "Convocatória criada e emails enviados com sucesso.");
-            } else {
-                resposta.put("mensagem", "Convocatória criada, mas ocorreu um erro no envio de emails.");
+            Map<String, Object> eventoGuardado = eventoDAO.buscarPorId(eventoId);
+            if (eventoGuardado != null) {
+                notificacaoService.notificarConvocados(eventoId, eventoGuardado, "MODALIDADE");
             }
+            resposta.put("mensagem", "Convocatória criada e emails a ser enviados.");
         } else {
-            resposta.put("emailStatus", "SEM_DESTINATARIOS");
             resposta.put("mensagem", "Evento criado com sucesso.");
         }
 
@@ -304,48 +299,42 @@ public class TreinadorRestController {
                 "MODALIDADE",
                 clubeModalidadeId,
                 null,
-                utilizadorId
+                ((Number) eventoExistente.get("criadoPor")).intValue()
         );
         eventoAtualizado.setEscalaoId(escalaoId);
         if (fim != null) eventoAtualizado.setDataHoraFim(Timestamp.valueOf(fim));
         eventoAtualizado.setLatitude(extrairDouble(payload.get("latitude")));
         eventoAtualizado.setLongitude(extrairDouble(payload.get("longitude")));
+        eventoAtualizado.setCriadoPorTreinador(true);
 
         boolean atualizado = eventoDAO.atualizar(eventoId, eventoAtualizado);
         if (!atualizado) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao atualizar evento.");
         }
 
-        List<Integer> convocadosExistentes = eventoAtletaDAO.listarPorEvento(eventoId)
-                .stream().map(a -> ((Number) a.get("id")).intValue()).toList();
         eventoAtletaDAO.removerTodos(eventoId);
         if (!atletasConvocados.isEmpty()) {
             eventoAtletaDAO.inserirMultiplos(eventoId, atletasConvocados);
         }
 
-        boolean camposAlterados = camposRelevantesAlterados(eventoExistente, inicio, local,
-                descricao != null ? descricao : "", subtipo);
-        boolean atletasAdicionados = atletasConvocados.stream()
-                .anyMatch(id -> !convocadosExistentes.contains(id));
-
         LinkedHashMap<String, Object> resposta = new LinkedHashMap<>();
-        if ((camposAlterados || atletasAdicionados) && !atletasConvocados.isEmpty()) {
-            Map<String, Object> emailResult = notificacaoService.enviarEmailsConvocados(
-                    eventoId, titulo, inicio, local, descricao != null ? descricao : "", subtipo);
-            String emailStatus = (String) emailResult.get("status");
-            resposta.put("emailStatus", emailStatus);
-            if ("SUCESSO".equals(emailStatus) || "SEM_DESTINATARIOS".equals(emailStatus)) {
-                resposta.put("mensagem", "Email enviado com sucesso.");
-            } else {
-                resposta.put("mensagem", "Convocatória atualizada, mas ocorreu um erro no envio de emails.");
+        resposta.put("id", eventoId);
+        if (!atletasConvocados.isEmpty()) {
+            Map<String, Object> eventoGuardado = eventoDAO.buscarPorId(eventoId);
+            if (eventoGuardado != null) {
+                notificacaoService.notificarConvocados(eventoId, eventoGuardado, "MODALIDADE");
             }
+            resposta.put("mensagem", "Convocatória atualizada e emails a ser enviados.");
         } else {
-            resposta.put("emailStatus", "NAO_ENVIADO");
             resposta.put("mensagem", "Evento atualizado com sucesso.");
         }
 
         return ResponseEntity.ok(resposta);
     }
+
+    // ==========================================
+    // SESSÕES DE TREINO
+    // ==========================================
 
     @GetMapping("/clubes/{clubeId}/treinador/sessoes")
     public List<Map<String, Object>> listarSessoes(@PathVariable int clubeId) {
@@ -379,6 +368,16 @@ public class TreinadorRestController {
         return treinadorService.obterAssiduidade(clubeId, startDate, endDate);
     }
 
+    // ==========================================
+    // PLANOS DE TREINO
+    // ==========================================
+
+    @GetMapping("/clubes/{clubeId}/treinador/planos")
+    public List<Map<String, Object>> listarPlanos(@PathVariable int clubeId) {
+        exigirAcessoTreinador(clubeId);
+        return treinadorService.listarPlanos(clubeId);
+    }
+
     @PostMapping("/clubes/{clubeId}/treinador/planos")
     public ResponseEntity<?> criarPlanoTreino(
             @PathVariable int clubeId,
@@ -392,11 +391,42 @@ public class TreinadorRestController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
+    @PutMapping("/clubes/{clubeId}/treinador/planos/{planoId}")
+    public ResponseEntity<?> atualizarPlanoTreino(
+            @PathVariable int clubeId,
+            @PathVariable int planoId,
+            @RequestBody Map<String, Object> payload
+    ) {
+        exigirAcessoTreinador(clubeId);
+        boolean ok = treinadorService.atualizarPlanoTreino(planoId, payload, emailService);
+        if (!ok) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao atualizar plano de treino.");
+        }
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    @DeleteMapping("/clubes/{clubeId}/treinador/planos/{planoId}")
+    public ResponseEntity<?> removerPlanoTreino(
+            @PathVariable int clubeId,
+            @PathVariable int planoId
+    ) {
+        exigirAcessoTreinador(clubeId);
+        boolean ok = treinadorService.removerPlanoTreino(planoId);
+        if (!ok) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao remover plano de treino.");
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    // ==========================================
+    // UTILITÁRIOS (Helpers)
+    // ==========================================
+
     private void exigirAcessoTreinador(int clubeId) {
         if (SecurityUtils.isSuperAdmin()) return;
         if (SecurityUtils.canManageClube(clubeId)) return;
         if (SecurityUtils.isAdministrador() && Integer.valueOf(clubeId).equals(SecurityUtils.currentClubeId())) return;
-        if (isSecretario() && Integer.valueOf(clubeId).equals(SecurityUtils.currentClubeId())) return;
+        if ("ROLE_SECRETARIO".equals(SecurityUtils.currentRole()) && Integer.valueOf(clubeId).equals(SecurityUtils.currentClubeId())) return;
         String role = SecurityUtils.currentRole();
         if ("ROLE_TREINADOR_PRINCIPAL".equals(role) && Integer.valueOf(clubeId).equals(SecurityUtils.currentClubeId())) return;
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para aceder ao módulo de treinador deste clube.");
@@ -473,10 +503,6 @@ public class TreinadorRestController {
         return List.of(escalaoId);
     }
 
-    /**
-     * Valida que o treinador está afeto ao escalaoId e devolve
-     * a lista de IDs de escalões permitidos (selecionado + imediatamente abaixo).
-     */
     private List<Integer> validarEEscaloes(int clubeId, int clubeModalidadeId, Integer escalaoId) {
         if (escalaoId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escalão é obrigatório para convocatórias do treinador.");
@@ -510,9 +536,6 @@ public class TreinadorRestController {
                 .toList();
     }
 
-    /**
-     * Resolve os IDs de escalões permitidos para listagem de atletas (mesmo escalão + imediatamente abaixo).
-     */
     private List<Integer> resolverEscaloesPermitidos(int clubeId, int clubeModalidadeId, int escalaoId) {
         int utilizadorId = SecurityUtils.currentUserId();
         List<Map<String, Object>> treinadorEscaloes = staffAfetacaoEscalaoDAO
@@ -595,7 +618,6 @@ public class TreinadorRestController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não tem permissão para gerir este evento.");
         }
 
-        // Valida a posse do escalão se presente no evento
         Integer eventoEscalaoId = numeroParaInt(existente.get("escalaoId"));
         if (eventoEscalaoId != null) {
             int utilizadorId = SecurityUtils.currentUserId();
@@ -688,17 +710,5 @@ public class TreinadorRestController {
         } catch (DateTimeParseException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato inválido para " + campo + ".");
         }
-    }
-
-    private boolean camposRelevantesAlterados(Map<String, Object> existente, LocalDateTime novoInicio,
-            String novoLocal, String novaDescricao, String novoSubtipo) {
-        java.sql.Timestamp existenteTs = (java.sql.Timestamp) existente.get("dataHora");
-        LocalDateTime existenteInicio = existenteTs != null ? existenteTs.toLocalDateTime() : null;
-        if (!Objects.equals(existenteInicio, novoInicio)) return true;
-        if (!Objects.equals(existente.get("local"), novoLocal)) return true;
-        String descricaoExistente = existente.get("descricao") != null ? (String) existente.get("descricao") : "";
-        if (!descricaoExistente.equals(novaDescricao)) return true;
-        if (!Objects.equals(existente.get("observacoes"), novoSubtipo)) return true;
-        return false;
     }
 }

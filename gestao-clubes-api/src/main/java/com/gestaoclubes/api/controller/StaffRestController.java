@@ -20,6 +20,7 @@ import java.sql.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -61,8 +62,19 @@ public class StaffRestController {
             @PathVariable int clubeId,
             @PathVariable String tipo
     ) {
+        if ("treinador".equalsIgnoreCase(tipo)) {
+            // Fetch all staff for the club, then filter in memory for "Treinador"
+            List<Map<String, Object>> allStaff = staffDAO.listarPorClube(clubeId);
+            return allStaff.stream()
+                    .filter(s -> {
+                        String cargo = (String) s.get("cargo");
+                        return cargo != null && cargo.toLowerCase().contains("treinador");
+                    })
+                    .collect(Collectors.toList());
+        }
+        
         if (!"direcao".equalsIgnoreCase(tipo) && !"medico".equalsIgnoreCase(tipo)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tipo de departamento inválido. Utilize 'direcao' ou 'medico'.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tipo de departamento inválido. Utilize 'direcao', 'medico' ou 'treinador'.");
         }
         return staffDAO.listarPorClubeDepartamento(clubeId, tipo);
     }

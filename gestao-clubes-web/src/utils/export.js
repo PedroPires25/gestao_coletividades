@@ -65,7 +65,7 @@ function generatePdfDoc(data, columns, title, clubName) {
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(platformName, 14, 15);
-    doc.text(`Data de geração: ${dateStr}`, doc.internal.pageSize.getWidth() - 14, 15, { align: "right" });
+    doc.text(`Data de criação: ${dateStr}`, doc.internal.pageSize.getWidth() - 14, 15, { align: "right" });
 
     doc.setFontSize(16);
     doc.setTextColor(20);
@@ -117,22 +117,22 @@ export function exportToPdf(data, columns, title, clubName, filename) {
 }
 
 /**
- * Gera o documento PDF em memória e abre-o num novo separador
+ * Gera o documento PDF em memória e abre-o num novo separador 
  * instruindo o browser a abrir imediatamente a janela de impressão.
  */
 export function printPdf(data, columns, title, clubName) {
     const doc = generatePdfDoc(data, columns, title, clubName);
-
+    
     // Instruir o PDF a imprimir quando for aberto
     doc.autoPrint();
-
+    
     // Criar um URL temporário com o conteúdo do PDF
     const blob = doc.output('blob');
     const url = URL.createObjectURL(blob);
-
+    
     // Abrir num novo separador
     const printWindow = window.open(url, '_blank');
-
+    
     // Se o bloqueador de pop-ups impedir a abertura, avisamos o utilizador
     if (!printWindow) {
         alert("Por favor, permita pop-ups para imprimir o documento.");
