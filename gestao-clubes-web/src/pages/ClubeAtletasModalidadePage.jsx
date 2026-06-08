@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
@@ -84,6 +84,7 @@ function athleteToEditForm(atleta) {
             atleta?.dataFim || atleta?.data_fim || ""
         ),
         ativo: atleta?.ativo ?? true,
+        fotoPath: atleta?.fotoPath || atleta?.foto_path || null,
     };
 }
 
@@ -139,7 +140,9 @@ export default function ClubeAtletasModalidadePage() {
     const { clubeId, clubeModalidadeId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { logout, isAdmin, isSuperAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, isScopedAdmin, isSecretario } = useAuth();
+    
+    const canManageFotos = isSuperAdmin || isAdmin || isScopedAdmin || isSecretario;
 
     const [clube, setClube] = useState(null);
     const [modalidadeAtiva, setModalidadeAtiva] = useState(null);
@@ -166,12 +169,15 @@ export default function ClubeAtletasModalidadePage() {
         dataInscricao: "",
         dataFim: "",
         ativo: true,
+        fotoPath: null,
     });
 
     const fotoInputRef = useRef(null);
+    const formFotoInputRef = useRef(null);
     const [fotoTargetId, setFotoTargetId] = useState(null);
 
     function handleAvatarClick(atletaId) {
+        if (!canManageFotos) return;
         setFotoTargetId(atletaId);
         if (fotoInputRef.current) {
             fotoInputRef.current.value = "";
@@ -193,6 +199,35 @@ export default function ClubeAtletasModalidadePage() {
             setErro("Erro ao fazer upload da foto: " + (err.message || ""));
         }
         setFotoTargetId(null);
+    }
+    
+    async function handleFormFotoChange(e) {
+        const file = e.target.files?.[0];
+        if (!file || !editForm.id) return;
+        
+        try {
+            const res = await uploadAtletaFoto(editForm.id, file);
+            if (res?.fotoPath) {
+                setEditForm(prev => ({ ...prev, fotoPath: res.fotoPath }));
+                setAtletas(prev =>
+                    prev.map(a => a.id === editForm.id ? { ...a, fotoPath: res.fotoPath } : a)
+                );
+            }
+        } catch (err) {
+            alert("Erro ao fazer upload da foto: " + (err.message || ""));
+        }
+    }
+    
+    async function handleRemoverFoto() {
+        if (!editForm.id) return;
+        if (!window.confirm("Tem a certeza que deseja remover a foto?")) return;
+        
+        try {
+             setEditForm(prev => ({ ...prev, fotoPath: null }));
+             alert("Aviso: A remoção da foto apenas será efetiva ao guardar as alterações, caso o servidor o suporte. Contacte o suporte se a foto persistir.");
+        } catch {
+             alert("Erro ao remover foto.");
+        }
     }
 
     const menuItems= useMemo(
@@ -217,74 +252,59 @@ export default function ClubeAtletasModalidadePage() {
         [clubeId, clubeModalidadeId, isAdmin, isSuperAdmin, logout, navigate]
     );
 
-    useEffect(() => {
-        let isMounted = true;
-        
-        async function carregar() {
-            if (!clubeId || !clubeModalidadeId) return;
+    const carregarPagina = useCallback(async () => {
+        if (!clubeId || !clubeModalidadeId) return;
 
-            if (isMounted) {
-                setErro("");
-                setMsg(location.state?.msg || "");
-                setLoading(true);
+        setErro("");
+        setMsg(location.state?.msg || "");
+        setLoading(true);
+
+        try {
+            const [clubeData, modalidadesData, escaloesData, estadosData] =
+                await Promise.all([
+                    getClubeById(clubeId),
+                    getModalidadesByClube(clubeId),
+                    getEscaloes().catch(() => []),
+                    getEstadosAtleta().catch(() => []),
+                ]);
+
+            const modalidades = Array.isArray(modalidadesData) ? modalidadesData : [];
+            const modalidadeSelecionada = modalidades.find(
+                (item) => getClubeModalidadeId(item) === String(clubeModalidadeId)
+            );
+
+            if (!modalidadeSelecionada) {
+                setErro("Modalidade não encontrada para este clube.");
+                setLoading(false);
+                return;
             }
 
-            try {
-                const [clubeData, modalidadesData, escaloesData, estadosData] =
-                    await Promise.all([
-                        getClubeById(clubeId),
-                        getModalidadesByClube(clubeId),
-                        getEscaloes().catch(() => []),
-                        getEstadosAtleta().catch(() => []),
-                    ]);
+            const atletasData = await getAtletasByClubeModalidade(
+                clubeId,
+                getClubeModalidadeId(modalidadeSelecionada)
+            );
 
-                if (!isMounted) return;
-
-                const modalidades = Array.isArray(modalidadesData) ? modalidadesData : [];
-                const modalidadeSelecionada = modalidades.find(
-                    (item) => getClubeModalidadeId(item) === String(clubeModalidadeId)
-                );
-
-                if (!modalidadeSelecionada) {
-                    setErro("Modalidade não encontrada para este clube.");
-                    setLoading(false);
-                    return;
-                }
-
-                const atletasData = await getAtletasByClubeModalidade(
-                    clubeId,
-                    getClubeModalidadeId(modalidadeSelecionada)
-                );
-
-                if (!isMounted) return;
-
-                setClube(clubeData || null);
-                setModalidadeAtiva(modalidadeSelecionada);
-                setAtletas(Array.isArray(atletasData) ? atletasData : []);
-                setEscaloes(Array.isArray(escaloesData) ? escaloesData : []);
-                setEstados(Array.isArray(estadosData) ? estadosData : []);
-            } catch (e) {
-                if (isMounted) {
-                    setErro(e.message || "Não foi possível carregar os atletas da modalidade.");
-                    setAtletas([]);
-                    setModalidadeAtiva(null);
-                }
-            } finally {
-                if (isMounted) {
-                    setLoading(false);
-                    if (location.state?.msg) {
-                        navigate(location.pathname, { replace: true, state: {} });
-                    }
-                }
+            setClube(clubeData || null);
+            setModalidadeAtiva(modalidadeSelecionada);
+            setAtletas(Array.isArray(atletasData) ? atletasData : []);
+            setEscaloes(Array.isArray(escaloesData) ? escaloesData : []);
+            setEstados(Array.isArray(estadosData) ? estadosData : []);
+        } catch (e) {
+            setErro(e.message || "Não foi possível carregar os atletas da modalidade.");
+            setAtletas([]);
+            setModalidadeAtiva(null);
+        } finally {
+            setLoading(false);
+            if (location.state?.msg) {
+                navigate(location.pathname, { replace: true, state: {} });
             }
         }
-
-        carregar();
-        
-        return () => {
-            isMounted = false;
-        };
     }, [clubeId, clubeModalidadeId, navigate, location.pathname, location.state?.msg]);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        carregarPagina();
+    }, [carregarPagina]);
 
     async function carregarData() {
         if (!clubeId || !clubeModalidadeId) return;
@@ -363,6 +383,7 @@ export default function ClubeAtletasModalidadePage() {
                 dataFim: editForm.dataFim || null,
                 ativo: Boolean(editForm.ativo),
                 clubeModalidadeId: Number(clubeModalidadeId),
+                fotoPath: editForm.fotoPath,
             });
 
             setMsg("Atleta atualizado com sucesso.");
@@ -421,7 +442,7 @@ export default function ClubeAtletasModalidadePage() {
             columns,
             title: `Atletas - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`,
             clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
         });
     };
 
@@ -432,20 +453,22 @@ export default function ClubeAtletasModalidadePage() {
             columns,
             title: `Atletas - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`,
             clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
             filename: `atletas_${modalidadeAtiva?.modalidade?.nome || 'modalidade'}.pdf`,
         });
     };
 
     return (
         <>
-            <input
-                type="file"
-                accept="image/*"
-                ref={fotoInputRef}
-                style={{ display: "none" }}
-                onChange={handleFotoChange}
-            />
+            {canManageFotos && (
+                <input
+                    type="file"
+                    accept="image/*"
+                    ref={fotoInputRef}
+                    style={{ display: "none" }}
+                    onChange={handleFotoChange}
+                />
+            )}
             <SideMenu
                 title="Gestão de Coletividades"
                 subtitle={clube?.nome || "Clube"}
@@ -533,9 +556,13 @@ export default function ClubeAtletasModalidadePage() {
                                             <td className="nowrap">
                                                 <span className="nome-com-avatar">
                                                     <span
-                                                        className="avatar-upload-trigger"
-                                                        title="Clique para alterar foto"
-                                                        onClick={(e) => { e.stopPropagation(); handleAvatarClick(a.id); }}
+                                                        className={`avatar-upload-trigger ${canManageFotos ? 'clickable' : ''}`}
+                                                        title={canManageFotos ? "Clique para alterar foto" : ""}
+                                                        onClick={(e) => { 
+                                                            e.stopPropagation(); 
+                                                            handleAvatarClick(a.id); 
+                                                        }}
+                                                        style={{ cursor: canManageFotos ? 'pointer' : 'default' }}
                                                     >
                                                         {a.fotoPath ? (
                                                             <img
@@ -602,6 +629,46 @@ export default function ClubeAtletasModalidadePage() {
                                 ×
                             </button>
                         </div>
+                        
+                        {canManageFotos && (
+                            <div className="row" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', padding: '10px', background: '#f8f9fa', borderRadius: '8px' }}>
+                                <div className="avatar-preview" style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {editForm.fotoPath ? (
+                                        <img src={getUploadUrl(editForm.fotoPath)} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <span style={{ fontSize: '24px', color: '#64748b' }}>{(editForm.nome || "?")[0].toUpperCase()}</span>
+                                    )}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#334155' }}>Foto de Perfil</h4>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <input 
+                                            type="file" 
+                                            ref={formFotoInputRef} 
+                                            style={{ display: 'none' }} 
+                                            accept="image/*"
+                                            onChange={handleFormFotoChange}
+                                        />
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-sm btn-upload-photo" 
+                                            onClick={() => formFotoInputRef.current?.click()}
+                                        >
+                                            Alterar foto
+                                        </button>
+                                        {editForm.fotoPath && (
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-sm btn-danger"
+                                                onClick={handleRemoverFoto}
+                                            >
+                                                Remover foto
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="row">
                             <div className="row2">

@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
+import { getClubeById, getUploadUrl } from "../api";
 import { getAssiduidade, getAtletasTreinador, getEscaloesTreinador, getAssiduidadeAtleta } from "../services/treinador";
 import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 
@@ -30,7 +31,9 @@ const MESES = [
 export default function AssiduidadePage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, clube } = useAuth(); 
+    const { logout } = useAuth();
+
+    const [clubeInfo, setClubeInfo] = useState(null);
 
     const [view, setView] = useState('equipa');
     
@@ -72,10 +75,12 @@ export default function AssiduidadePage() {
     useEffect(() => {
         async function carregarDropdowns() {
             try {
-                const [escaloesData, atletasData] = await Promise.all([
+                const [clubeData, escaloesData, atletasData] = await Promise.all([
+                    getClubeById(clubeId).catch(() => null),
                     getEscaloesTreinador(clubeId),
                     getAtletasTreinador(clubeId)
                 ]);
+                setClubeInfo(clubeData || null);
                 setEscaloes(Array.isArray(escaloesData) ? escaloesData : (escaloesData?.data || []));
                 setAtletas(Array.isArray(atletasData) ? atletasData : (atletasData?.data || []));
             } catch (err) {
@@ -175,7 +180,7 @@ export default function AssiduidadePage() {
         const filename = `assiduidade_${atletaSelecionado?.nome || 'individual'}_${startDate}_a_${endDate}.pdf`;
         const summary = `Período: ${startDate} a ${endDate} | Escalão: ${nomeEscalaoSelecionado} | Total de Treinos: ${totalTreinos} | Presenças: ${presencas} | Assiduidade: ${percentagem}%`;
 
-        return { columns, dataToExport, title, filename, summary, athletePhotoUrl: atletaSelecionado?.fotoUrl };
+        return { columns, dataToExport, title, filename, summary, athletePhotoUrl: getUploadUrl(atletaSelecionado?.fotoPath) };
     };
 
     const handleExportPdfIndividual = () => {
@@ -184,8 +189,8 @@ export default function AssiduidadePage() {
             data: dataToExport,
             columns,
             title,
-            clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubName: clubeInfo?.nome,
+            clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             filename,
             summary,
             athletePhotoUrl,
@@ -203,8 +208,8 @@ export default function AssiduidadePage() {
             data: dataToExport,
             columns,
             title,
-            clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubName: clubeInfo?.nome,
+            clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             summary,
             athletePhotoUrl,
         });
@@ -236,8 +241,8 @@ export default function AssiduidadePage() {
             data: dataToExport,
             columns,
             title,
-            clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubName: clubeInfo?.nome,
+            clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             filename,
             summary,
         });
@@ -255,8 +260,8 @@ export default function AssiduidadePage() {
             data: dataToExport,
             columns,
             title,
-            clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubName: clubeInfo?.nome,
+            clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             summary,
         });
     };

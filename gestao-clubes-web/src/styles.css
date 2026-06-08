@@ -790,6 +790,19 @@ body.theme-light textarea::placeholder {
     border-color: rgba(255,92,92,0.40);
 }
 
+.btn-upload-photo {
+    background: #fff;
+    color: #111 !important;
+    border: 1.5px solid #111 !important;
+    cursor: pointer;
+}
+
+.btn-upload-photo:hover {
+    background: #f0f0f0;
+    border-color: #000 !important;
+    transform: translateY(-1px);
+}
+
 /* =========================
    Alertas
 ========================= */
@@ -3248,16 +3261,19 @@ img.avatar-circle-sm {
     display: inline-block;
     padding: 8px 18px;
     border-radius: 10px;
-    background: var(--accent);
-    color: #fff;
+    background: #fff;
+    color: #111;
+    border: 1.5px solid #111;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.18s;
+    transition: background 0.18s, border-color 0.18s, transform 0.18s;
 }
 
 .perfil-avatar-upload-btn:hover {
-    opacity: 0.85;
+    background: #f0f0f0;
+    border-color: #000;
+    transform: translateY(-1px);
 }
 
 .perfil-form {

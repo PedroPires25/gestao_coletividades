@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getClubeById } from "../api";
+import { getClubeById, getUploadUrl } from "../api";
 import { getAtletasTreinador } from "../services/treinador";
 import {
   listarEventos,
@@ -256,7 +256,7 @@ export default function EventosPage() {
         columns,
         title: isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube",
         clubName: clube?.nome,
-        clubLogoUrl: clube?.logo,
+        clubLogoUrl: getUploadUrl(clube?.logoPath),
         filename: `eventos_${clube?.nome || clubeId}.pdf`,
     });
   };
@@ -268,7 +268,7 @@ export default function EventosPage() {
         columns,
         title: isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube",
         clubName: clube?.nome,
-        clubLogoUrl: clube?.logo,
+        clubLogoUrl: getUploadUrl(clube?.logoPath),
     });
   };
 

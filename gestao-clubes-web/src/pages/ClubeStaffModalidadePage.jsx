@@ -58,6 +58,7 @@ function staffToEditForm(item) {
             : Array.isArray(item?.escaloes_ids)
                 ? item.escaloes_ids.map((v) => String(v))
                 : [],
+        fotoPath: item?.fotoPath || item?.foto_path || null,
     };
 }
 
@@ -98,7 +99,9 @@ function PendingNameCell() {
 export default function ClubeStaffModalidadePage() {
     const { clubeId, clubeModalidadeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, isScopedAdmin, isSecretario } = useAuth();
+    
+    const canManageFotos = isSuperAdmin || isAdmin || isScopedAdmin || isSecretario;
 
     const [clube, setClube] = useState(null);
     const [modalidadeAtiva, setModalidadeAtiva] = useState(null);
@@ -127,12 +130,15 @@ export default function ClubeStaffModalidadePage() {
         observacoes: "",
         ativo: true,
         escaloesIds: [],
+        fotoPath: null,
     });
 
     const fotoInputRef = useRef(null);
+    const formFotoInputRef = useRef(null);
     const [fotoTargetId, setFotoTargetId] = useState(null);
 
     function handleAvatarClick(staffId) {
+        if (!canManageFotos) return;
         setFotoTargetId(staffId);
         if (fotoInputRef.current) {
             fotoInputRef.current.value = "";
@@ -154,6 +160,35 @@ export default function ClubeStaffModalidadePage() {
             setErro("Erro ao fazer upload da foto: " + (err.message || ""));
         }
         setFotoTargetId(null);
+    }
+    
+    async function handleFormFotoChange(e) {
+        const file = e.target.files?.[0];
+        if (!file || !editForm.id) return;
+        
+        try {
+            const res = await uploadStaffFoto(editForm.id, file);
+            if (res?.fotoPath) {
+                setEditForm(prev => ({ ...prev, fotoPath: res.fotoPath }));
+                setStaffRows(prev =>
+                    prev.map(s => s.id === editForm.id ? { ...s, fotoPath: res.fotoPath } : s)
+                );
+            }
+        } catch (err) {
+            alert("Erro ao fazer upload da foto: " + (err.message || ""));
+        }
+    }
+    
+    async function handleRemoverFoto() {
+        if (!editForm.id) return;
+        if (!window.confirm("Tem a certeza que deseja remover a foto?")) return;
+        
+        try {
+             setEditForm(prev => ({ ...prev, fotoPath: null }));
+             alert("Aviso: A remoção da foto apenas será efetiva ao guardar as alterações, caso o servidor o suporte.");
+        } catch {
+             alert("Erro ao remover foto.");
+        }
     }
 
     const menuItems= useMemo(
@@ -269,6 +304,7 @@ export default function ClubeStaffModalidadePage() {
                 morada: editForm.morada,
                 numRegisto: editForm.numRegisto,
                 remuneracao: Number(editForm.remuneracao || 0),
+                fotoPath: editForm.fotoPath,
             });
 
             await updateStaffAfetacao(clubeId, editForm.id, editForm.afetacaoId, {
@@ -325,7 +361,7 @@ export default function ClubeStaffModalidadePage() {
             columns,
             title: `Staff - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`,
             clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
         });
     };
 
@@ -336,20 +372,37 @@ export default function ClubeStaffModalidadePage() {
             columns,
             title: `Staff - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`,
             clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
             filename: `staff_${modalidadeAtiva?.modalidade?.nome || 'modalidade'}.pdf`,
         });
     };
 
     return (
         <>
-            <input
-                type="file"
-                accept="image/*"
-                ref={fotoInputRef}
-                style={{ display: "none" }}
-                onChange={handleFotoChange}
-            />
+            <style>{`
+                .btn-upload-photo {
+                    color: #333 !important;
+                    border: 1px solid #ccc !important;
+                    background-color: #fff !important;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    text-align: center;
+                }
+                .btn-upload-photo:hover {
+                    background-color: #f0f0f0 !important;
+                }
+            `}</style>
+            {canManageFotos && (
+                <input
+                    type="file"
+                    accept="image/*"
+                    ref={fotoInputRef}
+                    style={{ display: "none" }}
+                    onChange={handleFotoChange}
+                />
+            )}
             <SideMenu
                 title="Gestão de Coletividades"
                 subtitle={clube?.nome || "Clube"}
@@ -433,9 +486,13 @@ export default function ClubeStaffModalidadePage() {
                                             <td className="nowrap">
                                                 <span className="nome-com-avatar">
                                                     <span
-                                                        className="avatar-upload-trigger"
-                                                        title="Clique para alterar foto"
-                                                        onClick={(e) => { e.stopPropagation(); handleAvatarClick(row.id); }}
+                                                        className={`avatar-upload-trigger ${canManageFotos ? 'clickable' : ''}`}
+                                                        title={canManageFotos ? "Clique para alterar foto" : ""}
+                                                        onClick={(e) => { 
+                                                            e.stopPropagation(); 
+                                                            if (canManageFotos) handleAvatarClick(row.id);
+                                                        }}
+                                                        style={{ cursor: canManageFotos ? 'pointer' : 'default' }}
                                                     >
                                                         {row.fotoPath ? (
                                                             <img
@@ -487,6 +544,46 @@ export default function ClubeStaffModalidadePage() {
                                 ×
                             </button>
                         </div>
+
+                        {canManageFotos && (
+                            <div className="row" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', padding: '10px', background: '#f8f9fa', borderRadius: '8px' }}>
+                                <div className="avatar-preview" style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {editForm.fotoPath ? (
+                                        <img src={getUploadUrl(editForm.fotoPath)} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <span style={{ fontSize: '24px', color: '#64748b' }}>{(editForm.nome || "?")[0].toUpperCase()}</span>
+                                    )}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#334155' }}>Foto de Perfil</h4>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <input 
+                                            type="file" 
+                                            ref={formFotoInputRef} 
+                                            style={{ display: 'none' }} 
+                                            accept="image/*"
+                                            onChange={handleFormFotoChange}
+                                        />
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-sm btn-upload-photo" 
+                                            onClick={() => formFotoInputRef.current?.click()}
+                                        >
+                                            Alterar foto
+                                        </button>
+                                        {editForm.fotoPath && (
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-sm btn-danger" 
+                                                onClick={handleRemoverFoto}
+                                            >
+                                                Remover foto
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="row">
                             <div className="row2">

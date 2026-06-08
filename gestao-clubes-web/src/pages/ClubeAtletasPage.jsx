@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getClubeById } from "../api";
+import { getClubeById, getUploadUrl } from "../api";
 import {
     createAtleta,
     getAtletasByClubeModalidade,
@@ -372,7 +372,7 @@ export default function ClubeAtletasPage() {
             columns,
             title: "Listagem Geral de Atletas",
             clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
             filename: `atletas_${clube?.nome || clubeId}.pdf`,
         });
     };
@@ -384,7 +384,7 @@ export default function ClubeAtletasPage() {
             columns,
             title: "Listagem Geral de Atletas",
             clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
         });
     };
 

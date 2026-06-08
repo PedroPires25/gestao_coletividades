@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// --- Funções de exportação de CSV (sem alterações) ---
+// --- Funções de exportação de CSV ---
 
 function arrayToCsv(data, columns, separator = ';') {
     const header = columns.map(c => c.label).join(separator);
@@ -34,127 +34,213 @@ export function exportToCsv(data, columns, filename) {
     downloadCsv(csv, filename);
 }
 
-// --- Novas funções e melhorias para exportação de PDF ---
+// --- Exportação de PDF ---
 
-const PLATFORM_LOGO_URL = "/LOGO_GCDC04.png"; // Caminho para o logo da plataforma nos assets
+// O logo da plataforma é servido como asset público (funciona em localhost e Vercel/Render)
+const PLATFORM_LOGO_URL = "/LOGO_GCDC04.png";
 
 /**
- * Converte uma imagem de um URL para uma string Base64.
- * Trata de CORS e falhas de carregamento.
- * @param {string} url - O URL da imagem.
- * @returns {Promise<string|null>} A string Base64 ou null em caso de erro.
+ * Resolve um URL de imagem para URL absoluto.
+ * Suporta: URLs Cloudinary (https://...), caminhos relativos (/uploads/...) e assets locais (/logo.png).
  */
-async function imageToBase64(url) {
-  if (!url) return null;
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch (error) {
-    console.error("Erro ao carregar imagem para PDF:", error);
-    return null;
-  }
+function resolveImageUrl(url) {
+    if (!url) return null;
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    // Caminho relativo - resolver com base no origin atual
+    return `${window.location.origin}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
 /**
- * Função auxiliar que gera o documento PDF base formatado, agora com cabeçalho e rodapé melhorados.
- * @param {object} options - Opções para a geração do PDF.
- * @returns {Promise<jsPDF>} O documento PDF gerado.
+ * Converte uma imagem num URL para Base64, com suporte a CORS e fallback seguro.
+ * @param {string} url
+ * @returns {Promise<string|null>}
  */
-// eslint-disable-next-line new-cap
-async function generatePdfDoc(options) {
-    const { data, columns, title, clubName, clubLogoUrl, summary, athletePhotoUrl } = options;
+async function imageToBase64(url) {
+    const resolved = resolveImageUrl(url);
+    if (!resolved) return null;
+    try {
+        const response = await fetch(resolved, { mode: "cors" });
+        if (!response.ok) return null;
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    } catch {
+        // Imagem inacessível ou bloqueada por CORS — continua sem a imagem
+        return null;
+    }
+}
 
+const HEADER_LOGO_SIZE = 22;  // largura e altura dos logos no cabeçalho
+const HEADER_TOP = 8;          // y inicial do cabeçalho
+const HEADER_LOGO_Y = HEADER_TOP;
+const MARGIN = 14;
+const ACCENT_COLOR = [41, 100, 200]; // azul para cabeçalho da tabela
+
+/**
+ * Gera o documento PDF base com cabeçalho de identidade visual, corpo e rodapé.
+ *
+ * Opções suportadas:
+ *  - data: array de objectos
+ *  - columns: [{ key, label }]
+ *  - title: string
+ *  - clubName?: string
+ *  - clubLogoUrl?: string  (URL completo ou relativo — será resolvido automaticamente)
+ *  - summary?: string      (texto de resumo/filtros aplicados)
+ *  - athletePhotoUrl?: string
+ *  - athleteInfo?: string  (linha extra de info do atleta, ex: "Escalão: Sénior | Modalidade: Futebol")
+ *  - filters?: string      (descrição dos filtros activos)
+ */
+async function generatePdfDoc(options) {
+    const {
+        data, columns, title,
+        clubName, clubLogoUrl,
+        summary, filters,
+        athletePhotoUrl, athleteInfo,
+    } = options;
+
+    // eslint-disable-next-line new-cap
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
-    const margin = 14;
+    const pageH = doc.internal.pageSize.getHeight();
 
-    // Carregar imagens em paralelo
+    // Carregar todas as imagens em paralelo; falhas são silenciosas
     const [platformLogoB64, clubLogoB64, athletePhotoB64] = await Promise.all([
         imageToBase64(PLATFORM_LOGO_URL),
         imageToBase64(clubLogoUrl),
-        imageToBase64(athletePhotoUrl)
+        imageToBase64(athletePhotoUrl),
     ]);
 
-    // --- Cabeçalho ---
+    // ── Cabeçalho ───────────────────────────────────────────────────────────────
+    // Logo da plataforma (esquerda)
     if (platformLogoB64) {
-        doc.addImage(platformLogoB64, 'PNG', margin, 10, 20, 20); // x, y, w, h
+        doc.addImage(platformLogoB64, 'PNG', MARGIN, HEADER_LOGO_Y, HEADER_LOGO_SIZE, HEADER_LOGO_SIZE);
     }
+    // Logo do clube (direita)
     if (clubLogoB64) {
-        doc.addImage(clubLogoB64, 'PNG', pageW - margin - 20, 10, 20, 20);
+        doc.addImage(clubLogoB64, 'PNG', pageW - MARGIN - HEADER_LOGO_SIZE, HEADER_LOGO_Y, HEADER_LOGO_SIZE, HEADER_LOGO_SIZE);
     }
-    
-    doc.setFontSize(16);
-    doc.setTextColor(20);
-    doc.text(title, pageW / 2, 20, { align: "center" });
 
-    doc.setFontSize(12);
-    doc.setTextColor(80);
+    // Título centrado
+    doc.setFontSize(15);
+    doc.setFont(undefined, "bold");
+    doc.setTextColor(20, 20, 20);
+    doc.text(title, pageW / 2, HEADER_TOP + 9, { align: "center" });
+
+    // Nome do clube
     if (clubName) {
-        doc.text(clubName, pageW / 2, 28, { align: "center" });
+        doc.setFontSize(11);
+        doc.setFont(undefined, "normal");
+        doc.setTextColor(60, 60, 60);
+        doc.text(clubName, pageW / 2, HEADER_TOP + 16, { align: "center" });
     }
 
-    const dateStr = new Date().toLocaleDateString("pt-PT");
-    doc.setFontSize(9);
-    doc.setTextColor(120);
-    doc.text(`Gerado em: ${dateStr}`, pageW / 2, 34, { align: "center" });
-    
-    let startY = 45;
+    // Data de geração
+    const dateStr = new Date().toLocaleDateString("pt-PT", {
+        day: "2-digit", month: "long", year: "numeric",
+    });
+    doc.setFontSize(8);
+    doc.setTextColor(130, 130, 130);
+    doc.text(`Gerado em ${dateStr}`, pageW / 2, HEADER_TOP + 22, { align: "center" });
 
-    // Foto do atleta (se existir)
+    // Linha separadora
+    const separatorY = HEADER_TOP + HEADER_LOGO_SIZE + 5;
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.4);
+    doc.line(MARGIN, separatorY, pageW - MARGIN, separatorY);
+
+    let cursorY = separatorY + 6;
+
+    // ── Bloco de identificação do atleta (se existir foto) ───────────────────
     if (athletePhotoB64) {
-        doc.addImage(athletePhotoB64, 'PNG', margin, startY, 30, 30);
-        startY += 40;
-    }
+        const photoSize = 28;
+        doc.addImage(athletePhotoB64, 'PNG', MARGIN, cursorY, photoSize, photoSize);
 
-    if (summary) {
+        // Informação do atleta à direita da foto
+        const infoX = MARGIN + photoSize + 6;
         doc.setFontSize(10);
-        doc.setTextColor(50);
-        doc.text(summary, margin, startY - 5);
-        startY += 10;
+        doc.setFont(undefined, "bold");
+        doc.setTextColor(20, 20, 20);
+        if (summary) {
+            // Dividir summary em linhas curtas para caber à direita da foto
+            const summaryLines = doc.splitTextToSize(summary, pageW - infoX - MARGIN);
+            summaryLines.forEach((line, i) => {
+                doc.setFont(undefined, i === 0 ? "bold" : "normal");
+                doc.setFontSize(i === 0 ? 10 : 9);
+                doc.setTextColor(i === 0 ? 20 : 70);
+                doc.text(line, infoX, cursorY + 7 + i * 5);
+            });
+        }
+        if (athleteInfo) {
+            doc.setFontSize(9);
+            doc.setFont(undefined, "normal");
+            doc.setTextColor(90, 90, 90);
+            doc.text(athleteInfo, infoX, cursorY + 20);
+        }
+        cursorY += photoSize + 6;
+    } else {
+        // Sem foto: mostrar summary e filtros em texto simples
+        if (summary) {
+            doc.setFontSize(9);
+            doc.setFont(undefined, "normal");
+            doc.setTextColor(60, 60, 60);
+            const lines = doc.splitTextToSize(summary, pageW - MARGIN * 2);
+            doc.text(lines, MARGIN, cursorY);
+            cursorY += lines.length * 5 + 3;
+        }
+        if (filters) {
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            const fLines = doc.splitTextToSize(`Filtros: ${filters}`, pageW - MARGIN * 2);
+            doc.text(fLines, MARGIN, cursorY);
+            cursorY += fLines.length * 4.5 + 3;
+        }
     }
 
-    // --- Tabela de Dados ---
+    cursorY += 2;
+
+    // ── Tabela de dados ──────────────────────────────────────────────────────
     const tableColumnLabels = columns.map(c => c.label);
     const tableData = data.map(row => columns.map(c => String(row[c.key] ?? '')));
 
     autoTable(doc, {
-        startY,
+        startY: cursorY,
         head: [tableColumnLabels],
         body: tableData,
         theme: 'striped',
         headStyles: {
-            fillColor: [41, 128, 185], 
+            fillColor: ACCENT_COLOR,
             textColor: 255,
-            fontSize: 10,
+            fontSize: 9,
+            fontStyle: "bold",
         },
         styles: {
-            fontSize: 9,
+            fontSize: 8.5,
             cellPadding: 3,
+            overflow: "linebreak",
         },
         alternateRowStyles: {
-            fillColor: [245, 247, 250],
+            fillColor: [245, 248, 255],
         },
-        didDrawPage: function () { // Removido o parâmetro '_data'
-            // --- Rodapé ---
-            const pageH = doc.internal.pageSize.getHeight();
+        didDrawPage: (hookData) => {
+            // ── Rodapé em cada página ────────────────────────────────────────
+            const totalPages = doc.internal.getNumberOfPages();
+            const currentPage = hookData.pageNumber;
             doc.setFontSize(8);
-            doc.setTextColor(150);
+            doc.setFont(undefined, "normal");
+            doc.setTextColor(160, 160, 160);
             doc.text(
                 "Plataforma de Gestão de Coletividades",
-                margin,
-                pageH - 10
+                MARGIN,
+                pageH - 8
             );
             doc.text(
-                `Página ${doc.internal.getNumberOfPages()}`,
-                pageW - margin,
-                pageH - 10,
+                `Página ${currentPage} de ${totalPages}`,
+                pageW - MARGIN,
+                pageH - 8,
                 { align: "right" }
             );
         },
@@ -164,8 +250,7 @@ async function generatePdfDoc(options) {
 }
 
 /**
- * Exporta dados para um ficheiro PDF formatado e inicia o download.
- * @param {object} options - Opções para a geração do PDF.
+ * Exporta dados para um ficheiro PDF e inicia o download.
  */
 export async function exportToPdf(options) {
     const { filename = "export.pdf" } = options;
@@ -173,14 +258,13 @@ export async function exportToPdf(options) {
         const doc = await generatePdfDoc(options);
         doc.save(filename);
     } catch (error) {
-        console.error("Falha ao gerar PDF para exportação:", error);
+        console.error("Falha ao gerar PDF:", error);
         alert("Ocorreu um erro ao gerar o PDF. Por favor, tente novamente.");
     }
 }
 
 /**
  * Gera o PDF e abre-o num novo separador para impressão.
- * @param {object} options - Opções para a geração do PDF.
  */
 export async function printPdf(options) {
     try {
@@ -199,7 +283,7 @@ export async function printPdf(options) {
 }
 
 /**
- * Antiga função de impressão da página HTML
+ * Impressão directa da página HTML (fallback).
  */
 export function printTable() {
     window.print();

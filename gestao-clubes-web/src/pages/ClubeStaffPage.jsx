@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getClubeById } from "../api";
+import { getClubeById, getUploadUrl } from "../api";
 import {
     createStaff,
     getCargosStaff,
@@ -375,7 +375,7 @@ export default function ClubeStaffPage() {
             columns,
             title: "Listagem Geral de Staff",
             clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
             filename: `staff_${clube?.nome || clubeId}.pdf`,
         });
     };
@@ -387,7 +387,7 @@ export default function ClubeStaffPage() {
             columns,
             title: "Listagem Geral de Staff",
             clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
         });
     };
 

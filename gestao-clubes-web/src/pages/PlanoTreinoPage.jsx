@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
+import { getClubeById, getUploadUrl } from "../api";
 import { exportToPdf, printPdf } from "../utils/export";
 
 const API_BASE = `${(import.meta.env.VITE_API_URL || "http://localhost:10000").replace(/\/$/, "")}/api`;
@@ -74,8 +75,9 @@ function formatDate(dateString) {
 export default function PlanoTreinoPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, clube } = useAuth();
+    const { logout } = useAuth();
 
+    const [clubeInfo, setClubeInfo] = useState(null);
     const [atletasList, setAtletasList] = useState([]);
     const [planos, setPlanos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -117,7 +119,8 @@ export default function PlanoTreinoPage() {
                 setLoading(true);
             }
             try {
-                const [atletasData, planosData] = await Promise.all([
+                const [clubeData, atletasData, planosData] = await Promise.all([
+                    getClubeById(clubeId).catch(() => null),
                     getAtletasTreinador(clubeId).catch(() => []),
                     getPlanosTreino(clubeId).catch(() => []),
                 ]);
@@ -125,6 +128,7 @@ export default function PlanoTreinoPage() {
                 if (!isMounted) return;
 
                 const parseArray = (d) => Array.isArray(d) ? d : (Array.isArray(d?.data) ? d.data : []);
+                setClubeInfo(clubeData || null);
                 setAtletasList(parseArray(atletasData));
                 setPlanos(parseArray(planosData));
             } catch (err) {
@@ -253,9 +257,9 @@ export default function PlanoTreinoPage() {
             data: dataToExport,
             columns,
             title: "Plano de Treino Individual",
-            clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
-            athletePhotoUrl: atleta?.fotoUrl,
+            clubName: clubeInfo?.nome,
+            clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
+            athletePhotoUrl: getUploadUrl(atleta?.fotoPath),
         });
     };
 
@@ -275,10 +279,10 @@ export default function PlanoTreinoPage() {
             data: dataToExport,
             columns,
             title: "Plano de Treino Individual",
-            clubName: clube?.nome,
-            clubLogoUrl: clube?.logo,
+            clubName: clubeInfo?.nome,
+            clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
             filename: `plano_${atleta?.nome || 'atleta'}.pdf`,
-            athletePhotoUrl: atleta?.fotoUrl,
+            athletePhotoUrl: getUploadUrl(atleta?.fotoPath),
         });
     };
 

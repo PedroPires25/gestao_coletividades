@@ -135,6 +135,22 @@ export default function PerfilPage() {
             if (fileRef.current) fileRef.current.value = "";
         }
     }
+    
+    async function handleRemoverFoto() {
+        if (!window.confirm("Tem a certeza que deseja remover a sua foto de perfil?")) return;
+        setSaving(true);
+        setMsg(null);
+        try {
+            await updateMyProfile({ logoPath: null });
+            setLogoPath(null);
+            updateSession({ logoPath: null });
+            setMsg({ type: "success", text: "Foto removida com sucesso." });
+        } catch {
+            setMsg({ type: "error", text: "Erro ao remover a foto." });
+        } finally {
+            setSaving(false);
+        }
+    }
 
     function handleEditDados() {
         setEditingDados(true);
@@ -262,16 +278,27 @@ export default function PerfilPage() {
                                 </span>
                             )}
                         </div>
-                        <label className="perfil-avatar-upload-btn">
-                            Alterar Foto
-                            <input
-                                ref={fileRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFotoUpload}
-                                hidden
-                            />
-                        </label>
+                        <div className="perfil-avatar-actions">
+                            <label className="perfil-avatar-upload-btn">
+                                Alterar Foto
+                                <input
+                                    ref={fileRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFotoUpload}
+                                    hidden
+                                />
+                            </label>
+                            {logoPath && (
+                                <button
+                                    type="button"
+                                    className="perfil-avatar-remove-btn"
+                                    onClick={handleRemoverFoto}
+                                >
+                                    Remover
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <form className="perfil-form" onSubmit={handleSave}>
