@@ -251,12 +251,25 @@ export default function EventosPage() {
 
   const handleExportPdf = () => {
     const { columns, dataToExport } = prepareExportData();
-    exportToPdf(dataToExport, columns, isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube", clube?.nome, `eventos_${clube?.nome || clubeId}.pdf`);
+    exportToPdf({
+        data: dataToExport,
+        columns,
+        title: isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube",
+        clubName: clube?.nome,
+        clubLogoUrl: clube?.logo,
+        filename: `eventos_${clube?.nome || clubeId}.pdf`,
+    });
   };
 
   const handlePrint = () => {
     const { columns, dataToExport } = prepareExportData();
-    printPdf(dataToExport, columns, isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube", clube?.nome);
+    printPdf({
+        data: dataToExport,
+        columns,
+        title: isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube",
+        clubName: clube?.nome,
+        clubLogoUrl: clube?.logo,
+    });
   };
 
   if (loading) {

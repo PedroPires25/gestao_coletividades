@@ -1,16 +1,10 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-/**
- * Converte um array de objetos para uma string CSV.
- * @param {Array<Object>} data - O array de dados.
- * @param {Array<{key: string, label: string}>} columns - As colunas a exportar.
- * @param {string} separator - O separador de campos (padrão ';').
- * @returns {string} A string CSV.
- */
+// --- Funções de exportação de CSV (sem alterações) ---
+
 function arrayToCsv(data, columns, separator = ';') {
     const header = columns.map(c => c.label).join(separator);
-    
     const rows = data.map(row => {
         return columns.map(col => {
             const value = row[col.key] ?? '';
@@ -18,14 +12,12 @@ function arrayToCsv(data, columns, separator = ';') {
             return `"${strValue}"`;
         }).join(separator);
     });
-
     return [header, ...rows].join('\n');
 }
 
-export function downloadCsv(csvString, filename = 'export.csv') {
+function downloadCsv(csvString, filename = 'export.csv') {
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    
     if (link.download !== undefined) {
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
@@ -42,37 +34,98 @@ export function exportToCsv(data, columns, filename) {
     downloadCsv(csv, filename);
 }
 
+// --- Novas funções e melhorias para exportação de PDF ---
+
+const PLATFORM_LOGO_URL = "/LOGO_GCDC04.png"; // Caminho para o logo da plataforma nos assets
+
 /**
- * Função auxiliar que gera o documento PDF base formatado.
+ * Converte uma imagem de um URL para uma string Base64.
+ * Trata de CORS e falhas de carregamento.
+ * @param {string} url - O URL da imagem.
+ * @returns {Promise<string|null>} A string Base64 ou null em caso de erro.
  */
-function generatePdfDoc(data, columns, title, clubName, summary) {
+async function imageToBase64(url) {
+  if (!url) return null;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error("Erro ao carregar imagem para PDF:", error);
+    return null;
+  }
+}
+
+/**
+ * Função auxiliar que gera o documento PDF base formatado, agora com cabeçalho e rodapé melhorados.
+ * @param {object} options - Opções para a geração do PDF.
+ * @returns {Promise<jsPDF>} O documento PDF gerado.
+ */
+// eslint-disable-next-line new-cap
+async function generatePdfDoc(options) {
+    const { data, columns, title, clubName, clubLogoUrl, summary, athletePhotoUrl } = options;
+
     const doc = new jsPDF();
-    const platformName = "Gestão de Coletividades";
-    const dateStr = new Date().toLocaleString("pt-PT");
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 14;
 
-    // Configurar o cabeçalho do documento
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(platformName, 14, 15);
-    doc.text(`Data de criação: ${dateStr}`, doc.internal.pageSize.getWidth() - 14, 15, { align: "right" });
+    // Carregar imagens em paralelo
+    const [platformLogoB64, clubLogoB64, athletePhotoB64] = await Promise.all([
+        imageToBase64(PLATFORM_LOGO_URL),
+        imageToBase64(clubLogoUrl),
+        imageToBase64(athletePhotoUrl)
+    ]);
 
+    // --- Cabeçalho ---
+    if (platformLogoB64) {
+        doc.addImage(platformLogoB64, 'PNG', margin, 10, 20, 20); // x, y, w, h
+    }
+    if (clubLogoB64) {
+        doc.addImage(clubLogoB64, 'PNG', pageW - margin - 20, 10, 20, 20);
+    }
+    
     doc.setFontSize(16);
     doc.setTextColor(20);
-    const mainTitle = clubName ? `${clubName} - ${title}` : title;
-    doc.text(mainTitle, 14, 25);
+    doc.text(title, pageW / 2, 20, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.setTextColor(80);
+    if (clubName) {
+        doc.text(clubName, pageW / 2, 28, { align: "center" });
+    }
+
+    const dateStr = new Date().toLocaleDateString("pt-PT");
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Gerado em: ${dateStr}`, pageW / 2, 34, { align: "center" });
+    
+    let startY = 45;
+
+    // Foto do atleta (se existir)
+    if (athletePhotoB64) {
+        doc.addImage(athletePhotoB64, 'PNG', margin, startY, 30, 30);
+        startY += 40;
+    }
 
     if (summary) {
         doc.setFontSize(10);
         doc.setTextColor(50);
-        doc.text(summary, 14, 32);
+        doc.text(summary, margin, startY - 5);
+        startY += 10;
     }
 
-    // Preparar os dados para o AutoTable
+    // --- Tabela de Dados ---
     const tableColumnLabels = columns.map(c => c.label);
     const tableData = data.map(row => columns.map(c => String(row[c.key] ?? '')));
 
     autoTable(doc, {
-        startY: summary ? 42 : 35,
+        startY,
         head: [tableColumnLabels],
         body: tableData,
         theme: 'striped',
@@ -88,14 +141,21 @@ function generatePdfDoc(data, columns, title, clubName, summary) {
         alternateRowStyles: {
             fillColor: [245, 247, 250],
         },
-        didDrawPage: function (data) {
-            // Rodapé com número da página
-            let str = "Página " + doc.internal.getNumberOfPages();
+        didDrawPage: function () { // Removido o parâmetro '_data'
+            // --- Rodapé ---
+            const pageH = doc.internal.pageSize.getHeight();
             doc.setFontSize(8);
+            doc.setTextColor(150);
             doc.text(
-                str,
-                data.settings.margin.left,
-                doc.internal.pageSize.getHeight() - 10
+                "Plataforma de Gestão de Coletividades",
+                margin,
+                pageH - 10
+            );
+            doc.text(
+                `Página ${doc.internal.getNumberOfPages()}`,
+                pageW - margin,
+                pageH - 10,
+                { align: "right" }
             );
         },
     });
@@ -104,33 +164,37 @@ function generatePdfDoc(data, columns, title, clubName, summary) {
 }
 
 /**
- * Exporta dados para um ficheiro PDF formatado com tabela e inicia o download.
+ * Exporta dados para um ficheiro PDF formatado e inicia o download.
+ * @param {object} options - Opções para a geração do PDF.
  */
-export function exportToPdf(data, columns, title, clubName, filename, summary) {
-    const doc = generatePdfDoc(data, columns, title, clubName, summary);
-    doc.save(filename);
+export async function exportToPdf(options) {
+    const { filename = "export.pdf" } = options;
+    try {
+        const doc = await generatePdfDoc(options);
+        doc.save(filename);
+    } catch (error) {
+        console.error("Falha ao gerar PDF para exportação:", error);
+        alert("Ocorreu um erro ao gerar o PDF. Por favor, tente novamente.");
+    }
 }
 
 /**
- * Gera o documento PDF em memória e abre-o num novo separador 
- * instruindo o browser a abrir imediatamente a janela de impressão.
+ * Gera o PDF e abre-o num novo separador para impressão.
+ * @param {object} options - Opções para a geração do PDF.
  */
-export function printPdf(data, columns, title, clubName, summary) {
-    const doc = generatePdfDoc(data, columns, title, clubName, summary);
-    
-    // Instruir o PDF a imprimir quando for aberto
-    doc.autoPrint();
-    
-    // Criar um URL temporário com o conteúdo do PDF
-    const blob = doc.output('blob');
-    const url = URL.createObjectURL(blob);
-    
-    // Abrir num novo separador
-    const printWindow = window.open(url, '_blank');
-    
-    // Se o bloqueador de pop-ups impedir a abertura, avisamos o utilizador
-    if (!printWindow) {
-        alert("Por favor, permita pop-ups para imprimir o documento.");
+export async function printPdf(options) {
+    try {
+        const doc = await generatePdfDoc(options);
+        doc.autoPrint();
+        const blob = doc.output('blob');
+        const url = URL.createObjectURL(blob);
+        const printWindow = window.open(url, '_blank');
+        if (!printWindow) {
+            alert("Por favor, permita pop-ups para imprimir o documento.");
+        }
+    } catch (error) {
+        console.error("Falha ao gerar PDF para impressão:", error);
+        alert("Ocorreu um erro ao gerar o PDF. Por favor, tente novamente.");
     }
 }
 

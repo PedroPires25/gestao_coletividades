@@ -370,12 +370,25 @@ export default function ClubeStaffPage() {
 
     const handleExportPdf = () => {
         const { columns, dataToExport } = prepareExportData();
-        exportToPdf(dataToExport, columns, "Listagem Geral de Staff", clube?.nome, `staff_${clube?.nome || clubeId}.pdf`);
+        exportToPdf({
+            data: dataToExport,
+            columns,
+            title: "Listagem Geral de Staff",
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+            filename: `staff_${clube?.nome || clubeId}.pdf`,
+        });
     };
 
     const handlePrint = () => {
         const { columns, dataToExport } = prepareExportData();
-        printPdf(dataToExport, columns, "Listagem Geral de Staff", clube?.nome);
+        printPdf({
+            data: dataToExport,
+            columns,
+            title: "Listagem Geral de Staff",
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+        });
     };
 
     return (

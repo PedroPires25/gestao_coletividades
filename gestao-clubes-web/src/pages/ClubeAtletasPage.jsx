@@ -207,56 +207,71 @@ export default function ClubeAtletasPage() {
         return new Map(entries);
     }, [modalidades]);
 
-    async function carregarPagina() {
-        if (!clubeId) return;
-
-        setErro("");
-        setMsg("");
-        setLoadingPagina(true);
-
-        try {
-            const [clubeData, modalidadesData, escaloesData, estadosData] = await Promise.all([
-                getClubeById(clubeId),
-                getModalidadesByClube(clubeId),
-                getEscaloes(),
-                getEstadosAtleta(),
-            ]);
-
-            const listaModalidades = Array.isArray(modalidadesData) ? modalidadesData : [];
-            const listaEscaloes = Array.isArray(escaloesData) ? escaloesData : [];
-            const listaEstados = Array.isArray(estadosData) ? estadosData : [];
-            const atletasPorModalidade = await Promise.all(
-                listaModalidades.map(async (item) => {
-                    const clubeModalidadeId = getClubeModalidadeId(item);
-                    if (!clubeModalidadeId) return [];
-                    const atletas = await getAtletasByClubeModalidade(clubeId, clubeModalidadeId);
-                    return Array.isArray(atletas) ? atletas : [];
-                })
-            );
-
-            setClube(clubeData || null);
-            setAtletasRows(atletasPorModalidade.flat());
-            setModalidades(listaModalidades);
-            setEscaloes(listaEscaloes);
-            setEstados(listaEstados);
-
-            setForm((prev) => ({
-                ...prev,
-                modalidadeId: prev.modalidadeId || getModalidadeId(listaModalidades?.[0]),
-                escalaoId: prev.escalaoId || String(listaEscaloes?.[0]?.id || ""),
-                estadoId: prev.estadoId || String(listaEstados?.[0]?.id || ""),
-                dataInscricao: prev.dataInscricao || new Date().toISOString().slice(0, 10),
-            }));
-        } catch (e) {
-            setErro(e.message || "Não foi possível carregar a página de atletas.");
-        } finally {
-            setLoadingPagina(false);
-        }
-    }
-
     useEffect(() => {
+        let isMounted = true;
+
+        async function carregarPagina() {
+            if (!clubeId) return;
+
+            if (isMounted) {
+                setErro("");
+                setMsg("");
+                setLoadingPagina(true);
+            }
+
+            try {
+                const [clubeData, modalidadesData, escaloesData, estadosData] = await Promise.all([
+                    getClubeById(clubeId),
+                    getModalidadesByClube(clubeId),
+                    getEscaloes(),
+                    getEstadosAtleta(),
+                ]);
+
+                if (!isMounted) return;
+
+                const listaModalidades = Array.isArray(modalidadesData) ? modalidadesData : [];
+                const listaEscaloes = Array.isArray(escaloesData) ? escaloesData : [];
+                const listaEstados = Array.isArray(estadosData) ? estadosData : [];
+                const atletasPorModalidade = await Promise.all(
+                    listaModalidades.map(async (item) => {
+                        const clubeModalidadeId = getClubeModalidadeId(item);
+                        if (!clubeModalidadeId) return [];
+                        const atletas = await getAtletasByClubeModalidade(clubeId, clubeModalidadeId);
+                        return Array.isArray(atletas) ? atletas : [];
+                    })
+                );
+
+                if (!isMounted) return;
+
+                setClube(clubeData || null);
+                setAtletasRows(atletasPorModalidade.flat());
+                setModalidades(listaModalidades);
+                setEscaloes(listaEscaloes);
+                setEstados(listaEstados);
+
+                setForm((prev) => ({
+                    ...prev,
+                    modalidadeId: prev.modalidadeId || getModalidadeId(listaModalidades?.[0]),
+                    escalaoId: prev.escalaoId || String(listaEscaloes?.[0]?.id || ""),
+                    estadoId: prev.estadoId || String(listaEstados?.[0]?.id || ""),
+                    dataInscricao: prev.dataInscricao || new Date().toISOString().slice(0, 10),
+                }));
+            } catch (e) {
+                if (isMounted) {
+                    setErro(e.message || "Não foi possível carregar a página de atletas.");
+                }
+            } finally {
+                if (isMounted) {
+                    setLoadingPagina(false);
+                }
+            }
+        }
+
         carregarPagina();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        
+        return () => {
+            isMounted = false;
+        };
     }, [clubeId]);
 
     function onChange(e) {
@@ -352,12 +367,25 @@ export default function ClubeAtletasPage() {
     
     const handleExportPdf = () => {
         const { columns, dataToExport } = prepareExportData();
-        exportToPdf(dataToExport, columns, "Listagem Geral de Atletas", clube?.nome, `atletas_${clube?.nome || clubeId}.pdf`);
+        exportToPdf({
+            data: dataToExport,
+            columns,
+            title: "Listagem Geral de Atletas",
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+            filename: `atletas_${clube?.nome || clubeId}.pdf`,
+        });
     };
 
     const handlePrint = () => {
         const { columns, dataToExport } = prepareExportData();
-        printPdf(dataToExport, columns, "Listagem Geral de Atletas", clube?.nome);
+        printPdf({
+            data: dataToExport,
+            columns,
+            title: "Listagem Geral de Atletas",
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+        });
     };
 
     return (

@@ -109,27 +109,54 @@ export default function PlanoTreinoPage() {
         [clubeId, logout, navigate]
     );
 
-    async function carregar() {
-        setLoading(true);
+    useEffect(() => {
+        let isMounted = true;
+
+        async function carregar() {
+            if (isMounted) {
+                setLoading(true);
+            }
+            try {
+                const [atletasData, planosData] = await Promise.all([
+                    getAtletasTreinador(clubeId).catch(() => []),
+                    getPlanosTreino(clubeId).catch(() => []),
+                ]);
+                
+                if (!isMounted) return;
+
+                const parseArray = (d) => Array.isArray(d) ? d : (Array.isArray(d?.data) ? d.data : []);
+                setAtletasList(parseArray(atletasData));
+                setPlanos(parseArray(planosData));
+            } catch (err) {
+                if (isMounted) {
+                    console.error(err);
+                    setErro("Erro ao carregar dados iniciais.");
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        }
+        
+        carregar();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [clubeId]);
+
+    // Added a separate function to re-fetch data after mutations
+    async function recarregarPlanos() {
         try {
-            const [atletasData, planosData] = await Promise.all([
-                getAtletasTreinador(clubeId).catch(() => []),
-                getPlanosTreino(clubeId).catch(() => []),
-            ]);
+            const planosData = await getPlanosTreino(clubeId).catch(() => []);
             const parseArray = (d) => Array.isArray(d) ? d : (Array.isArray(d?.data) ? d.data : []);
-            setAtletasList(parseArray(atletasData));
             setPlanos(parseArray(planosData));
         } catch (err) {
-            console.error(err);
-            setErro("Erro ao carregar dados iniciais.");
-        } finally {
-            setLoading(false);
+             console.error("Erro ao recarregar planos", err);
         }
     }
 
-    useEffect(() => {
-        carregar();
-    }, [clubeId]);
 
     function handleSelectPlano(plano) {
         setPlanoSelecionado(plano);
@@ -160,7 +187,7 @@ export default function PlanoTreinoPage() {
             await deletarPlanoTreino(clubeId, id);
             setMsg("Plano eliminado com sucesso.");
             setPlanoSelecionado(null);
-            carregar();
+            await recarregarPlanos();
         } catch (err) {
             setErro(err.message || "Erro ao eliminar plano.");
         }
@@ -202,7 +229,7 @@ export default function PlanoTreinoPage() {
                 setMsg(form.enviarEmail ? "Plano criado e enviado por email com sucesso." : "Plano guardado com sucesso.");
             }
             setPlanoSelecionado(null);
-            carregar();
+            await recarregarPlanos();
         } catch (err) {
             setErro(err.message || "Erro ao guardar o plano de treino.");
         } finally {
@@ -222,7 +249,14 @@ export default function PlanoTreinoPage() {
             { prop: 'Data', value: formatDate(planoSelecionado.dataCriacao) },
             { prop: 'Conteúdo', value: planoSelecionado.conteudo },
         ];
-        printPdf(dataToExport, columns, "Plano de Treino Individual", clube?.nome);
+        printPdf({
+            data: dataToExport,
+            columns,
+            title: "Plano de Treino Individual",
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+            athletePhotoUrl: atleta?.fotoUrl,
+        });
     };
 
     const handleExportPdf = () => {
@@ -237,7 +271,15 @@ export default function PlanoTreinoPage() {
             { prop: 'Data', value: formatDate(planoSelecionado.dataCriacao) },
             { prop: 'Conteúdo', value: planoSelecionado.conteudo },
         ];
-        exportToPdf(dataToExport, columns, "Plano de Treino Individual", clube?.nome, `plano_${atleta?.nome || 'atleta'}.pdf`);
+        exportToPdf({
+            data: dataToExport,
+            columns,
+            title: "Plano de Treino Individual",
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+            filename: `plano_${atleta?.nome || 'atleta'}.pdf`,
+            athletePhotoUrl: atleta?.fotoUrl,
+        });
     };
 
     return (

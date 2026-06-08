@@ -320,12 +320,25 @@ export default function ClubeStaffModalidadePage() {
 
     const handlePrint = () => {
         const { columns, dataToExport } = prepareExportData();
-        printPdf(dataToExport, columns, `Staff - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`, clube?.nome);
+        printPdf({
+            data: dataToExport,
+            columns,
+            title: `Staff - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`,
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+        });
     };
 
     const handleExportPdf = () => {
         const { columns, dataToExport } = prepareExportData();
-        exportToPdf(dataToExport, columns, `Staff - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`, clube?.nome, `staff_${modalidadeAtiva?.modalidade?.nome || 'modalidade'}.pdf`);
+        exportToPdf({
+            data: dataToExport,
+            columns,
+            title: `Staff - ${modalidadeAtiva?.modalidade?.nome || 'Modalidade'}`,
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+            filename: `staff_${modalidadeAtiva?.modalidade?.nome || 'modalidade'}.pdf`,
+        });
     };
 
     return (

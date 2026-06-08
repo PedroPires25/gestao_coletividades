@@ -30,22 +30,20 @@ const MESES = [
 export default function AssiduidadePage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, clube } = useAuth(); // 'clube' vem do useAuth
+    const { logout, clube } = useAuth(); 
 
-    const [view, setView] = useState('equipa'); // 'equipa' ou 'individual'
+    const [view, setView] = useState('equipa');
     
-    // Filtros
     const [escaloes, setEscaloes] = useState([]);
     const [atletas, setAtletas] = useState([]);
     const [filtroEscalao, setFiltroEscalao] = useState("");
     const [filtroAtleta, setFiltroAtleta] = useState("");
-    const [filtroPeriodo, setFiltroPeriodo] = useState("periodo"); // 'periodo', 'mes', 'ano'
+    const [filtroPeriodo, setFiltroPeriodo] = useState("periodo");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [mes, setMes] = useState(new Date().getMonth() + 1);
     const [ano, setAno] = useState(new Date().getFullYear());
 
-    // Resultados
     const [resultadosGeral, setResultadosGeral] = useState([]);
     const [resultadosIndividual, setResultadosIndividual] = useState([]);
     const [atletaSelecionado, setAtletaSelecionado] = useState(null);
@@ -158,7 +156,6 @@ export default function AssiduidadePage() {
         return escaloes.find(e => String(e.id) === String(filtroEscalao))?.nome || "Todos os Escalões";
     }, [escaloes, filtroEscalao]);
 
-    // --- Exportação Individual ---
     const prepareExportDataIndividual = () => {
         const { startDate, endDate } = getPeriodo();
         const totalTreinos = resultadosIndividual.length;
@@ -178,12 +175,21 @@ export default function AssiduidadePage() {
         const filename = `assiduidade_${atletaSelecionado?.nome || 'individual'}_${startDate}_a_${endDate}.pdf`;
         const summary = `Período: ${startDate} a ${endDate} | Escalão: ${nomeEscalaoSelecionado} | Total de Treinos: ${totalTreinos} | Presenças: ${presencas} | Assiduidade: ${percentagem}%`;
 
-        return { columns, dataToExport, title, filename, summary };
+        return { columns, dataToExport, title, filename, summary, athletePhotoUrl: atletaSelecionado?.fotoUrl };
     };
 
     const handleExportPdfIndividual = () => {
-        const { columns, dataToExport, title, filename, summary } = prepareExportDataIndividual();
-        exportToPdf(dataToExport, columns, title, clube?.nome, filename, summary);
+        const { columns, dataToExport, title, filename, summary, athletePhotoUrl } = prepareExportDataIndividual();
+        exportToPdf({
+            data: dataToExport,
+            columns,
+            title,
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+            filename,
+            summary,
+            athletePhotoUrl,
+        });
     };
 
     const handleExportCsvIndividual = () => {
@@ -192,11 +198,18 @@ export default function AssiduidadePage() {
     };
 
     const handlePrintIndividual = () => {
-        const { columns, dataToExport, title, summary } = prepareExportDataIndividual();
-        printPdf(dataToExport, columns, title, clube?.nome, summary);
+        const { columns, dataToExport, title, summary, athletePhotoUrl } = prepareExportDataIndividual();
+        printPdf({
+            data: dataToExport,
+            columns,
+            title,
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+            summary,
+            athletePhotoUrl,
+        });
     };
 
-    // --- Exportação Geral (Equipa) ---
     const prepareExportDataGeral = () => {
         const { startDate, endDate } = getPeriodo();
         const columns = [
@@ -219,7 +232,15 @@ export default function AssiduidadePage() {
 
     const handleExportPdfGeral = () => {
         const { columns, dataToExport, title, filename, summary } = prepareExportDataGeral();
-        exportToPdf(dataToExport, columns, title, clube?.nome, filename, summary);
+        exportToPdf({
+            data: dataToExport,
+            columns,
+            title,
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+            filename,
+            summary,
+        });
     };
 
     const handleExportCsvGeral = () => {
@@ -230,7 +251,14 @@ export default function AssiduidadePage() {
 
     const handlePrintGeral = () => {
         const { columns, dataToExport, title, summary } = prepareExportDataGeral();
-        printPdf(dataToExport, columns, title, clube?.nome, summary);
+        printPdf({
+            data: dataToExport,
+            columns,
+            title,
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+            summary,
+        });
     };
 
     return (
@@ -254,7 +282,6 @@ export default function AssiduidadePage() {
                 {erro && <div className="alert error no-print">{erro}</div>}
 
                 <div className="card">
-                    {/* Botões que parecem abas, mas com estilo consistente da plataforma */}
                     <div className="actions" style={{ marginBottom: 20, justifyContent: 'flex-start' }}>
                         <button 
                             className={`btn ${view === 'equipa' ? 'btn-primary' : 'btn-secondary'}`} 
@@ -275,7 +302,7 @@ export default function AssiduidadePage() {
                             <label className="field-label">Escalão</label>
                             <select className="input" value={filtroEscalao} onChange={e => {
                                 setFiltroEscalao(e.target.value);
-                                setFiltroAtleta(""); // Limpar o atleta se mudar de escalão
+                                setFiltroAtleta("");
                             }}>
                                 <option value="">Todos os Escalões</option>
                                 {escaloes.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}

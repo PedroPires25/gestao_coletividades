@@ -134,12 +134,25 @@ export default function SessoesTreinoPage() {
 
     const handleExportPdf = () => {
         const { columns, dataToExport } = prepareExportData();
-        exportToPdf(dataToExport, columns, "Histórico de Treinos", clube?.nome, `sessoes_treino_${clube?.nome || clubeId}.pdf`);
+        exportToPdf({
+            data: dataToExport,
+            columns,
+            title: "Histórico de Treinos",
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+            filename: `sessoes_treino_${clube?.nome || clubeId}.pdf`,
+        });
     };
 
     const handlePrint = () => {
         const { columns, dataToExport } = prepareExportData();
-        printPdf(dataToExport, columns, "Histórico de Treinos", clube?.nome);
+        printPdf({
+            data: dataToExport,
+            columns,
+            title: "Histórico de Treinos",
+            clubName: clube?.nome,
+            clubLogoUrl: clube?.logo,
+        });
     };
 
     return (
