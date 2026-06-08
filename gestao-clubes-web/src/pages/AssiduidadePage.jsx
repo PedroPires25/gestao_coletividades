@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getClubeById, getUploadUrl, getAtletaById } from "../api";
+import { getClubeById, getAtletaById, getUploadUrl } from "../api";
 import { getAssiduidade, getAtletasTreinador, getEscaloesTreinador, getAssiduidadeAtleta } from "../services/treinador";
 import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 
@@ -132,9 +132,8 @@ export default function AssiduidadePage() {
                 }
                 const data = await getAssiduidadeAtleta(clubeId, filtroAtleta, startDate, endDate);
                 setResultadosIndividual(Array.isArray(data) ? data : []);
-                // Find from cached list first; fallback to individual fetch to guarantee fotoPath
                 const atletaFromList = atletas.find(a => String(a.id) === String(filtroAtleta));
-                if (atletaFromList?.fotoPath) {
+                if (atletaFromList?.fotoPath || atletaFromList?.foto_path) {
                     setAtletaSelecionado(atletaFromList);
                 } else {
                     const atletaFull = await getAtletaById(filtroAtleta).catch(() => null);
