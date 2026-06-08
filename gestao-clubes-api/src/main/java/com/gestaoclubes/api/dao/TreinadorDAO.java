@@ -131,6 +131,38 @@ public class TreinadorDAO {
         return lista;
     }
 
+    public List<Map<String, Object>> obterAssiduidadeAtleta(int atletaId, Date startDate, Date endDate) {
+        String sql = """
+            SELECT st.id, st.data_treino, st.hora_treino, st.observacoes,
+                   COALESCE(pt.presente, 0) as presente
+            FROM sessoes_treino st
+            LEFT JOIN presencas_treino pt ON st.id = pt.sessao_treino_id AND pt.atleta_id = ?
+            WHERE st.data_treino BETWEEN ? AND ?
+            ORDER BY st.data_treino DESC, st.hora_treino DESC
+        """;
+        List<Map<String, Object>> lista = new ArrayList<>();
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, atletaId);
+            ps.setDate(2, startDate);
+            ps.setDate(3, endDate);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", rs.getInt("id"));
+                    row.put("dataTreino", rs.getDate("data_treino"));
+                    row.put("horaTreino", rs.getTime("hora_treino"));
+                    row.put("observacoes", rs.getString("observacoes"));
+                    row.put("presente", rs.getBoolean("presente"));
+                    lista.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.severe(e.toString());
+        }
+        return lista;
+    }
+
     public int inserirPlanoTreino(int clubeId, int atletaId, String conteudo) {
         String sql = "INSERT INTO planos_treino (clube_id, atleta_id, conteudo) VALUES (?, ?, ?)";
         try (Connection conn = ConexoBD.getConnection();

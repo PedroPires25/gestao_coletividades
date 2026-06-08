@@ -161,8 +161,8 @@ export default function PlanoTreinoPage() {
             setMsg("Plano eliminado com sucesso.");
             setPlanoSelecionado(null);
             carregar();
-        } catch (e) {
-            setErro(e.message || "Erro ao eliminar plano.");
+        } catch (err) {
+            setErro(err.message || "Erro ao eliminar plano.");
         }
     }
 
@@ -343,7 +343,7 @@ export default function PlanoTreinoPage() {
                             <p className="subtle">Ainda não foram criados planos de treino.</p>
                         ) : (
                             <div className="table-wrap">
-                                <table className="dashboard-table">
+                                <table className="dashboard-table clickable">
                                     <thead>
                                         <tr>
                                             <th>Atleta</th>
@@ -354,7 +354,7 @@ export default function PlanoTreinoPage() {
                                     </thead>
                                     <tbody>
                                         {planos.map((row) => (
-                                            <tr key={row.id} className="clickable" onClick={() => handleSelectPlano(row)} title="Clique para ver detalhes">
+                                            <tr key={row.id} onClick={() => handleSelectPlano(row)} title="Clique para ver detalhes">
                                                 <td className="font-weight-bold">{row.nomeAtleta}</td>
                                                 <td>{formatDate(row.dataCriacao)}</td>
                                                 <td className="cell-muted" style={{ maxWidth: 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

@@ -71,6 +71,17 @@ public class TreinadorService {
         }
     }
 
+    public List<Map<String, Object>> obterAssiduidadeAtleta(int atletaId, String startDateStr, String endDateStr) {
+        try {
+            Date startDate = Date.valueOf(LocalDate.parse(startDateStr));
+            Date endDate = Date.valueOf(LocalDate.parse(endDateStr));
+            return treinadorDAO.obterAssiduidadeAtleta(atletaId, startDate, endDate);
+        } catch (DateTimeParseException | NullPointerException e) {
+            LOGGER.severe(e.toString());
+            return new java.util.ArrayList<>();
+        }
+    }
+
     public List<Map<String, Object>> listarPlanos(int clubeId) {
         return treinadorDAO.listarPlanos(clubeId);
     }
