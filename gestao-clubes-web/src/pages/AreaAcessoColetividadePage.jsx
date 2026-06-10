@@ -1,9 +1,33 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getColetividadeById } from "../api";
+import { getEventosColetividade } from "../services/eventosColetividade";
 import eventosIcon from "../assets/eventos.svg";
+
+function formatDateOnly(value) {
+    if (!value) return "-";
+    const raw = String(value).trim();
+    const date = raw.includes("T") ? raw.split("T")[0] : raw.slice(0, 10);
+    const [year, month, day] = date.split("-");
+    return year && month && day ? `${day}/${month}/${year}` : date;
+}
+
+function badgeEstadoEvento(estado) {
+    const cores = {
+        Aberto: { bg: "#22c55e20", color: "#15803d", border: "#22c55e" },
+        Fechado: { bg: "#94a3b820", color: "#cbd5e1", border: "#94a3b8" },
+        Cancelado: { bg: "#ef444420", color: "#fca5a5", border: "#ef4444" },
+        "Concluído": { bg: "#3b82f620", color: "#93c5fd", border: "#3b82f6" },
+    };
+    const c = cores[estado] || { bg: "#88888820", color: "#fff", border: "#888" };
+    return (
+        <span style={{ padding: "3px 10px", borderRadius: 999, fontSize: "0.78rem", fontWeight: 700, background: c.bg, color: c.color, border: `1px solid ${c.border}` }}>
+            {estado || "-"}
+        </span>
+    );
+}
 
 function InscricaoBadge({ estado }) {
     const map = {
@@ -25,24 +49,33 @@ export default function AreaAcessoColetividadePage() {
     const { logout, user } = useAuth();
 
     const [coletividade, setColetividade] = useState(null);
+    const [eventos, setEventos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState(null);
 
-    const carregar = useCallback(async () => {
+    useEffect(() => {
         if (!coletividadeId) return;
-        setErro(null);
-        setLoading(true);
-        try {
-            const data = await getColetividadeById(coletividadeId);
-            setColetividade(data);
-        } catch (e) {
-            setErro(e.message || "Erro ao carregar dados da coletividade.");
-        } finally {
-            setLoading(false);
-        }
+        let active = true;
+        (async () => {
+            try {
+                const [data, eventosData] = await Promise.all([
+                    getColetividadeById(coletividadeId),
+                    getEventosColetividade(coletividadeId),
+                ]);
+                if (active) {
+                    setColetividade(data);
+                    setEventos(Array.isArray(eventosData) ? eventosData : []);
+                    setLoading(false);
+                }
+            } catch (e) {
+                if (active) {
+                    setErro(e.message || "Erro ao carregar dados da coletividade.");
+                    setLoading(false);
+                }
+            }
+        })();
+        return () => { active = false; };
     }, [coletividadeId]);
-
-    useEffect(() => { carregar(); }, [carregar]);
 
     const menuItems = [
         { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
@@ -86,15 +119,54 @@ export default function AreaAcessoColetividadePage() {
 
                 <div className="stack-sections">
 
-                    {/* SECÇÃO 1 — Eventos (placeholder) */}
+                    {/* SECÇÃO 1 — Eventos reais */}
                     <section className="card">
                         <div className="modalidades-toolbar">
                             <div className="toolbar-title-group">
                                 <h2>Eventos</h2>
-                                <span className="toolbar-count">0</span>
+                                <span className="toolbar-count">{eventos.length}</span>
                             </div>
                         </div>
-                        <p className="subtle">Não existem eventos disponíveis de momento.</p>
+                        {eventos.length === 0 ? (
+                            <p className="subtle">Não existem eventos disponíveis de momento.</p>
+                        ) : (
+                            <div className="table-wrap">
+                                <table className="dashboard-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>Data</th>
+                                        <th>Local</th>
+                                        <th>Atividade</th>
+                                        <th>Vagas</th>
+                                        <th>Inscrição</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {eventos.map((evento) => (
+                                        <tr key={evento.id}>
+                                            <td style={{ fontWeight: 500 }}>{evento.titulo || "-"}</td>
+                                            <td>{formatDateOnly(evento.dataEvento)}</td>
+                                            <td>{evento.localEvento || "-"}</td>
+                                            <td>{evento.atividadeNome || <span className="subtle">Geral</span>}</td>
+                                            <td>
+                                                {evento.maxParticipantes
+                                                    ? `${evento.participantesConfirmados || 0}/${evento.maxParticipantes}`
+                                                    : "Sem limite"}
+                                            </td>
+                                            <td>
+                                                {evento.permiteInscricao
+                                                    ? <span style={{ color: "#22c55e", fontWeight: 600 }}>✓ Aberta</span>
+                                                    : <span className="subtle">—</span>}
+                                            </td>
+                                            <td>{badgeEstadoEvento(evento.estado)}</td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </section>
 
                     {/* SECÇÃO 2 — Inscrição */}

@@ -50,8 +50,9 @@ const FORM_INICIAL = {
 export default function ColetividadeStaffAtividadePage() {
     const { coletividadeId, coletividadeAtividadeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin, canManageColetividade } = useAuth();
-    const podeGerir = canManageColetividade(Number(coletividadeId));
+    const { logout, isAdmin, isSuperAdmin, isSecretario, canManageColetividade, coletividadeId: authColetividadeId } = useAuth();
+    const podeGerir = canManageColetividade(Number(coletividadeId)) ||
+        (isSecretario && Number(authColetividadeId) === Number(coletividadeId));
 
     const [coletividade, setColetividade] = useState(null);
     const [atividadeAtiva, setAtividadeAtiva] = useState(null);

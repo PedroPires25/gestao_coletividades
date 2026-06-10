@@ -48,7 +48,6 @@ function calcularRedirectUrl(user) {
             return null;
 
         case "STAFF":
-        case "PROFESSOR":
             if (clubeId && modalidadeId) {
                 return `/clubes/${clubeId}/clube-modalidade/${modalidadeId}/modalidade`;
             }
@@ -57,6 +56,18 @@ function calcularRedirectUrl(user) {
             }
             if (coletividadeId) {
                 return `/coletividades/${coletividadeId}`;
+            }
+            return null;
+
+        case "PROFESSOR":
+            if (clubeId && modalidadeId) {
+                return `/clubes/${clubeId}/clube-modalidade/${modalidadeId}/modalidade`;
+            }
+            if (clubeId) {
+                return `/clubes/${clubeId}`;
+            }
+            if (coletividadeId) {
+                return `/coletividades/${coletividadeId}/professor`;
             }
             return null;
 
@@ -135,6 +146,7 @@ export function AuthProvider({ children }) {
         const isDepartamentoMedico = role === "DEPARTAMENTO_MEDICO";
         const isTreinador = role === "TREINADOR_PRINCIPAL";
         const isSecretario = role === "SECRETARIO";
+        const isProfessorColetividade = role === "PROFESSOR" && !!session?.user?.coletividadeId;
 
         return {
             session,
@@ -150,6 +162,7 @@ export function AuthProvider({ children }) {
             isDepartamentoMedico,
             isTreinador,
             isSecretario,
+            isProfessorColetividade,
             privilegiosAtivos: session?.user?.privilegiosAtivos ?? false,
             estadoRegisto: session?.user?.estadoRegisto ?? null,
             clubeId: session?.user?.clubeId ?? null,

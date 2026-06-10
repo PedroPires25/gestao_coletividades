@@ -18,6 +18,19 @@ export default function AdminApprovedUsersPage() {
     const { logout, isSuperAdmin } = useAuth();
     const navigate = useNavigate();
 
+    const PERFIL_LABELS = {
+        ADMINISTRADOR: "Administrador",
+        USER: "Utilizador",
+        ATLETA: "Atleta",
+        UTENTE: "Inscrito (Coletividade)",
+        STAFF: "Staff",
+        PROFESSOR: "Professor / Treinador",
+        TREINADOR_PRINCIPAL: "Treinador Principal",
+        DEPARTAMENTO_MEDICO: "Departamento Médico",
+        SECRETARIO: "Secretário",
+        SUPER_ADMIN: "Super Admin",
+    };
+
     const [users, setUsers] = useState([]);
     const [profiles, setProfiles] = useState([]);
     const [clubes, setClubes] = useState([]);
@@ -53,7 +66,6 @@ export default function AdminApprovedUsersPage() {
         setErro("");
         setMsg("");
         setLoading(true);
-
         try {
             const [
                 usersData,
@@ -70,21 +82,17 @@ export default function AdminApprovedUsersPage() {
                 getModalidades({ ativas: true }).catch(() => []),
                 getAtividades().catch(() => []),
             ]);
-
             const listaUsers = Array.isArray(usersData) ? usersData : [];
             const listaProfiles = Array.isArray(profilesData) ? profilesData : [];
-
             setUsers(listaUsers);
             setProfiles(listaProfiles);
             setClubes(Array.isArray(clubesData) ? clubesData : []);
             setColetividades(Array.isArray(coletividadesData) ? coletividadesData : []);
             setModalidades(Array.isArray(modalidadesData) ? modalidadesData : []);
             setAtividades(Array.isArray(atividadesData) ? atividadesData : []);
-
             const perfisMap = {};
             const afetacoesMap = {};
             const editMap = {};
-
             for (const u of listaUsers) {
                 perfisMap[u.id] = u.role;
                 afetacoesMap[u.id] = {
@@ -95,7 +103,6 @@ export default function AdminApprovedUsersPage() {
                 };
                 editMap[u.id] = false;
             }
-
             setPerfilDrafts(perfisMap);
             setAfetacaoDrafts(afetacoesMap);
             setEditingAfetacao(editMap);
@@ -107,7 +114,57 @@ export default function AdminApprovedUsersPage() {
     }
 
     useEffect(() => {
-        carregar();
+        let active = true;
+        (async () => {
+            try {
+                const [
+                    usersData,
+                    profilesData,
+                    clubesData,
+                    coletividadesData,
+                    modalidadesData,
+                    atividadesData,
+                ] = await Promise.all([
+                    getAdminUsers("APROVADO"),
+                    isSuperAdmin ? getAdminProfiles() : Promise.resolve([]),
+                    getClubes().catch(() => []),
+                    getColetividades().catch(() => []),
+                    getModalidades({ ativas: true }).catch(() => []),
+                    getAtividades().catch(() => []),
+                ]);
+                if (!active) return;
+                const listaUsers = Array.isArray(usersData) ? usersData : [];
+                const listaProfiles = Array.isArray(profilesData) ? profilesData : [];
+                setUsers(listaUsers);
+                setProfiles(listaProfiles);
+                setClubes(Array.isArray(clubesData) ? clubesData : []);
+                setColetividades(Array.isArray(coletividadesData) ? coletividadesData : []);
+                setModalidades(Array.isArray(modalidadesData) ? modalidadesData : []);
+                setAtividades(Array.isArray(atividadesData) ? atividadesData : []);
+                const perfisMap = {};
+                const afetacoesMap = {};
+                const editMap = {};
+                for (const u of listaUsers) {
+                    perfisMap[u.id] = u.role;
+                    afetacoesMap[u.id] = {
+                        clubeId: u.clubeId ?? "",
+                        modalidadeId: u.modalidadeId ?? "",
+                        coletividadeId: u.coletividadeId ?? "",
+                        atividadeId: u.atividadeId ?? "",
+                    };
+                    editMap[u.id] = false;
+                }
+                setPerfilDrafts(perfisMap);
+                setAfetacaoDrafts(afetacoesMap);
+                setEditingAfetacao(editMap);
+            } catch (e) {
+                if (active) setErro(e.message || "Erro ao carregar utilizadores aprovados.");
+            } finally {
+                if (active) setLoading(false);
+            }
+        })();
+        return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const clubesMap = useMemo(
@@ -322,7 +379,7 @@ export default function AdminApprovedUsersPage() {
                                                     disabled={saving}
                                                 >
                                                     {profiles.map((p) => (
-                                                        <option key={p} value={p}>{p}</option>
+                                                        <option key={p} value={p}>{PERFIL_LABELS[p] || p}</option>
                                                     ))}
                                                 </select>
 

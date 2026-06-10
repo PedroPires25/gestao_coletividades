@@ -4,6 +4,7 @@ import RequireAdmin from "./auth/RequireAdmin";
 import RequireSuperAdmin from "./auth/RequireSuperAdmin";
 import RequireNotMedico from "./auth/RequireNotMedico";
 import RequireNotTreinador from "./auth/RequireNotTreinador";
+import RequireNotProfessorColetividade from "./auth/RequireNotProfessorColetividade";
 import TomorrowReminder from "./components/TomorrowReminder";
 
 import LoginPage from "./pages/LoginPage";
@@ -40,6 +41,7 @@ const ColetividadeUtentesAtividadePage = lazy(() => import("./pages/Coletividade
 const ColetividadeStaffPage = lazy(() => import("./pages/ColetividadeStaffPage"));
 const ColetividadeStaffAtividadePage = lazy(() => import("./pages/ColetividadeStaffAtividadePage"));
 const GestaoEventosColetividadePage = lazy(() => import("./pages/GestaoEventosColetividadePage"));
+const ColetividadeModuloProfessorPage = lazy(() => import("./pages/ColetividadeModuloProfessorPage"));
 const AreaAcessoClubePage = lazy(() => import("./pages/AreaAcessoClubePage"));
 const AreaAcessoColetividadePage = lazy(() => import("./pages/AreaAcessoColetividadePage"));
 const PerfilPage = lazy(() => import("./pages/PerfilPage"));
@@ -339,7 +341,9 @@ export default function App() {
                         <RequireAuth>
                             <RequireNotMedico>
                                 <RequireNotTreinador>
-                                    <ColetividadeHomePage />
+                                    <RequireNotProfessorColetividade>
+                                        <ColetividadeHomePage />
+                                    </RequireNotProfessorColetividade>
                                 </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
@@ -353,7 +357,9 @@ export default function App() {
                         <RequireAuth>
                             <RequireNotMedico>
                                 <RequireNotTreinador>
-                                    <ColetividadeEditPage />
+                                    <RequireNotProfessorColetividade>
+                                        <ColetividadeEditPage />
+                                    </RequireNotProfessorColetividade>
                                 </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
@@ -366,7 +372,9 @@ export default function App() {
                         <RequireAuth>
                             <RequireNotMedico>
                                 <RequireNotTreinador>
-                                    <ColetividadeAtividadesPage />
+                                    <RequireNotProfessorColetividade>
+                                        <ColetividadeAtividadesPage />
+                                    </RequireNotProfessorColetividade>
                                 </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
@@ -379,7 +387,9 @@ export default function App() {
                         <RequireAuth>
                             <RequireNotMedico>
                                 <RequireNotTreinador>
-                                    <ColetividadeUtentesPage />
+                                    <RequireNotProfessorColetividade>
+                                        <ColetividadeUtentesPage />
+                                    </RequireNotProfessorColetividade>
                                 </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
@@ -392,7 +402,9 @@ export default function App() {
                         <RequireAuth>
                             <RequireNotMedico>
                                 <RequireNotTreinador>
-                                    <ColetividadeUtentesAtividadePage />
+                                    <RequireNotProfessorColetividade>
+                                        <ColetividadeUtentesAtividadePage />
+                                    </RequireNotProfessorColetividade>
                                 </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
@@ -405,7 +417,9 @@ export default function App() {
                         <RequireAuth>
                             <RequireNotMedico>
                                 <RequireNotTreinador>
-                                    <ColetividadeStaffPage />
+                                    <RequireNotProfessorColetividade>
+                                        <ColetividadeStaffPage />
+                                    </RequireNotProfessorColetividade>
                                 </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
@@ -418,7 +432,9 @@ export default function App() {
                         <RequireAuth>
                             <RequireNotMedico>
                                 <RequireNotTreinador>
-                                    <ColetividadeStaffAtividadePage />
+                                    <RequireNotProfessorColetividade>
+                                        <ColetividadeStaffAtividadePage />
+                                    </RequireNotProfessorColetividade>
                                 </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
@@ -432,6 +448,20 @@ export default function App() {
                             <RequireNotMedico>
                                 <RequireNotTreinador>
                                     <GestaoEventosColetividadePage />
+                                </RequireNotTreinador>
+                            </RequireNotMedico>
+                        </RequireAuth>
+                    }
+                />
+
+                {/* MÓDULO PROFESSOR / TREINADOR — coletividade */}
+                <Route
+                    path="/coletividades/:id/professor"
+                    element={
+                        <RequireAuth>
+                            <RequireNotMedico>
+                                <RequireNotTreinador>
+                                    <ColetividadeModuloProfessorPage />
                                 </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>

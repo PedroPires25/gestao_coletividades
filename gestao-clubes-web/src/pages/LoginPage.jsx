@@ -49,6 +49,18 @@ const PERFIS_CLUBE = ["ATLETA", "TREINADOR_PRINCIPAL", "DEPARTAMENTO_MEDICO"];
 const PERFIS_COLETIVIDADE = ["UTENTE"];
 const PERFIS_MISTOS = ["ADMINISTRADOR", "STAFF", "SECRETARIO", "PROFESSOR", "USER"];
 
+const PERFIL_LABELS = {
+    ADMINISTRADOR: "Administrador",
+    USER: "Utilizador",
+    ATLETA: "Atleta",
+    UTENTE: "Inscrito (Coletividade)",
+    STAFF: "Staff",
+    PROFESSOR: "Professor / Treinador",
+    TREINADOR_PRINCIPAL: "Treinador Principal",
+    DEPARTAMENTO_MEDICO: "Departamento Médico",
+    SECRETARIO: "Secretário",
+};
+
 export default function LoginPage() {
     const { login } = useAuth();
     const { theme, setTheme } = useTheme();
@@ -149,23 +161,29 @@ export default function LoginPage() {
 
     useEffect(() => {
         if (PERFIS_CLUBE.includes(rPerfil)) {
-            setREstruturaTipo("CLUBE");
-            setRColetividadeId("");
-            setRAtividadeId("");
+            void Promise.resolve().then(() => {
+                setREstruturaTipo("CLUBE");
+                setRColetividadeId("");
+                setRAtividadeId("");
+            });
         } else if (PERFIS_COLETIVIDADE.includes(rPerfil)) {
-            setREstruturaTipo("COLETIVIDADE");
-            setRClubeId("");
-            setRModalidadeId("");
+            void Promise.resolve().then(() => {
+                setREstruturaTipo("COLETIVIDADE");
+                setRClubeId("");
+                setRModalidadeId("");
+            });
         } else if (PERFIS_MISTOS.includes(rPerfil)) {
             if (!["CLUBE", "COLETIVIDADE"].includes(rEstruturaTipo)) {
-                setREstruturaTipo("CLUBE");
+                void Promise.resolve().then(() => setREstruturaTipo("CLUBE"));
             }
         } else {
-            setREstruturaTipo("");
-            setRClubeId("");
-            setRModalidadeId("");
-            setRColetividadeId("");
-            setRAtividadeId("");
+            void Promise.resolve().then(() => {
+                setREstruturaTipo("");
+                setRClubeId("");
+                setRModalidadeId("");
+                setRColetividadeId("");
+                setRAtividadeId("");
+            });
         }
     }, [rPerfil, rEstruturaTipo]);
 
@@ -555,7 +573,7 @@ export default function LoginPage() {
                             >
                                 {profiles.map((p) => (
                                     <option key={p} value={p}>
-                                        {p}
+                                        {PERFIL_LABELS[p] || p}
                                     </option>
                                 ))}
                             </select>

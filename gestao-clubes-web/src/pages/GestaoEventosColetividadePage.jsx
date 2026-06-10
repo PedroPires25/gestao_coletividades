@@ -116,14 +116,26 @@ export default function GestaoEventosColetividadePage() {
         isAdmin,
         isSuperAdmin,
         isSecretario,
+        isProfessorColetividade,
         coletividadeId: authColetividadeId,
+        atividadeId: authAtividadeId,
         canManageColetividade,
         nome,
     } = useAuth();
 
     const podeGerir =
         canManageColetividade(Number(coletividadeId)) ||
-        (isSecretario && Number(authColetividadeId) === Number(coletividadeId));
+        (isSecretario && Number(authColetividadeId) === Number(coletividadeId)) ||
+        isProfessorColetividade;
+
+    // Professor only manages events for his own activity
+    function podeManejarEvento(evento) {
+        if (!podeGerir) return false;
+        if (isProfessorColetividade) {
+            return String(evento.coletividadeAtividadeId) === String(authAtividadeId);
+        }
+        return true;
+    }
 
     const [coletividade, setColetividade] = useState(null);
     const [atividades, setAtividades] = useState([]);
@@ -133,10 +145,16 @@ export default function GestaoEventosColetividadePage() {
     const [erro, setErro] = useState("");
     const [msg, setMsg] = useState("");
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState(FORM_INICIAL);
+    const [form, setForm] = useState(() => ({
+        ...FORM_INICIAL,
+        coletividadeAtividadeId: isProfessorColetividade && authAtividadeId ? String(authAtividadeId) : "",
+    }));
     const [editOpen, setEditOpen] = useState(false);
     const [editForm, setEditForm] = useState(FORM_INICIAL);
-    const [filtros, setFiltros] = useState({ estado: "", coletividadeAtividadeId: "" });
+    const [filtros, setFiltros] = useState({
+        estado: "",
+        coletividadeAtividadeId: isProfessorColetividade && authAtividadeId ? String(authAtividadeId) : "",
+    });
     const [expanded, setExpanded] = useState({});
     const [inscricoesMap, setInscricoesMap] = useState({});
     const [loadingInscricoes, setLoadingInscricoes] = useState({});
@@ -422,7 +440,9 @@ export default function GestaoEventosColetividadePage() {
                                     className="input"
                                     name="coletividadeAtividadeId"
                                     value={filtros.coletividadeAtividadeId}
-                                    onChange={onFiltroChange}
+                                    onChange={isProfessorColetividade ? undefined : onFiltroChange}
+                                    disabled={isProfessorColetividade}
+                                    title={isProfessorColetividade ? "Filtrado pela sua atividade" : undefined}
                                 >
                                     <option value="">Todas as atividades</option>
                                     {atividades.map((atividade) => (
@@ -458,13 +478,20 @@ export default function GestaoEventosColetividadePage() {
                                             <input className="input" name="responsavel" placeholder="Responsável" value={form.responsavel} onChange={onFormChange} />
                                         </div>
                                         <div className="row2">
-                                            <select className="input" name="coletividadeAtividadeId" value={form.coletividadeAtividadeId} onChange={onFormChange}>
-                                                <option value="">Sem atividade específica</option>
-                                                {atividades.map((atividade) => (
-                                                    <option key={atividade.id} value={atividade.id}>
-                                                        {atividade?.atividade?.nome || "Atividade"}
-                                                    </option>
-                                                ))}
+                                            <select
+                                               className="input"
+                                               name="coletividadeAtividadeId"
+                                               value={form.coletividadeAtividadeId}
+                                               onChange={isProfessorColetividade ? undefined : onFormChange}
+                                               disabled={isProfessorColetividade}
+                                               title={isProfessorColetividade ? "Restrito à sua atividade" : undefined}
+                                            >
+                                               <option value="">Sem atividade específica</option>
+                                               {atividades.map((atividade) => (
+                                                   <option key={atividade.id} value={atividade.id}>
+                                                       {atividade?.atividade?.nome || "Atividade"}
+                                                   </option>
+                                               ))}
                                             </select>
                                             <input className="input" type="number" min="0" name="maxParticipantes" placeholder="Máx. participantes" value={form.maxParticipantes} onChange={onFormChange} />
                                         </div>
@@ -520,7 +547,7 @@ export default function GestaoEventosColetividadePage() {
                                                             {expanded[evento.id] ? "Ocultar inscrições" : "Ver inscrições"}
                                                         </button>
                                                     )}
-                                                    {podeGerir && (
+                                                {podeManejarEvento(evento) && (
                                                         <>
                                                             <button type="button" className="btn" onClick={() => abrirEditar(evento)}>Editar</button>
                                                             <button type="button" className="btn btn-danger" onClick={() => apagarEvento(evento)}>Eliminar</button>
@@ -673,7 +700,14 @@ export default function GestaoEventosColetividadePage() {
                                     <input className="input" name="responsavel" placeholder="Responsável" value={editForm.responsavel || ""} onChange={onEditChange} />
                                 </div>
                                 <div className="row2">
-                                    <select className="input" name="coletividadeAtividadeId" value={editForm.coletividadeAtividadeId || ""} onChange={onEditChange}>
+                                    <select
+                                        className="input"
+                                        name="coletividadeAtividadeId"
+                                        value={editForm.coletividadeAtividadeId || ""}
+                                        onChange={isProfessorColetividade ? undefined : onEditChange}
+                                        disabled={isProfessorColetividade}
+                                        title={isProfessorColetividade ? "Restrito à sua atividade" : undefined}
+                                    >
                                         <option value="">Sem atividade específica</option>
                                         {atividades.map((atividade) => (
                                             <option key={atividade.id} value={atividade.id}>
