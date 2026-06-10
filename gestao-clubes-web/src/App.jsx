@@ -39,6 +39,7 @@ const ColetividadeUtentesPage = lazy(() => import("./pages/ColetividadeUtentesPa
 const ColetividadeUtentesAtividadePage = lazy(() => import("./pages/ColetividadeUtentesAtividadePage"));
 const ColetividadeStaffPage = lazy(() => import("./pages/ColetividadeStaffPage"));
 const ColetividadeStaffAtividadePage = lazy(() => import("./pages/ColetividadeStaffAtividadePage"));
+const GestaoEventosColetividadePage = lazy(() => import("./pages/GestaoEventosColetividadePage"));
 const AreaAcessoClubePage = lazy(() => import("./pages/AreaAcessoClubePage"));
 const AreaAcessoColetividadePage = lazy(() => import("./pages/AreaAcessoColetividadePage"));
 const PerfilPage = lazy(() => import("./pages/PerfilPage"));
@@ -418,6 +419,19 @@ export default function App() {
                             <RequireNotMedico>
                                 <RequireNotTreinador>
                                     <ColetividadeStaffAtividadePage />
+                                </RequireNotTreinador>
+                            </RequireNotMedico>
+                        </RequireAuth>
+                    }
+                />
+
+                <Route
+                    path="/coletividades/:id/eventos"
+                    element={
+                        <RequireAuth>
+                            <RequireNotMedico>
+                                <RequireNotTreinador>
+                                    <GestaoEventosColetividadePage />
                                 </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>

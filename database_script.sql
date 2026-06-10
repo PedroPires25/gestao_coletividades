@@ -590,6 +590,45 @@ CREATE TABLE IF NOT EXISTS staff_coletividade_afetacao (
   KEY idx_sca_cargo (cargo_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS coletividade_evento (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  coletividade_id INT NOT NULL,
+  coletividade_atividade_id INT NULL,
+  titulo VARCHAR(200) NOT NULL,
+  descricao TEXT,
+  data_evento DATE NOT NULL,
+  hora_inicio TIME NULL,
+  hora_fim TIME NULL,
+  local_evento VARCHAR(255),
+  responsavel VARCHAR(120),
+  max_participantes INT NULL,
+  permite_inscricao TINYINT(1) NOT NULL DEFAULT 0,
+  estado ENUM('Aberto','Fechado','Cancelado','Concluído') NOT NULL DEFAULT 'Aberto',
+  criado_por INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_ce_col FOREIGN KEY (coletividade_id) REFERENCES coletividade(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ce_ca FOREIGN KEY (coletividade_atividade_id) REFERENCES coletividade_atividade(id) ON DELETE SET NULL,
+  CONSTRAINT fk_ce_criado FOREIGN KEY (criado_por) REFERENCES utilizadores(id) ON DELETE SET NULL,
+  KEY idx_ce_col (coletividade_id),
+  KEY idx_ce_data (data_evento)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS coletividade_evento_inscricao (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  evento_id INT NOT NULL,
+  inscrito_id INT NULL,
+  utilizador_id INT NULL,
+  nome_participante VARCHAR(120),
+  estado ENUM('Confirmado','Cancelado','Lista de espera') NOT NULL DEFAULT 'Confirmado',
+  data_inscricao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_cei_evento FOREIGN KEY (evento_id) REFERENCES coletividade_evento(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cei_inscrito FOREIGN KEY (inscrito_id) REFERENCES inscrito(id) ON DELETE SET NULL,
+  CONSTRAINT fk_cei_user FOREIGN KEY (utilizador_id) REFERENCES utilizadores(id) ON DELETE SET NULL,
+  UNIQUE KEY uq_cei (evento_id, inscrito_id),
+  KEY idx_cei_evento (evento_id)
+) ENGINE=InnoDB;
+
 INSERT INTO escalao (nome)
 VALUES ('Traquinas');
 

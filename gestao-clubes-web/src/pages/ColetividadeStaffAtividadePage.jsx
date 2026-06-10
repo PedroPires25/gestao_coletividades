@@ -4,13 +4,21 @@ import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getColetividadeById } from "../api";
 import { getAtividadesByColetividade } from "../services/coletividadeAtividades";
-import { createStaffColetividade, getCargosColetividadeStaff, getStaffByColetividadeAtividade } from "../services/staffColetividade";
+import {
+    createStaffColetividade,
+    getCargosColetividadeStaff,
+    getStaffByColetividadeAtividade,
+    removerAfetacaoStaff,
+    updateStaffColetividade,
+} from "../services/staffColetividade";
 import atletasIcon from "../assets/atletas.svg";
 
 function formatDateOnly(value) {
-    if (!value) return "";
+    if (!value) return "-";
     const text = String(value).trim();
-    return text.includes("T") ? text.split("T")[0] : text.slice(0, 10);
+    const date = text.includes("T") ? text.split("T")[0] : text.slice(0, 10);
+    const [year, month, day] = date.split("-");
+    return year && month && day ? `${day}/${month}/${year}` : date;
 }
 
 function hasPendingName(value) {
@@ -19,32 +27,31 @@ function hasPendingName(value) {
 
 function PendingNameCell() {
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "4px",
-                padding: "10px 12px",
-                borderRadius: "10px",
-                background: "rgba(255, 193, 7, 0.22)",
-                border: "1px solid rgba(255, 193, 7, 0.65)",
-                boxShadow: "0 0 0 1px rgba(255, 193, 7, 0.08), inset 0 0 0 1px rgba(255,255,255,0.03)",
-            }}
-        >
-            <div style={{ color: "#ffd54f", fontWeight: 800 }}>
-                ⚠ Completar dados de inscrição
-            </div>
-            <div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.92)" }}>
-                Registo criado por aprovação administrativa
-            </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "10px 12px", borderRadius: 10, background: "rgba(255, 193, 7, 0.22)", border: "1px solid rgba(255, 193, 7, 0.65)" }}>
+            <div style={{ color: "#ffd54f", fontWeight: 800 }}>⚠ Completar dados de inscrição</div>
+            <div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.92)" }}>Registo criado por aprovação administrativa</div>
         </div>
     );
 }
 
+const FORM_INICIAL = {
+    nome: "",
+    email: "",
+    telefone: "",
+    morada: "",
+    numRegisto: "",
+    remuneracao: "0.00",
+    cargoId: "",
+    dataInicio: new Date().toISOString().slice(0, 10),
+    dataFim: "",
+    observacoes: "",
+};
+
 export default function ColetividadeStaffAtividadePage() {
     const { coletividadeId, coletividadeAtividadeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, canManageColetividade } = useAuth();
+    const podeGerir = canManageColetividade(Number(coletividadeId));
 
     const [coletividade, setColetividade] = useState(null);
     const [atividadeAtiva, setAtividadeAtiva] = useState(null);
@@ -54,19 +61,10 @@ export default function ColetividadeStaffAtividadePage() {
     const [saving, setSaving] = useState(false);
     const [erro, setErro] = useState("");
     const [msg, setMsg] = useState("");
+    const [editOpen, setEditOpen] = useState(false);
+    const [editForm, setEditForm] = useState({});
 
-    const [form, setForm] = useState({
-        nome: "",
-        email: "",
-        telefone: "",
-        morada: "",
-        numRegisto: "",
-        remuneracao: "0.00",
-        cargoId: "",
-        dataInicio: new Date().toISOString().slice(0, 10),
-        dataFim: "",
-        observacoes: "",
-    });
+    const [form, setForm] = useState(FORM_INICIAL);
 
     const menuItems = useMemo(() => [
         { label: "Home", to: "/menu" },
@@ -74,8 +72,9 @@ export default function ColetividadeStaffAtividadePage() {
         ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         { label: "Atividades", to: `/coletividades/${coletividadeId}/atividades` },
-        { label: "Utentes", to: `/coletividades/${coletividadeId}/utentes` },
+        { label: "Inscritos", to: `/coletividades/${coletividadeId}/utentes` },
         { label: "Staff", to: `/coletividades/${coletividadeId}/staff` },
+        { label: "Eventos", to: `/coletividades/${coletividadeId}/eventos` },
         {
             label: "Logout",
             onClick: () => {
@@ -83,7 +82,7 @@ export default function ColetividadeStaffAtividadePage() {
                 navigate("/login", { replace: true });
             },
         },
-    ], [coletividadeAtividadeId, coletividadeId, isAdmin, isSuperAdmin, logout, navigate]);
+    ], [coletividadeId, isAdmin, isSuperAdmin, logout, navigate]);
 
     const carregar = useCallback(async () => {
         setErro("");
@@ -102,22 +101,25 @@ export default function ColetividadeStaffAtividadePage() {
                 (r) => String(r.id) === String(coletividadeAtividadeId)
             );
 
+            const cargosLista = Array.isArray(cargosRows) ? cargosRows : [];
             setColetividade(col || null);
             setAtividadeAtiva(atividade || null);
             setRows(Array.isArray(staffRows) ? staffRows : []);
-            setCargos(Array.isArray(cargosRows) ? cargosRows : []);
-            if (!form.cargoId && Array.isArray(cargosRows) && cargosRows[0]) {
-                setForm((prev) => ({ ...prev, cargoId: String(cargosRows[0].id) }));
-            }
+            setCargos(cargosLista);
+            setForm((prev) => ({ ...prev, cargoId: prev.cargoId || String(cargosLista[0]?.id || "") }));
         } catch (e) {
             setErro(e.message || "Não foi possível carregar o staff.");
         } finally {
             setLoading(false);
         }
-    }, [coletividadeId, coletividadeAtividadeId, form.cargoId]);
+    }, [coletividadeId, coletividadeAtividadeId]);
 
     useEffect(() => {
-        carregar();
+        const timeoutId = window.setTimeout(() => {
+            void carregar();
+        }, 0);
+
+        return () => window.clearTimeout(timeoutId);
     }, [carregar]);
 
     function onChange(e) {
@@ -125,9 +127,31 @@ export default function ColetividadeStaffAtividadePage() {
         setForm((prev) => ({ ...prev, [name]: value }));
     }
 
+    function onEditChange(e) {
+        const { name, value } = e.target;
+        setEditForm((prev) => ({ ...prev, [name]: value }));
+    }
+
+    function abrirEditar(row) {
+        setEditForm({
+            id: row.id,
+            afetacaoId: row.afetacaoId,
+            nome: row.nome || "",
+            email: row.email || "",
+            telefone: row.telefone || "",
+            morada: row.morada || "",
+            numRegisto: row.numRegisto || "",
+            remuneracao: String(row.remuneracao ?? "0.00"),
+            dataInicio: row.dataInicio ? String(row.dataInicio).slice(0, 10) : "",
+            dataFim: row.dataFim ? String(row.dataFim).slice(0, 10) : "",
+            observacoes: row.observacoes || "",
+            cargoNome: row.cargoNome || "-",
+        });
+        setEditOpen(true);
+    }
+
     async function onSubmit(e) {
         e.preventDefault();
-
         if (!form.nome.trim()) {
             setErro("Indica o nome do membro do staff.");
             return;
@@ -153,21 +177,58 @@ export default function ColetividadeStaffAtividadePage() {
             });
 
             setMsg("Staff registado com sucesso.");
-            setForm((prev) => ({
-                ...prev,
-                nome: "",
-                email: "",
-                telefone: "",
-                morada: "",
-                numRegisto: "",
-                remuneracao: "0.00",
-                dataFim: "",
-                observacoes: "",
-                dataInicio: new Date().toISOString().slice(0, 10),
-            }));
+            setForm({ ...FORM_INICIAL, cargoId: String(cargos[0]?.id || "") });
             await carregar();
         } catch (e) {
             setErro(e.message || "Não foi possível registar o staff.");
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function guardarEdicao() {
+        if (!editForm.nome?.trim()) {
+            setErro("Indica o nome do membro do staff.");
+            return;
+        }
+
+        setSaving(true);
+        setErro("");
+        setMsg("");
+        try {
+            await updateStaffColetividade(coletividadeId, editForm.id, {
+                nome: editForm.nome.trim(),
+                email: editForm.email?.trim() || null,
+                telefone: editForm.telefone?.trim() || null,
+                morada: editForm.morada?.trim() || null,
+                numRegisto: editForm.numRegisto?.trim() || null,
+                remuneracao: Number(editForm.remuneracao || 0),
+                afetacaoId: editForm.afetacaoId,
+                dataInicio: editForm.dataInicio || null,
+                dataFim: editForm.dataFim || null,
+                observacoes: editForm.observacoes?.trim() || null,
+            });
+            setMsg("Staff atualizado com sucesso.");
+            setEditOpen(false);
+            await carregar();
+        } catch (e) {
+            setErro(e.message || "Não foi possível atualizar o staff.");
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function removerAfetacao(row) {
+        if (!window.confirm(`Remover a afetação de ${row.nome || "este elemento"}?`)) return;
+        setSaving(true);
+        setErro("");
+        setMsg("");
+        try {
+            await removerAfetacaoStaff(coletividadeId, row.id, row.afetacaoId);
+            setMsg("Afetação removida com sucesso.");
+            await carregar();
+        } catch (e) {
+            setErro(e.message || "Não foi possível remover a afetação.");
         } finally {
             setSaving(false);
         }
@@ -187,9 +248,7 @@ export default function ColetividadeStaffAtividadePage() {
                         </div>
                     </div>
                     <div className="actions">
-                        <button type="button" className="btn" onClick={() => navigate(`/coletividades/${coletividadeId}/staff`)}>
-                            Voltar
-                        </button>
+                        <button type="button" className="btn" onClick={() => navigate(`/coletividades/${coletividadeId}/staff`)}>Voltar</button>
                     </div>
                 </div>
 
@@ -222,24 +281,14 @@ export default function ColetividadeStaffAtividadePage() {
                                         <th>Remuneração</th>
                                         <th>Cargo</th>
                                         <th>Data Início</th>
+                                        <th>Ações</th>
                                     </tr>
                                     </thead>
                                     <tbody>
                                     {rows.map((r) => {
                                         const pendingName = hasPendingName(r.nome);
-
                                         return (
-                                            <tr
-                                                key={`${r.id}-${r.afetacaoId}`}
-                                                style={
-                                                    pendingName
-                                                        ? {
-                                                            background: "rgba(255, 193, 7, 0.18)",
-                                                            boxShadow: "inset 5px 0 0 #ffcc33",
-                                                        }
-                                                        : {}
-                                                }
-                                            >
+                                            <tr key={`${r.id}-${r.afetacaoId}`} style={pendingName ? { background: "rgba(255, 193, 7, 0.18)", boxShadow: "inset 5px 0 0 #ffcc33" } : {}}>
                                                 <td>{pendingName ? <PendingNameCell /> : r.nome}</td>
                                                 <td>{r.email || "-"}</td>
                                                 <td>{r.telefone || "-"}</td>
@@ -247,7 +296,17 @@ export default function ColetividadeStaffAtividadePage() {
                                                 <td>{r.numRegisto || "-"}</td>
                                                 <td>{r.remuneracao ?? "-"}</td>
                                                 <td>{r.cargoNome || "-"}</td>
-                                                <td>{formatDateOnly(r.dataInicio) || "-"}</td>
+                                                <td>{formatDateOnly(r.dataInicio)}</td>
+                                                <td>
+                                                    {podeGerir ? (
+                                                        <div className="table-actions">
+                                                            <button type="button" className="btn" onClick={() => abrirEditar(r)}>Editar</button>
+                                                            <button type="button" className="btn btn-danger" onClick={() => removerAfetacao(r)}>Remover afetação</button>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="subtle">Sem ações</span>
+                                                    )}
+                                                </td>
                                             </tr>
                                         );
                                     })}
@@ -257,42 +316,75 @@ export default function ColetividadeStaffAtividadePage() {
                         )}
                     </section>
 
-                    <section className="card">
-                        <h2>Registar staff</h2>
-                        <div className="form-scroll">
-                        <form className="row" onSubmit={onSubmit}>
-                            <input className="input" name="nome" placeholder="Nome *" value={form.nome} onChange={onChange} />
-                            <div className="row2">
-                                <input className="input" name="email" placeholder="Email" value={form.email} onChange={onChange} />
-                                <input className="input" name="telefone" placeholder="Telefone" value={form.telefone} onChange={onChange} />
+                    {podeGerir && (
+                        <section className="card">
+                            <h2>Registar staff</h2>
+                            <div className="form-scroll">
+                                <form className="row" onSubmit={onSubmit}>
+                                    <input className="input" name="nome" placeholder="Nome *" value={form.nome} onChange={onChange} />
+                                    <div className="row2">
+                                        <input className="input" name="email" placeholder="Email" value={form.email} onChange={onChange} />
+                                        <input className="input" name="telefone" placeholder="Telefone" value={form.telefone} onChange={onChange} />
+                                    </div>
+                                    <input className="input" name="morada" placeholder="Morada" value={form.morada} onChange={onChange} />
+                                    <div className="row2">
+                                        <input className="input" name="numRegisto" placeholder="Nº Registo" value={form.numRegisto} onChange={onChange} />
+                                        <input className="input" name="remuneracao" placeholder="Remuneração" value={form.remuneracao} onChange={onChange} />
+                                    </div>
+                                    <div className="row2">
+                                        <select className="input" name="cargoId" value={form.cargoId} onChange={onChange}>
+                                            {cargos.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                                        </select>
+                                        <input className="input" type="date" name="dataInicio" value={form.dataInicio} onChange={onChange} />
+                                    </div>
+                                    <div className="row2">
+                                        <input className="input" type="date" name="dataFim" value={form.dataFim} onChange={onChange} />
+                                        <input className="input" name="observacoes" placeholder="Observações" value={form.observacoes} onChange={onChange} />
+                                    </div>
+                                    <div className="actions">
+                                        <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? "A guardar..." : "Guardar"}</button>
+                                    </div>
+                                </form>
                             </div>
-                            <input className="input" name="morada" placeholder="Morada" value={form.morada} onChange={onChange} />
-                            <div className="row2">
-                                <input className="input" name="numRegisto" placeholder="Nº Registo" value={form.numRegisto} onChange={onChange} />
-                                <input className="input" name="remuneracao" placeholder="Remuneração" value={form.remuneracao} onChange={onChange} />
-                            </div>
-                            <div className="row2">
-                                <select className="input" name="cargoId" value={form.cargoId} onChange={onChange}>
-                                    {cargos.map((c) => (
-                                        <option key={c.id} value={c.id}>{c.nome}</option>
-                                    ))}
-                                </select>
-                                <input className="input" type="date" name="dataInicio" value={form.dataInicio} onChange={onChange} />
-                            </div>
-                            <div className="row2">
-                                <input className="input" type="date" name="dataFim" value={form.dataFim} onChange={onChange} />
-                                <input className="input" name="observacoes" placeholder="Observações" value={form.observacoes} onChange={onChange} />
-                            </div>
-                            <div className="actions">
-                                <button className="btn btn-primary" type="submit" disabled={saving}>
-                                    {saving ? "A guardar..." : "Guardar"}
-                                </button>
-                            </div>
-                        </form>
-                        </div>
-                    </section>
+                        </section>
+                    )}
                 </div>
             </div>
+
+            {editOpen && (
+                <div className="modal-backdrop" onClick={() => setEditOpen(false)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Editar staff</h3>
+                            <button type="button" className="btn modal-close" onClick={() => setEditOpen(false)}>×</button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="row">
+                                <input className="input" name="nome" placeholder="Nome" value={editForm.nome || ""} onChange={onEditChange} />
+                                <div className="row2">
+                                    <input className="input" name="numRegisto" placeholder="Nº Registo" value={editForm.numRegisto || ""} onChange={onEditChange} />
+                                    <input className="input" name="remuneracao" placeholder="Remuneração" value={editForm.remuneracao || ""} onChange={onEditChange} />
+                                </div>
+                                <div className="row2">
+                                    <input className="input" name="email" placeholder="Email" value={editForm.email || ""} onChange={onEditChange} />
+                                    <input className="input" name="telefone" placeholder="Telefone" value={editForm.telefone || ""} onChange={onEditChange} />
+                                </div>
+                                <input className="input" name="morada" placeholder="Morada" value={editForm.morada || ""} onChange={onEditChange} />
+                                <div className="row2">
+                                    <input className="input" type="date" name="dataInicio" value={editForm.dataInicio || ""} onChange={onEditChange} />
+                                    <input className="input" type="date" name="dataFim" value={editForm.dataFim || ""} onChange={onEditChange} />
+                                </div>
+                                <input className="input" value={`Cargo: ${editForm.cargoNome || "-"}`} readOnly />
+                                <textarea className="input" rows={3} name="observacoes" placeholder="Observações" value={editForm.observacoes || ""} onChange={onEditChange} />
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn" onClick={() => setEditOpen(false)}>Cancelar</button>
+                            <button type="button" className="btn btn-primary" disabled={saving} onClick={guardarEdicao}>{saving ? "A guardar..." : "Guardar"}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

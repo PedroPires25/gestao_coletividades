@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/coletividades")
@@ -30,6 +31,11 @@ public class UtenteColetividadeRestController {
         );
     }
 
+    @GetMapping("/{coletividadeId}/inscritos")
+    public ResponseEntity<List<Map<String, Object>>> listarTodosInscritos(@PathVariable int coletividadeId) {
+        return ResponseEntity.ok(utenteDAO.listarTodosPorColetividade(coletividadeId));
+    }
+
     public static class CriarUtenteRequest {
         public String nome;
         public String dataNascimento;
@@ -40,6 +46,11 @@ public class UtenteColetividadeRestController {
         public String dataInscricao;
         public String dataFim;
         public Boolean ativo;
+    }
+
+    public static class AdicionarAtividadeRequest {
+        public Integer coletividadeAtividadeId;
+        public String dataInscricao;
     }
 
     @PostMapping("/{coletividadeId}/utentes")
@@ -65,14 +76,84 @@ public class UtenteColetividadeRestController {
         u.setAtivo(body.ativo == null || body.ativo);
 
         Integer id = utenteDAO.criarUtente(u, coletividadeAtividadeId);
-        if (id == null) return ResponseEntity.badRequest().body("Não foi possível criar utente.");
+        if (id == null) return ResponseEntity.badRequest().body("Não foi possível criar inscrito.");
+
+        return ResponseEntity.ok(id);
+    }
+
+    @PutMapping("/{coletividadeId}/utentes/{utenteId}")
+    public ResponseEntity<?> atualizarUtente(
+            @PathVariable int coletividadeId,
+            @PathVariable int utenteId,
+            @RequestBody CriarUtenteRequest body
+    ) {
+        exigirGestaoColetividade(coletividadeId);
+
+        if (body == null || body.nome == null || body.nome.isBlank()) {
+            return ResponseEntity.badRequest().body("Nome é obrigatório.");
+        }
+        if (!utenteDAO.utentePertenceColetividade(coletividadeId, utenteId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Inscrito não encontrado.");
+        }
+
+        boolean ok = utenteDAO.atualizarUtente(
+                utenteId,
+                body.nome.trim(),
+                body.dataNascimento,
+                body.email,
+                body.telefone,
+                body.morada,
+                body.estadoId == null ? 1 : body.estadoId
+        );
+
+        return ok
+                ? ResponseEntity.ok().body("Inscrito atualizado com sucesso.")
+                : ResponseEntity.badRequest().body("Não foi possível atualizar o inscrito.");
+    }
+
+    @DeleteMapping("/{coletividadeId}/utentes/{utenteId}/inscricao/{inscricaoId}")
+    public ResponseEntity<?> removerInscricaoAtividade(
+            @PathVariable int coletividadeId,
+            @PathVariable int utenteId,
+            @PathVariable int inscricaoId
+    ) {
+        exigirGestaoColetividade(coletividadeId);
+
+        if (!utenteDAO.inscricaoPertenceAoUtente(coletividadeId, utenteId, inscricaoId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Inscrição não encontrada.");
+        }
+
+        return utenteDAO.removerInscricaoAtividade(inscricaoId)
+                ? ResponseEntity.ok().body("Inscrição removida com sucesso.")
+                : ResponseEntity.badRequest().body("Não foi possível remover a inscrição.");
+    }
+
+    @PostMapping("/{coletividadeId}/utentes/{utenteId}/atividades")
+    public ResponseEntity<?> adicionarAtividade(
+            @PathVariable int coletividadeId,
+            @PathVariable int utenteId,
+            @RequestBody AdicionarAtividadeRequest body
+    ) {
+        exigirGestaoColetividade(coletividadeId);
+
+        if (body == null || body.coletividadeAtividadeId == null) {
+            return ResponseEntity.badRequest().body("coletividadeAtividadeId é obrigatório.");
+        }
+        if (!utenteDAO.utentePertenceColetividade(coletividadeId, utenteId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Inscrito não encontrado.");
+        }
+
+        Integer id = utenteDAO.adicionarAtividade(utenteId, body.coletividadeAtividadeId, body.dataInscricao);
+        if (id == null) {
+            return ResponseEntity.badRequest().body("Não foi possível adicionar a atividade ao inscrito.");
+        }
 
         return ResponseEntity.ok(id);
     }
 
     private void exigirGestaoColetividade(int coletividadeId) {
         if (!SecurityUtils.canManageColetividade(coletividadeId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para gerir utentes desta coletividade.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para gerir inscritos desta coletividade.");
         }
     }
 }

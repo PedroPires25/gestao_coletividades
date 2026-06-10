@@ -84,8 +84,9 @@ export default function ColetividadeAtividadesPage() {
             ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Atividades", to: `/coletividades/${coletividadeId}/atividades` },
-            { label: "Utentes", to: `/coletividades/${coletividadeId}/utentes` },
+            { label: "Inscritos", to: `/coletividades/${coletividadeId}/utentes` },
             { label: "Staff", to: `/coletividades/${coletividadeId}/staff` },
+            { label: "Eventos", to: `/coletividades/${coletividadeId}/eventos` },
             {
                 label: "Logout",
                 onClick: () => {
@@ -187,25 +188,32 @@ export default function ColetividadeAtividadesPage() {
     }
 
     useEffect(() => {
-        if (!coletividadeId) return;
-        carregar();
+        if (!coletividadeId) return undefined;
+        const timeoutId = window.setTimeout(() => {
+            void carregar();
+        }, 0);
+        return () => window.clearTimeout(timeoutId);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [coletividadeId, apenasAtivas, anoSelecionado]);
 
     useEffect(() => {
-        const primeira = atividadesDisponiveisParaAnexar[0];
-        if (!primeira) {
-            setAtividadeExistenteId("");
-            return;
-        }
+        const timeoutId = window.setTimeout(() => {
+            const primeira = atividadesDisponiveisParaAnexar[0];
+            if (!primeira) {
+                setAtividadeExistenteId("");
+                return;
+            }
 
-        const atualExiste = atividadesDisponiveisParaAnexar.some(
-            (a) => String(a.id) === String(atividadeExistenteId)
-        );
+            const atualExiste = atividadesDisponiveisParaAnexar.some(
+                (a) => String(a.id) === String(atividadeExistenteId)
+            );
 
-        if (!atualExiste) {
-            setAtividadeExistenteId(String(primeira.id));
-        }
+            if (!atualExiste) {
+                setAtividadeExistenteId(String(primeira.id));
+            }
+        }, 0);
+
+        return () => window.clearTimeout(timeoutId);
     }, [atividadesDisponiveisParaAnexar, atividadeExistenteId]);
 
     async function onCriar() {
@@ -566,7 +574,7 @@ export default function ColetividadeAtividadesPage() {
                                                         type="button"
                                                         onClick={() => navigate(`/coletividades/${coletividadeId}/utentes/atividades/${row.id}`)}
                                                     >
-                                                        Utentes
+                                                        Inscritos
                                                     </button>
 
                                                     <button
