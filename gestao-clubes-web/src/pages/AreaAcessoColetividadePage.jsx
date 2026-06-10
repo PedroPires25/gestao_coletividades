@@ -3,7 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getColetividadeById } from "../api";
-import { getEventosColetividade } from "../services/eventosColetividade";
+import {
+    getEventosColetividade,
+    getInscricoesEvento,
+    inscreverEmEvento,
+    cancelarInscricaoEvento,
+} from "../services/eventosColetividade";
 import eventosIcon from "../assets/eventos.svg";
 
 function formatDateOnly(value) {
@@ -50,23 +55,51 @@ export default function AreaAcessoColetividadePage() {
 
     const [coletividade, setColetividade] = useState(null);
     const [eventos, setEventos] = useState([]);
+    const [minhasInscricoes, setMinhasInscricoes] = useState({}); // eventId -> inscricaoId
+    const [savingEvento, setSavingEvento] = useState({}); // eventId -> bool
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState(null);
+    const [msgSucesso, setMsgSucesso] = useState("");
 
     useEffect(() => {
         if (!coletividadeId) return;
         let active = true;
         (async () => {
             try {
-                const [data, eventosData] = await Promise.all([
+                const [coletividadeData, eventosData] = await Promise.all([
                     getColetividadeById(coletividadeId),
                     getEventosColetividade(coletividadeId),
                 ]);
-                if (active) {
-                    setColetividade(data);
-                    setEventos(Array.isArray(eventosData) ? eventosData : []);
-                    setLoading(false);
+                if (!active) return;
+
+                const listaEventos = Array.isArray(eventosData) ? eventosData : [];
+                setColetividade(coletividadeData);
+                setEventos(listaEventos);
+
+                // Pre-load user's inscriptions for inscribable events
+                const inscribiveis = listaEventos.filter(e => e.permiteInscricao);
+                if (inscribiveis.length > 0 && user?.id) {
+                    const results = await Promise.all(
+                        inscribiveis.map(e =>
+                            getInscricoesEvento(coletividadeId, e.id)
+                                .then(list => ({ eventoId: e.id, list: Array.isArray(list) ? list : [] }))
+                                .catch(() => ({ eventoId: e.id, list: [] }))
+                        )
+                    );
+                    if (!active) return;
+                    const minhas = {};
+                    for (const { eventoId, list } of results) {
+                        const minha = list.find(i =>
+                            i.utilizadorId != null &&
+                            String(i.utilizadorId) === String(user.id) &&
+                            i.estado !== "Cancelado"
+                        );
+                        if (minha) minhas[eventoId] = minha.id;
+                    }
+                    setMinhasInscricoes(minhas);
                 }
+
+                if (active) setLoading(false);
             } catch (e) {
                 if (active) {
                     setErro(e.message || "Erro ao carregar dados da coletividade.");
@@ -75,7 +108,46 @@ export default function AreaAcessoColetividadePage() {
             }
         })();
         return () => { active = false; };
-    }, [coletividadeId]);
+    }, [coletividadeId, user?.id]);
+
+    async function inscrever(evento) {
+        setSavingEvento(prev => ({ ...prev, [evento.id]: true }));
+        setMsgSucesso("");
+        setErro(null);
+        try {
+            const nomeParticipante = user?.nome || user?.email || "Participante";
+            const res = await inscreverEmEvento(coletividadeId, evento.id, { nomeParticipante });
+            const inscricaoId = res?.id ?? null;
+            setMinhasInscricoes(prev => ({ ...prev, [evento.id]: inscricaoId }));
+            setMsgSucesso(`Inscrito com sucesso em "${evento.titulo}".`);
+        } catch (e) {
+            setErro(e.message || "Não foi possível efetuar a inscrição.");
+        } finally {
+            setSavingEvento(prev => ({ ...prev, [evento.id]: false }));
+        }
+    }
+
+    async function cancelarMinhaInscricao(evento) {
+        const inscricaoId = minhasInscricoes[evento.id];
+        if (!inscricaoId) return;
+        if (!window.confirm(`Cancelar a tua inscrição em "${evento.titulo}"?`)) return;
+        setSavingEvento(prev => ({ ...prev, [evento.id]: true }));
+        setMsgSucesso("");
+        setErro(null);
+        try {
+            await cancelarInscricaoEvento(coletividadeId, evento.id, inscricaoId);
+            setMinhasInscricoes(prev => {
+                const next = { ...prev };
+                delete next[evento.id];
+                return next;
+            });
+            setMsgSucesso(`Inscrição em "${evento.titulo}" cancelada.`);
+        } catch (e) {
+            setErro(e.message || "Não foi possível cancelar a inscrição.");
+        } finally {
+            setSavingEvento(prev => ({ ...prev, [evento.id]: false }));
+        }
+    }
 
     const menuItems = [
         { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
@@ -116,10 +188,11 @@ export default function AreaAcessoColetividadePage() {
                 </div>
 
                 {erro && <div className="alert error">{erro}</div>}
+                {msgSucesso && <div className="alert success">{msgSucesso}</div>}
 
                 <div className="stack-sections">
 
-                    {/* SECÇÃO 1 — Eventos reais */}
+                    {/* SECÇÃO 1 — Eventos */}
                     <section className="card">
                         <div className="modalidades-toolbar">
                             <div className="toolbar-title-group">
@@ -139,30 +212,57 @@ export default function AreaAcessoColetividadePage() {
                                         <th>Local</th>
                                         <th>Atividade</th>
                                         <th>Vagas</th>
-                                        <th>Inscrição</th>
                                         <th>Estado</th>
+                                        <th>Ações</th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {eventos.map((evento) => (
-                                        <tr key={evento.id}>
-                                            <td style={{ fontWeight: 500 }}>{evento.titulo || "-"}</td>
-                                            <td>{formatDateOnly(evento.dataEvento)}</td>
-                                            <td>{evento.localEvento || "-"}</td>
-                                            <td>{evento.atividadeNome || <span className="subtle">Geral</span>}</td>
-                                            <td>
-                                                {evento.maxParticipantes
-                                                    ? `${evento.participantesConfirmados || 0}/${evento.maxParticipantes}`
-                                                    : "Sem limite"}
-                                            </td>
-                                            <td>
-                                                {evento.permiteInscricao
-                                                    ? <span style={{ color: "#22c55e", fontWeight: 600 }}>✓ Aberta</span>
-                                                    : <span className="subtle">—</span>}
-                                            </td>
-                                            <td>{badgeEstadoEvento(evento.estado)}</td>
-                                        </tr>
-                                    ))}
+                                    {eventos.map((evento) => {
+                                        const estaInscrito = evento.id in minhasInscricoes;
+                                        const podeInscrever = evento.permiteInscricao && evento.estado === "Aberto";
+                                        const isSaving = !!savingEvento[evento.id];
+                                        return (
+                                            <tr key={evento.id}>
+                                                <td style={{ fontWeight: 500 }}>{evento.titulo || "-"}</td>
+                                                <td>{formatDateOnly(evento.dataEvento)}</td>
+                                                <td>{evento.localEvento || "-"}</td>
+                                                <td>{evento.atividadeNome || <span className="subtle">Geral</span>}</td>
+                                                <td>
+                                                    {evento.maxParticipantes
+                                                        ? `${evento.participantesConfirmados || 0}/${evento.maxParticipantes}`
+                                                        : "Sem limite"}
+                                                </td>
+                                                <td>{badgeEstadoEvento(evento.estado)}</td>
+                                                <td>
+                                                    {podeInscrever && !estaInscrito && (
+                                                        <button
+                                                            className="btn btn-primary"
+                                                            disabled={isSaving}
+                                                            onClick={() => inscrever(evento)}
+                                                        >
+                                                            {isSaving ? "A inscrever..." : "Inscrever-me"}
+                                                        </button>
+                                                    )}
+                                                    {estaInscrito && (
+                                                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                                            <span style={{ color: "#22c55e", fontWeight: 600, fontSize: "0.85rem" }}>✓ Inscrito</span>
+                                                            <button
+                                                                className="btn btn-danger"
+                                                                style={{ fontSize: "0.78rem", padding: "3px 10px" }}
+                                                                disabled={isSaving}
+                                                                onClick={() => cancelarMinhaInscricao(evento)}
+                                                            >
+                                                                {isSaving ? "..." : "Cancelar"}
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    {!podeInscrever && !estaInscrito && (
+                                                        <span className="subtle">—</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                     </tbody>
                                 </table>
                             </div>

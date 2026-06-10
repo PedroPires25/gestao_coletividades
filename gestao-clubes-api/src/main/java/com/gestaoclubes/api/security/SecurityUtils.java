@@ -140,6 +140,14 @@ public class SecurityUtils {
         return "ROLE_SECRETARIO".equals(currentRole());
     }
 
+    public static boolean isProfessor() {
+        return "ROLE_PROFESSOR".equals(currentRole());
+    }
+
+    public static boolean isProfessorColetividade() {
+        return isProfessor() && currentColetividadeId() != null;
+    }
+
     public static boolean canAccessTesouraria(Integer clubeId) {
         if (clubeId == null) return false;
         if (isSuperAdmin()) return true;

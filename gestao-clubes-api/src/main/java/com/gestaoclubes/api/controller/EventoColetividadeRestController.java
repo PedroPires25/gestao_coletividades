@@ -56,6 +56,13 @@ public class EventoColetividadeRestController {
             @RequestBody EventoRequest body
     ) {
         exigirGestaoEventos(coletividadeId);
+        if (SecurityUtils.isProfessorColetividade()) {
+            Integer professorAtividadeId = SecurityUtils.currentAtividadeId();
+            if (professorAtividadeId == null || !professorAtividadeId.equals(body.coletividadeAtividadeId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Professor/Treinador só pode criar eventos para a sua atividade.");
+            }
+        }
         String erro = validarEvento(body);
         if (erro != null) {
             return ResponseEntity.badRequest().body(erro);
@@ -94,6 +101,16 @@ public class EventoColetividadeRestController {
         if (!eventoDAO.eventoPertenceColetividade(coletividadeId, eventoId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Evento não encontrado.");
         }
+        if (SecurityUtils.isProfessorColetividade()) {
+            Map<String, Object> eventoAtual = eventoDAO.obterEvento(eventoId);
+            Integer professorAtividadeId = SecurityUtils.currentAtividadeId();
+            Object raw = eventoAtual != null ? eventoAtual.get("coletividadeAtividadeId") : null;
+            Integer eventoAtividadeId = raw instanceof Number n ? n.intValue() : null;
+            if (professorAtividadeId == null || !professorAtividadeId.equals(eventoAtividadeId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Professor/Treinador só pode gerir eventos da sua atividade.");
+            }
+        }
 
         String erro = validarEvento(body);
         if (erro != null) {
@@ -127,6 +144,16 @@ public class EventoColetividadeRestController {
         exigirGestaoEventos(coletividadeId);
         if (!eventoDAO.eventoPertenceColetividade(coletividadeId, eventoId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Evento não encontrado.");
+        }
+        if (SecurityUtils.isProfessorColetividade()) {
+            Map<String, Object> eventoAtual = eventoDAO.obterEvento(eventoId);
+            Integer professorAtividadeId = SecurityUtils.currentAtividadeId();
+            Object raw = eventoAtual != null ? eventoAtual.get("coletividadeAtividadeId") : null;
+            Integer eventoAtividadeId = raw instanceof Number n ? n.intValue() : null;
+            if (professorAtividadeId == null || !professorAtividadeId.equals(eventoAtividadeId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Professor/Treinador só pode gerir eventos da sua atividade.");
+            }
         }
 
         return eventoDAO.eliminarEvento(eventoId)
@@ -213,7 +240,8 @@ public class EventoColetividadeRestController {
 
     private void exigirGestaoEventos(int coletividadeId) {
         boolean podeGerir = SecurityUtils.canManageColetividade(coletividadeId)
-                || (SecurityUtils.isSecretario() && Objects.equals(SecurityUtils.currentColetividadeId(), coletividadeId));
+                || (SecurityUtils.isSecretario() && Objects.equals(SecurityUtils.currentColetividadeId(), coletividadeId))
+                || (SecurityUtils.isProfessorColetividade() && Objects.equals(SecurityUtils.currentColetividadeId(), coletividadeId));
 
         if (!podeGerir) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para gerir eventos desta coletividade.");
