@@ -15,6 +15,7 @@ import perfisIcon from "../assets/perfis.svg";
 import definicoesIcon from "../assets/direcao.svg";
 // Importar o ícone do módulo médico, se o do treinador não existir usamos o de staff como fallback
 import deptMedicoIcon from "../assets/departamento-medico.svg";
+import tesourariaIcon from "../assets/tesouraria.svg";
 
 const QUICK_ICONS = {
     "Modalidades do Clube": modalidadesIcon,
@@ -26,6 +27,7 @@ const QUICK_ICONS = {
     "Definições do Clube": definicoesIcon,
     "Módulo Clínico": deptMedicoIcon,
     "Módulo Treinador": staffIcon, // Placeholder até criarem o ícone svg próprio
+    "Tesouraria": tesourariaIcon,
 };
 
 export default function ClubeHomePage() {

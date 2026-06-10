@@ -1211,3 +1211,40 @@ CREATE TABLE IF NOT EXISTS inscricao_atleta (
     CONSTRAINT fk_ia_atleta FOREIGN KEY (atleta_id) REFERENCES atleta(id) ON DELETE CASCADE,
     CONSTRAINT fk_ia_reg FOREIGN KEY (registado_por) REFERENCES utilizadores(id) ON DELETE SET NULL
 );
+
+CREATE TABLE IF NOT EXISTS seguro_escalao (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    clube_id INT NOT NULL,
+    escalao_id INT NOT NULL,
+    epoca VARCHAR(20) NOT NULL DEFAULT '2024/2025',
+    valor_seguro DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+    ativo TINYINT(1) NOT NULL DEFAULT 1,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by INT NULL,
+    UNIQUE KEY uq_seguro_escalao (clube_id, escalao_id, epoca),
+    CONSTRAINT fk_se_clube FOREIGN KEY (clube_id) REFERENCES clube(id) ON DELETE CASCADE,
+    CONSTRAINT fk_se_escalao FOREIGN KEY (escalao_id) REFERENCES escalao(id) ON DELETE CASCADE,
+    CONSTRAINT fk_se_user FOREIGN KEY (updated_by) REFERENCES utilizadores(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS pagamento_seguro (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    clube_id INT NOT NULL,
+    atleta_id INT NOT NULL,
+    escalao_id INT NULL,
+    epoca VARCHAR(20) NOT NULL DEFAULT '2024/2025',
+    valor_devido DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+    valor_pago DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+    estado ENUM('Pago','Em dívida','Isento') NOT NULL DEFAULT 'Em dívida',
+    data_pagamento DATE NULL,
+    metodo_pagamento ENUM('Dinheiro','Transferência bancária','MB Way','Cartão','Outro') NULL,
+    observacoes TEXT NULL,
+    registado_por INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_pagamento_seguro (clube_id, atleta_id, epoca),
+    CONSTRAINT fk_ps_clube FOREIGN KEY (clube_id) REFERENCES clube(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ps_atleta FOREIGN KEY (atleta_id) REFERENCES atleta(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ps_escalao FOREIGN KEY (escalao_id) REFERENCES escalao(id) ON DELETE SET NULL,
+    CONSTRAINT fk_ps_reg FOREIGN KEY (registado_por) REFERENCES utilizadores(id) ON DELETE SET NULL
+);

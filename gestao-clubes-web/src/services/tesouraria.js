@@ -146,3 +146,41 @@ export function enviarAvisos(clubeId, body) {
         body: JSON.stringify(body),
     });
 }
+
+// ==========================================
+// SEGUROS
+// ==========================================
+
+export function getTaxasSeguro(clubeId, epoca = "2024/2025") {
+    return authFetch(`/clubes/${clubeId}/tesouraria/seguros/config?epoca=${encodeURIComponent(epoca)}`);
+}
+
+export function upsertTaxaSeguro(clubeId, body) {
+    return authFetch(`/clubes/${clubeId}/tesouraria/seguros/config`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+    });
+}
+
+export function getSeguros(clubeId, params = {}) {
+    const qs = new URLSearchParams();
+    if (params.epoca) qs.set("epoca", params.epoca);
+    if (params.estado) qs.set("estado", params.estado);
+    if (params.atletaId) qs.set("atletaId", params.atletaId);
+    if (params.escalaoId) qs.set("escalaoId", params.escalaoId);
+    return authFetch(`/clubes/${clubeId}/tesouraria/seguros?${qs}`);
+}
+
+export function criarSeguro(clubeId, body) {
+    return authFetch(`/clubes/${clubeId}/tesouraria/seguros`, {
+        method: "POST",
+        body: JSON.stringify(body),
+    });
+}
+
+export function atualizarSeguro(clubeId, id, body) {
+    return authFetch(`/clubes/${clubeId}/tesouraria/seguros/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+    });
+}

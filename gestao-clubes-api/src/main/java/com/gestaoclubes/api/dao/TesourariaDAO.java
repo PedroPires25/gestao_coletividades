@@ -462,6 +462,189 @@ public class TesourariaDAO {
     }
 
     // ==========================================
+    // SEGUROS — CONFIGURAÇÃO POR ESCALÃO
+    // ==========================================
+
+    public List<Map<String, Object>> listarTaxasSeguro(int clubeId, String epoca) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = """
+            SELECT se.id, se.clube_id, se.escalao_id, e.nome AS escalao_nome,
+                   se.epoca, se.valor_seguro, se.ativo, se.updated_at,
+                   u.utilizador AS updated_by_email
+            FROM seguro_escalao se
+            JOIN escalao e ON e.id = se.escalao_id
+            LEFT JOIN utilizadores u ON u.id = se.updated_by
+            WHERE se.clube_id = ? AND se.epoca = ?
+            ORDER BY e.nome
+        """;
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, clubeId);
+            ps.setString(2, epoca);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("id", rs.getInt("id"));
+                row.put("clubeId", rs.getInt("clube_id"));
+                row.put("escalaoId", rs.getInt("escalao_id"));
+                row.put("escalaoNome", rs.getString("escalao_nome"));
+                row.put("epoca", rs.getString("epoca"));
+                row.put("valorSeguro", rs.getDouble("valor_seguro"));
+                row.put("ativo", rs.getBoolean("ativo"));
+                row.put("updatedAt", rs.getString("updated_at"));
+                row.put("updatedByEmail", rs.getString("updated_by_email"));
+                list.add(row);
+            }
+        } catch (Exception e) {
+            LOGGER.severe(e.toString());
+        }
+        return list;
+    }
+
+    public boolean upsertTaxaSeguro(int clubeId, int escalaoId, String epoca, double valor, Integer updatedBy) {
+        String sql = """
+            INSERT INTO seguro_escalao (clube_id, escalao_id, epoca, valor_seguro, updated_by)
+            VALUES (?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE valor_seguro = VALUES(valor_seguro), updated_by = VALUES(updated_by)
+        """;
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, clubeId);
+            ps.setInt(2, escalaoId);
+            ps.setString(3, epoca);
+            ps.setDouble(4, valor);
+            if (updatedBy == null) ps.setNull(5, Types.INTEGER);
+            else ps.setInt(5, updatedBy);
+            return ps.executeUpdate() >= 1;
+        } catch (Exception e) {
+            LOGGER.severe(e.toString());
+            return false;
+        }
+    }
+
+    // ==========================================
+    // SEGUROS — PAGAMENTOS POR ATLETA
+    // ==========================================
+
+    public List<Map<String, Object>> listarSeguros(int clubeId, String epoca, String estado,
+                                                    Integer atletaId, Integer escalaoId) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("""
+            SELECT ps.id, ps.clube_id, ps.atleta_id,
+                   COALESCE(u.nome, a.nome) AS atleta_nome,
+                   ps.escalao_id, e.nome AS escalao_nome,
+                   ps.epoca,
+                   ps.valor_devido, ps.valor_pago,
+                   ROUND(ps.valor_devido - ps.valor_pago, 2) AS valor_divida,
+                   ps.estado, ps.data_pagamento, ps.metodo_pagamento,
+                   ps.observacoes, ps.created_at,
+                   reg.utilizador AS registado_por_email
+            FROM pagamento_seguro ps
+            JOIN atleta a ON a.id = ps.atleta_id
+            LEFT JOIN utilizadores u ON u.id = a.utilizador_id
+            LEFT JOIN escalao e ON e.id = ps.escalao_id
+            LEFT JOIN utilizadores reg ON reg.id = ps.registado_por
+            WHERE ps.clube_id = ?
+        """);
+        List<Object> params = new ArrayList<>();
+        params.add(clubeId);
+        if (epoca != null && !epoca.isBlank()) { sql.append(" AND ps.epoca = ?"); params.add(epoca); }
+        if (estado != null && !estado.isBlank()) { sql.append(" AND ps.estado = ?"); params.add(estado); }
+        if (atletaId != null) { sql.append(" AND ps.atleta_id = ?"); params.add(atletaId); }
+        if (escalaoId != null) { sql.append(" AND ps.escalao_id = ?"); params.add(escalaoId); }
+        sql.append(" ORDER BY atleta_nome");
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("id", rs.getInt("id"));
+                row.put("clubeId", rs.getInt("clube_id"));
+                row.put("atletaId", rs.getInt("atleta_id"));
+                row.put("atletaNome", rs.getString("atleta_nome"));
+                row.put("escalaoId", rs.getObject("escalao_id"));
+                row.put("escalaoNome", rs.getString("escalao_nome"));
+                row.put("epoca", rs.getString("epoca"));
+                row.put("valorDevido", rs.getDouble("valor_devido"));
+                row.put("valorPago", rs.getDouble("valor_pago"));
+                row.put("valorDivida", rs.getDouble("valor_divida"));
+                row.put("estado", rs.getString("estado"));
+                row.put("dataPagamento", rs.getString("data_pagamento"));
+                row.put("metodoPagamento", rs.getString("metodo_pagamento"));
+                row.put("observacoes", rs.getString("observacoes"));
+                row.put("createdAt", rs.getString("created_at"));
+                row.put("registadoPorEmail", rs.getString("registado_por_email"));
+                list.add(row);
+            }
+        } catch (Exception e) {
+            LOGGER.severe(e.toString());
+        }
+        return list;
+    }
+
+    public int inserirSeguro(int clubeId, int atletaId, Integer escalaoId, String epoca,
+                              double valorDevido, double valorPago, String estado,
+                              String dataPagamento, String metodoPagamento,
+                              String observacoes, Integer registadoPor) {
+        String sql = """
+            INSERT INTO pagamento_seguro
+              (clube_id, atleta_id, escalao_id, epoca, valor_devido, valor_pago,
+               estado, data_pagamento, metodo_pagamento, observacoes, registado_por)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)
+            ON DUPLICATE KEY UPDATE
+              escalao_id=VALUES(escalao_id),
+              valor_devido=VALUES(valor_devido), valor_pago=VALUES(valor_pago),
+              estado=VALUES(estado), data_pagamento=VALUES(data_pagamento),
+              metodo_pagamento=VALUES(metodo_pagamento),
+              observacoes=VALUES(observacoes), registado_por=VALUES(registado_por)
+        """;
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, clubeId);
+            ps.setInt(2, atletaId);
+            if (escalaoId == null) ps.setNull(3, Types.INTEGER); else ps.setInt(3, escalaoId);
+            ps.setString(4, epoca);
+            ps.setDouble(5, valorDevido);
+            ps.setDouble(6, valorPago);
+            ps.setString(7, estado);
+            if (dataPagamento == null) ps.setNull(8, Types.DATE); else ps.setString(8, dataPagamento);
+            if (metodoPagamento == null) ps.setNull(9, Types.VARCHAR); else ps.setString(9, metodoPagamento);
+            if (observacoes == null) ps.setNull(10, Types.VARCHAR); else ps.setString(10, observacoes);
+            if (registadoPor == null) ps.setNull(11, Types.INTEGER); else ps.setInt(11, registadoPor);
+            ps.executeUpdate();
+            ResultSet keys = ps.getGeneratedKeys();
+            if (keys.next()) return keys.getInt(1);
+        } catch (Exception e) {
+            LOGGER.severe(e.toString());
+        }
+        return -1;
+    }
+
+    public boolean atualizarSeguro(int id, double valorDevido, double valorPago, String estado,
+                                    String dataPagamento, String metodoPagamento, String observacoes) {
+        String sql = """
+            UPDATE pagamento_seguro
+            SET valor_devido=?, valor_pago=?, estado=?, data_pagamento=?, metodo_pagamento=?, observacoes=?
+            WHERE id=?
+        """;
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDouble(1, valorDevido);
+            ps.setDouble(2, valorPago);
+            ps.setString(3, estado);
+            if (dataPagamento == null) ps.setNull(4, Types.DATE); else ps.setString(4, dataPagamento);
+            if (metodoPagamento == null) ps.setNull(5, Types.VARCHAR); else ps.setString(5, metodoPagamento);
+            if (observacoes == null) ps.setNull(6, Types.VARCHAR); else ps.setString(6, observacoes);
+            ps.setInt(7, id);
+            return ps.executeUpdate() == 1;
+        } catch (Exception e) {
+            LOGGER.severe(e.toString());
+            return false;
+        }
+    }
+
+    // ==========================================
     // OBTER DADOS DO ATLETA PARA AVISO
     // ==========================================
 

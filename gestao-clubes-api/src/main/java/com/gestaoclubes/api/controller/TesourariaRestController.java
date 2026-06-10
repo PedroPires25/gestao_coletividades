@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,15 @@ public class TesourariaRestController {
         }
     }
 
+    /** Calcula a época desportiva atual: começa em Agosto */
+    private static String epocaAtual() {
+        LocalDate hoje = LocalDate.now();
+        int ano = hoje.getYear();
+        int mes = hoje.getMonthValue();
+        if (mes >= 8) return ano + "/" + (ano + 1);
+        return (ano - 1) + "/" + ano;
+    }
+
     // ==========================================
     // MENSALIDADES POR ESCALÃO
     // ==========================================
@@ -40,9 +50,9 @@ public class TesourariaRestController {
     @GetMapping("/mensalidades/config")
     public List<Map<String, Object>> listarTaxasMensalidade(
             @PathVariable int clubeId,
-            @RequestParam(defaultValue = "2024/2025") String epoca) {
+            @RequestParam(required = false) String epoca) {
         exigirAcessoTesouraria(clubeId);
-        return tesourariaDAO.listarTaxasMensalidade(clubeId, epoca);
+        return tesourariaDAO.listarTaxasMensalidade(clubeId, epoca != null ? epoca : epocaAtual());
     }
 
     @PutMapping("/mensalidades/config")
@@ -66,9 +76,9 @@ public class TesourariaRestController {
     @GetMapping("/inscricoes/config")
     public List<Map<String, Object>> listarTaxasInscricao(
             @PathVariable int clubeId,
-            @RequestParam(defaultValue = "2024/2025") String epoca) {
+            @RequestParam(required = false) String epoca) {
         exigirAcessoTesouraria(clubeId);
-        return tesourariaDAO.listarTaxasInscricao(clubeId, epoca);
+        return tesourariaDAO.listarTaxasInscricao(clubeId, epoca != null ? epoca : epocaAtual());
     }
 
     @PutMapping("/inscricoes/config")
@@ -205,6 +215,74 @@ public class TesourariaRestController {
     }
 
     // ==========================================
+    // SEGUROS
+    // ==========================================
+
+    @GetMapping("/seguros/config")
+    public List<Map<String, Object>> listarTaxasSeguro(
+            @PathVariable int clubeId,
+            @RequestParam(required = false) String epoca) {
+        exigirAcessoTesouraria(clubeId);
+        return tesourariaDAO.listarTaxasSeguro(clubeId, epoca != null ? epoca : epocaAtual());
+    }
+
+    @PutMapping("/seguros/config")
+    public ResponseEntity<?> upsertTaxaSeguro(
+            @PathVariable int clubeId,
+            @RequestBody TaxaSeguroRequest body) {
+        exigirAcessoTesouraria(clubeId);
+        boolean ok = tesourariaDAO.upsertTaxaSeguro(clubeId, body.escalaoId, body.epoca,
+                body.valorSeguro, SecurityUtils.currentUserId());
+        if (ok) {
+            auditLogDAO.inserir(SecurityUtils.currentUserId(), "UPDATE", "seguro_escalao", null,
+                    null, "{\"escalaoId\":" + body.escalaoId + ",\"valor\":" + body.valorSeguro + "}");
+        }
+        return ok ? ResponseEntity.ok().build() : ResponseEntity.internalServerError().build();
+    }
+
+    @GetMapping("/seguros")
+    public List<Map<String, Object>> listarSeguros(
+            @PathVariable int clubeId,
+            @RequestParam(required = false) String epoca,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) Integer atletaId,
+            @RequestParam(required = false) Integer escalaoId) {
+        exigirAcessoTesouraria(clubeId);
+        return tesourariaDAO.listarSeguros(clubeId, epoca, estado, atletaId, escalaoId);
+    }
+
+    @PostMapping("/seguros")
+    public ResponseEntity<?> inserirSeguro(
+            @PathVariable int clubeId,
+            @RequestBody SeguroRequest body) {
+        exigirAcessoTesouraria(clubeId);
+        if (body.atletaId <= 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "atletaId é obrigatório.");
+        if (body.epoca == null || body.epoca.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Época é obrigatória.");
+        int id = tesourariaDAO.inserirSeguro(clubeId, body.atletaId, body.escalaoId, body.epoca,
+                body.valorDevido, body.valorPago, body.estado,
+                body.dataPagamento, body.metodoPagamento, body.observacoes, SecurityUtils.currentUserId());
+        if (id <= 0) return ResponseEntity.internalServerError().build();
+        auditLogDAO.inserir(SecurityUtils.currentUserId(), "CREATE", "pagamento_seguro", id,
+                null, "{\"atletaId\":" + body.atletaId + ",\"epoca\":\"" + body.epoca + "\"}");
+        return ResponseEntity.ok(Map.of("id", id));
+    }
+
+    @PutMapping("/seguros/{id}")
+    public ResponseEntity<?> atualizarSeguro(
+            @PathVariable int clubeId,
+            @PathVariable int id,
+            @RequestBody SeguroRequest body) {
+        exigirAcessoTesouraria(clubeId);
+        boolean ok = tesourariaDAO.atualizarSeguro(id, body.valorDevido, body.valorPago,
+                body.estado, body.dataPagamento, body.metodoPagamento, body.observacoes);
+        if (ok) {
+            auditLogDAO.inserir(SecurityUtils.currentUserId(), "UPDATE", "pagamento_seguro", id,
+                    null, "{\"estado\":\"" + body.estado + "\",\"valorPago\":" + body.valorPago + "}");
+        }
+        return ok ? ResponseEntity.ok().build() : ResponseEntity.internalServerError().build();
+    }
+
+    // ==========================================
     // AVISOS DE PAGAMENTO
     // ==========================================
 
@@ -275,6 +353,24 @@ public class TesourariaRestController {
         public int atletaId;
         public String epoca;
         public double valorInscricao;
+        public String estado;
+        public String dataPagamento;
+        public String metodoPagamento;
+        public String observacoes;
+    }
+
+    static class TaxaSeguroRequest {
+        public int escalaoId;
+        public String epoca;
+        public double valorSeguro;
+    }
+
+    static class SeguroRequest {
+        public int atletaId;
+        public Integer escalaoId;
+        public String epoca;
+        public double valorDevido;
+        public double valorPago;
         public String estado;
         public String dataPagamento;
         public String metodoPagamento;

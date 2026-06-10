@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
@@ -11,10 +11,12 @@ import {
     getDividas, getRecebimentos,
     getInscricoes, criarInscricao, atualizarInscricao,
     enviarAvisos,
+    getTaxasSeguro, upsertTaxaSeguro,
+    getSeguros, criarSeguro, atualizarSeguro,
 } from "../services/tesouraria";
 import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
+import tesourariaIcon from "../assets/tesouraria.svg";
 
-const EPOCAS = ["2025/2026", "2024/2025", "2023/2024", "2022/2023"];
 const MESES = [
     { v: 1, l: "Janeiro" }, { v: 2, l: "Fevereiro" }, { v: 3, l: "Março" },
     { v: 4, l: "Abril" }, { v: 5, l: "Maio" }, { v: 6, l: "Junho" },
@@ -27,6 +29,23 @@ const ESTADOS_INS = ["Pago", "Em dívida", "Isento"];
 
 const ANO_ATUAL = new Date().getFullYear();
 const MES_ATUAL = new Date().getMonth() + 1;
+
+// Época atual: começa em Agosto — se mês >= 8, é ano/ano+1; senão, ano-1/ano
+const EPOCA_ATUAL = MES_ATUAL >= 8
+    ? `${ANO_ATUAL}/${ANO_ATUAL + 1}`
+    : `${ANO_ATUAL - 1}/${ANO_ATUAL}`;
+
+// Gera lista de épocas: próxima + atual + 3 anteriores
+function gerarEpocas() {
+    const [anoInicio] = EPOCA_ATUAL.split("/").map(Number);
+    const epocas = [];
+    for (let i = 1; i >= -3; i--) {
+        const a = anoInicio + i;
+        epocas.push(`${a}/${a + 1}`);
+    }
+    return epocas;
+}
+const EPOCAS = gerarEpocas();
 
 function nomeMes(m) { return MESES.find((x) => x.v === Number(m))?.l || m; }
 
@@ -46,7 +65,7 @@ function EstadoBadge({ estado }) {
     );
 }
 
-const TABS = ["Mensalidades", "Inscrições", "Pagamentos", "Dívidas", "Recebimentos", "Avisos"];
+const TABS = ["Mensalidades", "Inscrições", "Pagamentos", "Dívidas", "Recebimentos", "Avisos", "Seguros"];
 
 export default function TesourariaPage() {
     const { clubeId } = useParams();
@@ -62,12 +81,12 @@ export default function TesourariaPage() {
     const [msg, setMsg] = useState("");
 
     // ---- MENSALIDADES ----
-    const [epocaMens, setEpocaMens] = useState("2024/2025");
+    const [epocaMens, setEpocaMens] = useState(EPOCA_ATUAL);
     const [editMens, setEditMens] = useState({});
     const [savingMens, setSavingMens] = useState(false);
 
     // ---- INSCRIÇÕES CONFIG ----
-    const [epocaIns, setEpocaIns] = useState("2024/2025");
+    const [epocaIns, setEpocaIns] = useState(EPOCA_ATUAL);
     const [editIns, setEditIns] = useState({});
     const [savingIns, setSavingIns] = useState(false);
 
@@ -90,9 +109,9 @@ export default function TesourariaPage() {
 
     // ---- INSCRIÇÕES ATLETAS ----
     const [inscricoes, setInscricoes] = useState([]);
-    const [filtroInsc, setFiltroInsc] = useState({ epoca: "2024/2025", estado: "", atletaId: "" });
+    const [filtroInsc, setFiltroInsc] = useState({ epoca: EPOCA_ATUAL, estado: "", atletaId: "" });
     const [showFormInsc, setShowFormInsc] = useState(false);
-    const [formInsc, setFormInsc] = useState({ atletaId: "", epoca: "2024/2025", valorInscricao: "", estado: "Em dívida", dataPagamento: "", metodoPagamento: "", observacoes: "" });
+    const [formInsc, setFormInsc] = useState({ atletaId: "", epoca: EPOCA_ATUAL, valorInscricao: "", estado: "Em dívida", dataPagamento: "", metodoPagamento: "", observacoes: "" });
     const [savingInsc, setSavingInsc] = useState(false);
     const [editInscId, setEditInscId] = useState(null);
     const [editFormInsc, setEditFormInsc] = useState({});
@@ -104,6 +123,20 @@ export default function TesourariaPage() {
     const [avisoAtletas, setAvisoAtletas] = useState([]);
     const [avisoSelecionados, setAvisoSelecionados] = useState([]);
     const [enviandoAviso, setEnviandoAviso] = useState(false);
+
+    // ---- SEGUROS CONFIG ----
+    const [epocaSeg, setEpocaSeg] = useState(EPOCA_ATUAL);
+    const [editSeg, setEditSeg] = useState({});
+    const [savingSeg, setSavingSeg] = useState(false);
+
+    // ---- SEGUROS ATLETAS ----
+    const [seguros, setSeguros] = useState([]);
+    const [filtroSeg, setFiltroSeg] = useState({ epoca: EPOCA_ATUAL, estado: "", atletaId: "", escalaoId: "" });
+    const [showFormSeg, setShowFormSeg] = useState(false);
+    const [formSeg, setFormSeg] = useState({ atletaId: "", escalaoId: "", epoca: EPOCA_ATUAL, valorDevido: "", valorPago: "0", estado: "Em dívida", dataPagamento: "", metodoPagamento: "", observacoes: "" });
+    const [savingSegForm, setSavingSegForm] = useState(false);
+    const [editSegId, setEditSegId] = useState(null);
+    const [editFormSeg, setEditFormSeg] = useState({});
 
     const menuItems = useMemo(() => [
         { label: "Clube", to: `/clubes/${clubeId}` },
@@ -146,6 +179,7 @@ export default function TesourariaPage() {
         else if (tab === 3) carregarDividas();
         else if (tab === 4) carregarRecebimentos();
         else if (tab === 5) carregarDividasParaAvisos();
+        else if (tab === 6) { carregarTaxasSeg(); carregarSeguros(); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tab, loading]);
 
@@ -222,6 +256,29 @@ export default function TesourariaPage() {
         try {
             const data = await getDividas(clubeId, {});
             setAvisoAtletas(Array.isArray(data) ? data : []);
+        } catch (e) { setErro(e.message); }
+    }
+
+    async function carregarTaxasSeg() {
+        try {
+            const data = await getTaxasSeguro(clubeId, epocaSeg);
+            const arr = Array.isArray(data) ? data : [];
+            const map = {};
+            arr.forEach((r) => { map[r.escalaoId] = r.valorSeguro; });
+            escaloes.forEach((e) => { if (!(e.id in map)) map[e.id] = ""; });
+            setEditSeg(map);
+        } catch (e) { setErro(e.message); }
+    }
+
+    async function carregarSeguros() {
+        try {
+            const data = await getSeguros(clubeId, {
+                epoca: filtroSeg.epoca || undefined,
+                estado: filtroSeg.estado || undefined,
+                atletaId: filtroSeg.atletaId || undefined,
+                escalaoId: filtroSeg.escalaoId || undefined,
+            });
+            setSeguros(Array.isArray(data) ? data : []);
         } catch (e) { setErro(e.message); }
     }
 
@@ -322,7 +379,7 @@ export default function TesourariaPage() {
             });
             setMsg("Inscrição registada.");
             setShowFormInsc(false);
-            setFormInsc({ atletaId: "", epoca: "2024/2025", valorInscricao: "", estado: "Em dívida", dataPagamento: "", metodoPagamento: "", observacoes: "" });
+            setFormInsc({ atletaId: "", epoca: EPOCA_ATUAL, valorInscricao: "", estado: "Em dívida", dataPagamento: "", metodoPagamento: "", observacoes: "" });
             await carregarInscricoes();
         } catch (ex) { setErro(ex.message); }
         finally { setSavingInsc(false); }
@@ -342,6 +399,66 @@ export default function TesourariaPage() {
             setMsg("Inscrição atualizada.");
             setEditInscId(null);
             await carregarInscricoes();
+        } catch (ex) { setErro(ex.message); }
+    }
+
+    // ==========================================
+    // SEGUROS CRUD
+    // ==========================================
+    async function guardarTaxasSeg() {
+        setSavingSeg(true);
+        setErro(""); setMsg("");
+        try {
+            for (const e of escaloes) {
+                const val = parseFloat(editSeg[e.id]);
+                if (isNaN(val) || val < 0) continue;
+                await upsertTaxaSeguro(clubeId, { escalaoId: e.id, epoca: epocaSeg, valorSeguro: val });
+            }
+            setMsg("Valores de seguro guardados com sucesso.");
+            await carregarTaxasSeg();
+        } catch (ex) { setErro(ex.message); }
+        finally { setSavingSeg(false); }
+    }
+
+    async function submeterSeguro(e) {
+        e.preventDefault();
+        if (!formSeg.atletaId) { setErro("Selecione um atleta."); return; }
+        setSavingSegForm(true); setErro(""); setMsg("");
+        try {
+            await criarSeguro(clubeId, {
+                atletaId: Number(formSeg.atletaId),
+                escalaoId: formSeg.escalaoId ? Number(formSeg.escalaoId) : null,
+                epoca: formSeg.epoca,
+                valorDevido: parseFloat(formSeg.valorDevido) || 0,
+                valorPago: parseFloat(formSeg.valorPago) || 0,
+                estado: formSeg.estado,
+                dataPagamento: formSeg.dataPagamento || null,
+                metodoPagamento: formSeg.metodoPagamento || null,
+                observacoes: formSeg.observacoes || null,
+            });
+            setMsg("Seguro registado.");
+            setShowFormSeg(false);
+            setFormSeg({ atletaId: "", escalaoId: "", epoca: EPOCA_ATUAL, valorDevido: "", valorPago: "0", estado: "Em dívida", dataPagamento: "", metodoPagamento: "", observacoes: "" });
+            await carregarSeguros();
+        } catch (ex) { setErro(ex.message); }
+        finally { setSavingSegForm(false); }
+    }
+
+    async function guardarEditSeguro() {
+        if (!editSegId) return;
+        setErro(""); setMsg("");
+        try {
+            await atualizarSeguro(clubeId, editSegId, {
+                valorDevido: parseFloat(editFormSeg.valorDevido) || 0,
+                valorPago: parseFloat(editFormSeg.valorPago) || 0,
+                estado: editFormSeg.estado,
+                dataPagamento: editFormSeg.dataPagamento || null,
+                metodoPagamento: editFormSeg.metodoPagamento || null,
+                observacoes: editFormSeg.observacoes || null,
+            });
+            setMsg("Seguro atualizado.");
+            setEditSegId(null);
+            await carregarSeguros();
         } catch (ex) { setErro(ex.message); }
     }
 
@@ -448,6 +565,27 @@ export default function TesourariaPage() {
         exportToPdf({ data: inscricoes, columns: cols, title: "Inscrições de Atletas", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `inscricoes_${clube?.nome || clubeId}.pdf`, generatedText: "Documento emitido em" });
     }
 
+    function exportSegurosCsv() {
+        const cols = [
+            { key: "atletaNome", label: "Atleta" }, { key: "escalaoNome", label: "Escalão" },
+            { key: "epoca", label: "Época" },
+            { key: "valorDevido", label: "Valor Devido (€)" }, { key: "valorPago", label: "Valor Pago (€)" },
+            { key: "valorDivida", label: "Dívida (€)" }, { key: "estado", label: "Estado" },
+            { key: "dataPagamento", label: "Data Pagamento" }, { key: "metodoPagamento", label: "Método" },
+        ];
+        exportToCsv(seguros, cols, `seguros_${clube?.nome || clubeId}.csv`);
+    }
+
+    function exportSegurosPdf() {
+        const cols = [
+            { key: "atletaNome", label: "Atleta" }, { key: "escalaoNome", label: "Escalão" },
+            { key: "epoca", label: "Época" },
+            { key: "valorDevido", label: "Devido €" }, { key: "valorPago", label: "Pago €" },
+            { key: "estado", label: "Estado" },
+        ];
+        exportToPdf({ data: seguros, columns: cols, title: "Seguros de Atletas", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `seguros_${clube?.nome || clubeId}.pdf`, generatedText: "Documento emitido em" });
+    }
+
     // ==========================================
     // RENDER
     // ==========================================
@@ -457,7 +595,9 @@ export default function TesourariaPage() {
             <div className="container" style={{ paddingTop: 24 }}>
                 <div className="page-title page-title-with-icon">
                     <div className="page-title-main-wrap">
-                        <span className="page-title-icon-circle" style={{ fontSize: "1.6rem" }}>💰</span>
+                        <span className="page-title-icon-circle" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: "50%", background: "var(--color-primary, #6366f1)" }}>
+                                <img src={tesourariaIcon} alt="Tesouraria" style={{ width: 26, height: 26 }} />
+                            </span>
                         <div className="page-title-texts">
                             <h1>Tesouraria</h1>
                             {clube && <div className="hint">{clube.nome}</div>}
@@ -1020,6 +1160,219 @@ export default function TesourariaPage() {
                                 </div>
                             </div>
                         )}
+                        {/* TAB 6 — SEGUROS */}
+                        {tab === 6 && (
+                            <div className="stack-sections">
+                                {/* Configuração de valores por escalão */}
+                                <div className="card">
+                                    <div className="modalidades-toolbar">
+                                        <div className="toolbar-title-group"><h2>Valores de Seguro por Escalão</h2></div>
+                                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                                            <label style={{ fontSize: "0.85rem" }}>Época:</label>
+                                            <select className="input" style={{ width: "auto" }} value={epocaSeg} onChange={(e) => setEpocaSeg(e.target.value)}>
+                                                {EPOCAS.map((ep) => <option key={ep} value={ep}>{ep}</option>)}
+                                            </select>
+                                            <button type="button" className="btn btn-sm" onClick={carregarTaxasSeg}>Carregar</button>
+                                        </div>
+                                    </div>
+                                    <p className="cell-muted" style={{ marginBottom: 12, fontSize: "0.85rem" }}>
+                                        O seguro é pago uma única vez por atleta por época. Defina o valor por escalão.
+                                    </p>
+                                    <div className="table-wrap">
+                                        <table className="dashboard-table">
+                                            <thead><tr><th>Escalão</th><th>Valor Seguro (€)</th></tr></thead>
+                                            <tbody>
+                                                {escaloes.map((e) => (
+                                                    <tr key={e.id}>
+                                                        <td>{e.nome}</td>
+                                                        <td>
+                                                            <input type="number" min="0" step="0.01" className="input"
+                                                                style={{ width: 120, padding: "4px 8px" }}
+                                                                value={editSeg[e.id] ?? ""}
+                                                                onChange={(ev) => setEditSeg((p) => ({ ...p, [e.id]: ev.target.value }))}
+                                                                placeholder="0.00" />
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div className="actions" style={{ marginTop: 12 }}>
+                                        <button type="button" className="btn btn-primary" disabled={savingSeg} onClick={guardarTaxasSeg}>
+                                            {savingSeg ? "A guardar..." : "Guardar valores de seguro"}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Registos de seguro por atleta */}
+                                <div className="card">
+                                    <div className="modalidades-toolbar">
+                                        <div className="toolbar-title-group">
+                                            <h2>Seguros dos Atletas</h2>
+                                            <span className="toolbar-count">{seguros.length}</span>
+                                        </div>
+                                        <div style={{ display: "flex", gap: 6 }}>
+                                            {seguros.length > 0 && <>
+                                                <button type="button" className="btn btn-sm" onClick={exportSegurosCsv}>CSV</button>
+                                                <button type="button" className="btn btn-sm" onClick={exportSegurosPdf}>PDF</button>
+                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: seguros, columns: [{ key: "atletaNome", label: "Atleta" }, { key: "epoca", label: "Época" }, { key: "estado", label: "Estado" }], title: "Seguros de Atletas", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), generatedText: "Documento emitido em" })}>Imprimir</button>
+                                            </>}
+                                            <button type="button" className="btn" onClick={() => { setShowFormSeg((p) => !p); setEditSegId(null); }}>
+                                                {showFormSeg ? "Fechar" : "Registar seguro"}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Filtros */}
+                                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                                        <select className="input" style={{ width: "auto" }} value={filtroSeg.epoca} onChange={(e) => setFiltroSeg((p) => ({ ...p, epoca: e.target.value }))}>
+                                            <option value="">Todas as épocas</option>
+                                            {EPOCAS.map((ep) => <option key={ep} value={ep}>{ep}</option>)}
+                                        </select>
+                                        <select className="input" style={{ width: "auto" }} value={filtroSeg.escalaoId} onChange={(e) => setFiltroSeg((p) => ({ ...p, escalaoId: e.target.value }))}>
+                                            <option value="">Todos os escalões</option>
+                                            {escaloes.map((e) => <option key={e.id} value={e.id}>{e.nome}</option>)}
+                                        </select>
+                                        <select className="input" style={{ width: "auto" }} value={filtroSeg.estado} onChange={(e) => setFiltroSeg((p) => ({ ...p, estado: e.target.value }))}>
+                                            <option value="">Todos os estados</option>
+                                            {ESTADOS_INS.map((s) => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                        <select className="input" style={{ width: "auto" }} value={filtroSeg.atletaId} onChange={(e) => setFiltroSeg((p) => ({ ...p, atletaId: e.target.value }))}>
+                                            <option value="">Todos os atletas</option>
+                                            {atletas.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
+                                        </select>
+                                        <button type="button" className="btn btn-sm" onClick={carregarSeguros}>Filtrar</button>
+                                    </div>
+
+                                    {/* Formulário de registo */}
+                                    {showFormSeg && (
+                                        <form onSubmit={submeterSeguro} className="row" style={{ marginBottom: 16 }}>
+                                            <div className="row2">
+                                                <div className="row">
+                                                    <label className="field-label">Atleta *</label>
+                                                    <select className="input" required value={formSeg.atletaId} onChange={(e) => setFormSeg((p) => ({ ...p, atletaId: e.target.value }))}>
+                                                        <option value="">Selecionar</option>
+                                                        {atletas.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="row">
+                                                    <label className="field-label">Escalão</label>
+                                                    <select className="input" value={formSeg.escalaoId} onChange={(e) => setFormSeg((p) => ({ ...p, escalaoId: e.target.value }))}>
+                                                        <option value="">—</option>
+                                                        {escaloes.map((e) => <option key={e.id} value={e.id}>{e.nome}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="row2">
+                                                <div className="row">
+                                                    <label className="field-label">Época *</label>
+                                                    <select className="input" value={formSeg.epoca} onChange={(e) => setFormSeg((p) => ({ ...p, epoca: e.target.value }))}>
+                                                        {EPOCAS.map((ep) => <option key={ep} value={ep}>{ep}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="row">
+                                                    <label className="field-label">Estado</label>
+                                                    <select className="input" value={formSeg.estado} onChange={(e) => setFormSeg((p) => ({ ...p, estado: e.target.value }))}>
+                                                        {ESTADOS_INS.map((s) => <option key={s} value={s}>{s}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="row2">
+                                                <div className="row">
+                                                    <label className="field-label">Valor Devido (€)</label>
+                                                    <input type="number" min="0" step="0.01" className="input" value={formSeg.valorDevido} onChange={(e) => setFormSeg((p) => ({ ...p, valorDevido: e.target.value }))} placeholder="0.00" />
+                                                </div>
+                                                <div className="row">
+                                                    <label className="field-label">Valor Pago (€)</label>
+                                                    <input type="number" min="0" step="0.01" className="input" value={formSeg.valorPago} onChange={(e) => setFormSeg((p) => ({ ...p, valorPago: e.target.value }))} placeholder="0.00" />
+                                                </div>
+                                            </div>
+                                            <div className="row2">
+                                                <div className="row">
+                                                    <label className="field-label">Data de Pagamento</label>
+                                                    <input type="date" className="input" value={formSeg.dataPagamento} onChange={(e) => setFormSeg((p) => ({ ...p, dataPagamento: e.target.value }))} />
+                                                </div>
+                                                <div className="row">
+                                                    <label className="field-label">{"M\u00e9todo"}</label>
+                                                    <select className="input" value={formSeg.metodoPagamento} onChange={(e) => setFormSeg((p) => ({ ...p, metodoPagamento: e.target.value }))}>
+                                                        <option value="">—</option>
+                                                        {METODOS.map((m) => <option key={m} value={m}>{m}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="row">
+                                                <label className="field-label">Observações</label>
+                                                <textarea className="input" rows={2} value={formSeg.observacoes} onChange={(e) => setFormSeg((p) => ({ ...p, observacoes: e.target.value }))} />
+                                            </div>
+                                            <div className="actions" style={{ marginTop: 8 }}>
+                                                <button type="submit" className="btn btn-primary" disabled={savingSegForm}>{savingSegForm ? "A guardar..." : "Guardar"}</button>
+                                            </div>
+                                        </form>
+                                    )}
+
+                                    {/* Estatísticas rápidas */}
+                                    {seguros.length > 0 && (
+                                        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+                                            {[
+                                                { label: "Pagos", val: seguros.filter((s) => s.estado === "Pago").length, color: "#22c55e" },
+                                                { label: "Em dívida", val: seguros.filter((s) => s.estado === "Em dívida").length, color: "#ef4444" },
+                                                { label: "Isentos", val: seguros.filter((s) => s.estado === "Isento").length, color: "#6366f1" },
+                                                { label: "Total recebido", val: seguros.reduce((s, r) => s + Number(r.valorPago), 0).toFixed(2) + " €", color: "#22c55e" },
+                                                { label: "Total em dívida", val: seguros.reduce((s, r) => s + Number(r.valorDivida), 0).toFixed(2) + " €", color: "#ef4444" },
+                                            ].map(({ label, val, color }) => (
+                                                <div key={label} style={{ padding: "8px 16px", borderRadius: 8, background: color + "15", border: `1px solid ${color}`, minWidth: 120 }}>
+                                                    <div style={{ fontSize: "0.75rem", color, fontWeight: 600 }}>{label}</div>
+                                                    <div style={{ fontSize: "1.1rem", fontWeight: 700, color }}>{val}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Tabela */}
+                                    <div className="table-wrap">
+                                        <table className="dashboard-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Atleta</th>
+                                                    <th>Escalão</th>
+                                                    <th>Época</th>
+                                                    <th>Devido €</th>
+                                                    <th>Pago €</th>
+                                                    <th>Dívida €</th>
+                                                    <th>Estado</th>
+                                                    <th>Data</th>
+                                                    <th>{"M\u00e9todo"}</th>
+                                                    <th>Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {seguros.length === 0 ? (
+                                                    <tr><td colSpan={10} className="cell-muted">Sem seguros registados.</td></tr>
+                                                ) : seguros.map((r) => (
+                                                    <tr key={r.id}>
+                                                        <td>{r.atletaNome}</td>
+                                                        <td className="cell-muted">{r.escalaoNome || "—"}</td>
+                                                        <td>{r.epoca}</td>
+                                                        <td>{Number(r.valorDevido).toFixed(2)}</td>
+                                                        <td>{Number(r.valorPago).toFixed(2)}</td>
+                                                        <td style={{ color: r.valorDivida > 0 ? "#ef4444" : undefined }}>{Number(r.valorDivida).toFixed(2)}</td>
+                                                        <td><EstadoBadge estado={r.estado} /></td>
+                                                        <td className="cell-muted">{r.dataPagamento || "—"}</td>
+                                                        <td className="cell-muted">{r.metodoPagamento || "—"}</td>
+                                                        <td>
+                                                            <button type="button" className="btn" onClick={() => {
+                                                                setEditSegId(r.id);
+                                                                setEditFormSeg({ valorDevido: r.valorDevido, valorPago: r.valorPago, estado: r.estado, dataPagamento: r.dataPagamento || "", metodoPagamento: r.metodoPagamento || "", observacoes: r.observacoes || "" });
+                                                            }}>Editar</button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
             </div>
@@ -1117,6 +1470,57 @@ export default function TesourariaPage() {
                         <div className="modal-footer">
                             <button type="button" className="btn" onClick={() => setEditInscId(null)}>Cancelar</button>
                             <button type="button" className="btn btn-primary" onClick={guardarEditInscricao}>Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL EDITAR SEGURO */}
+            {editSegId && (
+                <div className="modal-overlay" onClick={() => setEditSegId(null)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Editar Seguro</h2>
+                            <button type="button" className="btn-close" onClick={() => setEditSegId(null)}>✕</button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="row2">
+                                <div className="row">
+                                    <label className="field-label">Valor Devido €</label>
+                                    <input type="number" min="0" step="0.01" className="input" value={editFormSeg.valorDevido} onChange={(e) => setEditFormSeg((p) => ({ ...p, valorDevido: e.target.value }))} />
+                                </div>
+                                <div className="row">
+                                    <label className="field-label">Valor Pago €</label>
+                                    <input type="number" min="0" step="0.01" className="input" value={editFormSeg.valorPago} onChange={(e) => setEditFormSeg((p) => ({ ...p, valorPago: e.target.value }))} />
+                                </div>
+                            </div>
+                            <div className="row2">
+                                <div className="row">
+                                    <label className="field-label">Estado</label>
+                                    <select className="input" value={editFormSeg.estado} onChange={(e) => setEditFormSeg((p) => ({ ...p, estado: e.target.value }))}>
+                                        {ESTADOS_INS.map((s) => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </div>
+                                <div className="row">
+                                    <label className="field-label">{"M\u00e9todo"}</label>
+                                    <select className="input" value={editFormSeg.metodoPagamento} onChange={(e) => setEditFormSeg((p) => ({ ...p, metodoPagamento: e.target.value }))}>
+                                        <option value="">—</option>
+                                        {METODOS.map((m) => <option key={m} value={m}>{m}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="row">
+                                <label className="field-label">Data de Pagamento</label>
+                                <input type="date" className="input" value={editFormSeg.dataPagamento} onChange={(e) => setEditFormSeg((p) => ({ ...p, dataPagamento: e.target.value }))} />
+                            </div>
+                            <div className="row">
+                                <label className="field-label">Observações</label>
+                                <textarea className="input" rows={2} value={editFormSeg.observacoes} onChange={(e) => setEditFormSeg((p) => ({ ...p, observacoes: e.target.value }))} />
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn" onClick={() => setEditSegId(null)}>Cancelar</button>
+                            <button type="button" className="btn btn-primary" onClick={guardarEditSeguro}>Guardar</button>
                         </div>
                     </div>
                 </div>
