@@ -148,6 +148,19 @@ public class SecurityUtils {
         return isProfessor() && currentColetividadeId() != null;
     }
 
+    public static boolean isTreinadorColetividade() {
+        return "ROLE_TREINADOR_COLETIVIDADE".equals(currentRole());
+    }
+
+    public static boolean isTreinadorColetividadeComContext() {
+        return isTreinadorColetividade() && currentColetividadeId() != null;
+    }
+
+    /** Professor OU Treinador da Coletividade, ambos com coletividadeId atribuído */
+    public static boolean isProfessorOuTreinadorColetividade() {
+        return isProfessorColetividade() || isTreinadorColetividadeComContext();
+    }
+
     public static boolean canAccessTesouraria(Integer clubeId) {
         if (clubeId == null) return false;
         if (isSuperAdmin()) return true;

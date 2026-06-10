@@ -47,7 +47,7 @@ const eyeButtonStyle = {
 
 const PERFIS_CLUBE = ["ATLETA", "TREINADOR_PRINCIPAL", "DEPARTAMENTO_MEDICO"];
 const PERFIS_COLETIVIDADE = ["UTENTE"];
-const PERFIS_MISTOS = ["ADMINISTRADOR", "STAFF", "SECRETARIO", "PROFESSOR", "USER"];
+const PERFIS_MISTOS = ["ADMINISTRADOR", "STAFF", "SECRETARIO", "PROFESSOR", "TREINADOR_COLETIVIDADE", "USER"];
 
 const PERFIL_LABELS = {
     ADMINISTRADOR: "Administrador",
@@ -55,7 +55,8 @@ const PERFIL_LABELS = {
     ATLETA: "Atleta",
     UTENTE: "Inscrito (Coletividade)",
     STAFF: "Staff",
-    PROFESSOR: "Professor / Treinador",
+    PROFESSOR: "Professor (Coletividade/Clube)",
+    TREINADOR_COLETIVIDADE: "Treinador da Coletividade",
     TREINADOR_PRINCIPAL: "Treinador Principal",
     DEPARTAMENTO_MEDICO: "Departamento Médico",
     SECRETARIO: "Secretário",
@@ -369,6 +370,10 @@ export default function LoginPage() {
         if (PERFIS_MISTOS.includes(rPerfil)) {
             if (!rEstruturaTipo) {
                 setRErro("Seleciona CLUBE ou COLETIVIDADE.");
+                return;
+            }
+            if (rPerfil === "TREINADOR_COLETIVIDADE" && rEstruturaTipo === "CLUBE") {
+                setRErro("O perfil Treinador da Coletividade só pode ser associado a uma Coletividade.");
                 return;
             }
             if (rEstruturaTipo === "CLUBE" && clubes.length === 0) {

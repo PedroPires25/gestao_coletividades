@@ -116,7 +116,7 @@ export default function GestaoEventosColetividadePage() {
         isAdmin,
         isSuperAdmin,
         isSecretario,
-        isProfessorColetividade,
+        isProfessorOuTreinadorColetividade,
         coletividadeId: authColetividadeId,
         atividadeId: authAtividadeId,
         canManageColetividade,
@@ -126,12 +126,12 @@ export default function GestaoEventosColetividadePage() {
     const podeGerir =
         canManageColetividade(Number(coletividadeId)) ||
         (isSecretario && Number(authColetividadeId) === Number(coletividadeId)) ||
-        isProfessorColetividade;
+        isProfessorOuTreinadorColetividade;
 
-    // Professor only manages events for his own activity
+    // Professor/Treinador only manages events for their own activity
     function podeManejarEvento(evento) {
         if (!podeGerir) return false;
-        if (isProfessorColetividade) {
+        if (isProfessorOuTreinadorColetividade) {
             return String(evento.coletividadeAtividadeId) === String(authAtividadeId);
         }
         return true;
@@ -147,13 +147,13 @@ export default function GestaoEventosColetividadePage() {
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState(() => ({
         ...FORM_INICIAL,
-        coletividadeAtividadeId: isProfessorColetividade && authAtividadeId ? String(authAtividadeId) : "",
+        coletividadeAtividadeId: isProfessorOuTreinadorColetividade && authAtividadeId ? String(authAtividadeId) : "",
     }));
     const [editOpen, setEditOpen] = useState(false);
     const [editForm, setEditForm] = useState(FORM_INICIAL);
     const [filtros, setFiltros] = useState({
         estado: "",
-        coletividadeAtividadeId: isProfessorColetividade && authAtividadeId ? String(authAtividadeId) : "",
+        coletividadeAtividadeId: isProfessorOuTreinadorColetividade && authAtividadeId ? String(authAtividadeId) : "",
     });
     const [expanded, setExpanded] = useState({});
     const [inscricoesMap, setInscricoesMap] = useState({});
@@ -440,9 +440,9 @@ export default function GestaoEventosColetividadePage() {
                                     className="input"
                                     name="coletividadeAtividadeId"
                                     value={filtros.coletividadeAtividadeId}
-                                    onChange={isProfessorColetividade ? undefined : onFiltroChange}
-                                    disabled={isProfessorColetividade}
-                                    title={isProfessorColetividade ? "Filtrado pela sua atividade" : undefined}
+                                    onChange={isProfessorOuTreinadorColetividade ? undefined : onFiltroChange}
+                                    disabled={isProfessorOuTreinadorColetividade}
+                                    title={isProfessorOuTreinadorColetividade ? "Filtrado pela sua atividade" : undefined}
                                 >
                                     <option value="">Todas as atividades</option>
                                     {atividades.map((atividade) => (
@@ -482,9 +482,9 @@ export default function GestaoEventosColetividadePage() {
                                                className="input"
                                                name="coletividadeAtividadeId"
                                                value={form.coletividadeAtividadeId}
-                                               onChange={isProfessorColetividade ? undefined : onFormChange}
-                                               disabled={isProfessorColetividade}
-                                               title={isProfessorColetividade ? "Restrito à sua atividade" : undefined}
+                                               onChange={isProfessorOuTreinadorColetividade ? undefined : onFormChange}
+                                               disabled={isProfessorOuTreinadorColetividade}
+                                               title={isProfessorOuTreinadorColetividade ? "Restrito à sua atividade" : undefined}
                                             >
                                                <option value="">Sem atividade específica</option>
                                                {atividades.map((atividade) => (
@@ -704,9 +704,9 @@ export default function GestaoEventosColetividadePage() {
                                         className="input"
                                         name="coletividadeAtividadeId"
                                         value={editForm.coletividadeAtividadeId || ""}
-                                        onChange={isProfessorColetividade ? undefined : onEditChange}
-                                        disabled={isProfessorColetividade}
-                                        title={isProfessorColetividade ? "Restrito à sua atividade" : undefined}
+                                        onChange={isProfessorOuTreinadorColetividade ? undefined : onEditChange}
+                                        disabled={isProfessorOuTreinadorColetividade}
+                                        title={isProfessorOuTreinadorColetividade ? "Restrito à sua atividade" : undefined}
                                     >
                                         <option value="">Sem atividade específica</option>
                                         {atividades.map((atividade) => (
