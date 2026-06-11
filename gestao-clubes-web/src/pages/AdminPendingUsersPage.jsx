@@ -13,7 +13,7 @@ import {
 } from "../api";
 
 export default function AdminPendingUsersPage() {
-    const { logout, isSuperAdmin } = useAuth();
+    const { logout, isSuperAdmin, clubeId, coletividadeId } = useAuth();
     const navigate = useNavigate();
 
     const [users, setUsers] = useState([]);
@@ -48,20 +48,24 @@ export default function AdminPendingUsersPage() {
         setLoading(true);
 
         try {
+            // Backend já deve filtrar com base no perfil logado.
             const [usersData, clubesData, coletividadesData, modalidadesData, atividadesData] = await Promise.all([
                 getAdminUsers("PENDENTE"),
-                getClubes().catch(() => []),
-                getColetividades().catch(() => []),
-                getModalidades({ ativas: true }).catch(() => []),
-                getAtividades().catch(() => []),
+                isSuperAdmin ? getClubes().catch(() => []) : Promise.resolve([]),
+                isSuperAdmin ? getColetividades().catch(() => []) : Promise.resolve([]),
+                isSuperAdmin ? getModalidades({ ativas: true }).catch(() => []) : Promise.resolve([]),
+                isSuperAdmin ? getAtividades().catch(() => []) : Promise.resolve([]),
             ]);
 
             const listaUsers = Array.isArray(usersData) ? usersData : [];
             setUsers(listaUsers);
-            setClubes(Array.isArray(clubesData) ? clubesData : []);
-            setColetividades(Array.isArray(coletividadesData) ? coletividadesData : []);
-            setModalidades(Array.isArray(modalidadesData) ? modalidadesData : []);
-            setAtividades(Array.isArray(atividadesData) ? atividadesData : []);
+
+            if (isSuperAdmin) {
+                setClubes(Array.isArray(clubesData) ? clubesData : []);
+                setColetividades(Array.isArray(coletividadesData) ? coletividadesData : []);
+                setModalidades(Array.isArray(modalidadesData) ? modalidadesData : []);
+                setAtividades(Array.isArray(atividadesData) ? atividadesData : []);
+            }
 
             const drafts = {};
             for (const u of listaUsers) {
@@ -82,7 +86,7 @@ export default function AdminPendingUsersPage() {
 
     useEffect(() => {
         carregar();
-    }, []);
+    }, [isSuperAdmin]);
 
     const filtrados = useMemo(() => {
         const term = q.trim().toLowerCase();
@@ -136,13 +140,25 @@ export default function AdminPendingUsersPage() {
         const draft = afetacaoDrafts[u.id] || {};
 
         try {
-            await updateUserAfetacao(
-                u.id,
-                draft.clubeId === "" ? null : Number(draft.clubeId),
-                draft.modalidadeId === "" ? null : Number(draft.modalidadeId),
-                draft.coletividadeId === "" ? null : Number(draft.coletividadeId),
-                draft.atividadeId === "" ? null : Number(draft.atividadeId)
-            );
+            if (isSuperAdmin) {
+                await updateUserAfetacao(
+                    u.id,
+                    draft.clubeId === "" ? null : Number(draft.clubeId),
+                    draft.modalidadeId === "" ? null : Number(draft.modalidadeId),
+                    draft.coletividadeId === "" ? null : Number(draft.coletividadeId),
+                    draft.atividadeId === "" ? null : Number(draft.atividadeId)
+                );
+            } else {
+                // Se é administrador local, a afetação usa a estrutura do administrador (clube ou coletividade)
+                // e a modalidade/atividade pedida pelo utilizador.
+                await updateUserAfetacao(
+                    u.id,
+                    clubeId ? Number(clubeId) : null,
+                    u.modalidadeId ? Number(u.modalidadeId) : null,
+                    coletividadeId ? Number(coletividadeId) : null,
+                    u.atividadeId ? Number(u.atividadeId) : null
+                );
+            }
 
             await updateUserEstadoRegisto(u.id, "APROVADO");
 
@@ -185,7 +201,7 @@ export default function AdminPendingUsersPage() {
                     <h1>Registos Pendentes</h1>
                     <div className="hint">
                         {isSuperAdmin
-                            ? "Aqui aprovas apenas os pedidos de administradores de clube ou coletividade."
+                            ? "Aqui aprovas os pedidos na plataforma. Podes alterar as afetações antes de aprovar."
                             : "Aqui aprovas ou rejeitas pedidos da tua estrutura. Ao aprovar, o utilizador passa automaticamente para os aprovados."}
                     </div>
                 </div>
@@ -216,21 +232,25 @@ export default function AdminPendingUsersPage() {
                                 <th>Nome</th>
                                 <th>Email</th>
                                 <th>Perfil</th>
-                                <th>Clube</th>
-                                <th>Modalidade</th>
-                                <th>Coletividade</th>
-                                <th>Atividade</th>
+                                {isSuperAdmin && (
+                                    <>
+                                        <th>Clube</th>
+                                        <th>Modalidade</th>
+                                        <th>Coletividade</th>
+                                        <th>Atividade</th>
+                                    </>
+                                )}
                                 <th>Ações</th>
                             </tr>
                             </thead>
                             <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={8} style={{ padding: 14 }}>A carregar...</td>
+                                    <td colSpan={isSuperAdmin ? 8 : 4} style={{ padding: 14 }}>A carregar...</td>
                                 </tr>
                             ) : filtrados.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} style={{ padding: 14 }}>Sem registos pendentes.</td>
+                                    <td colSpan={isSuperAdmin ? 8 : 4} style={{ padding: 14 }}>Sem registos pendentes.</td>
                                 </tr>
                             ) : filtrados.map((u) => {
                                 const saving = savingId === u.id;
@@ -242,67 +262,73 @@ export default function AdminPendingUsersPage() {
                                         <td>{u.email}</td>
                                         <td>{u.role}</td>
 
-                                        <td>
-                                            <select
-                                                className="input"
-                                                value={draft.clubeId ?? ""}
-                                                onChange={(e) => updateAfetacaoField(u.id, "clubeId", e.target.value)}
-                                                disabled={saving || u.role === "SUPER_ADMIN"}
-                                            >
-                                                <option value="">Sem clube</option>
-                                                {clubes.map((c) => (
-                                                    <option key={c.id} value={c.id}>{c.nome}</option>
-                                                ))}
-                                            </select>
-                                        </td>
+                                        {isSuperAdmin && (
+                                            <>
+                                                <td>
+                                                    <select
+                                                        className="input"
+                                                        value={draft.clubeId ?? ""}
+                                                        onChange={(e) => updateAfetacaoField(u.id, "clubeId", e.target.value)}
+                                                        disabled={saving}
+                                                    >
+                                                        <option value="">Sem clube</option>
+                                                        {clubes.map((c) => (
+                                                            <option key={c.id} value={c.id}>{c.nome}</option>
+                                                        ))}
+                                                    </select>
+                                                </td>
 
-                                        <td>
-                                            <select
-                                                className="input"
-                                                value={draft.modalidadeId ?? ""}
-                                                onChange={(e) => updateAfetacaoField(u.id, "modalidadeId", e.target.value)}
-                                                disabled={saving || u.role === "SUPER_ADMIN"}
-                                            >
-                                                <option value="">Sem modalidade</option>
-                                                {modalidades.map((m) => (
-                                                    <option key={m.id} value={m.id}>{m.nome}</option>
-                                                ))}
-                                            </select>
-                                        </td>
+                                                <td>
+                                                    <select
+                                                        className="input"
+                                                        value={draft.modalidadeId ?? ""}
+                                                        onChange={(e) => updateAfetacaoField(u.id, "modalidadeId", e.target.value)}
+                                                        disabled={saving}
+                                                    >
+                                                        <option value="">Sem modalidade</option>
+                                                        {modalidades.map((m) => (
+                                                            <option key={m.id} value={m.id}>{m.nome}</option>
+                                                        ))}
+                                                    </select>
+                                                </td>
 
-                                        <td>
-                                            <select
-                                                className="input"
-                                                value={draft.coletividadeId ?? ""}
-                                                onChange={(e) => updateAfetacaoField(u.id, "coletividadeId", e.target.value)}
-                                                disabled={saving || u.role === "SUPER_ADMIN"}
-                                            >
-                                                <option value="">Sem coletividade</option>
-                                                {coletividades.map((c) => (
-                                                    <option key={c.id} value={c.id}>{c.nome}</option>
-                                                ))}
-                                            </select>
-                                        </td>
+                                                <td>
+                                                    <select
+                                                        className="input"
+                                                        value={draft.coletividadeId ?? ""}
+                                                        onChange={(e) => updateAfetacaoField(u.id, "coletividadeId", e.target.value)}
+                                                        disabled={saving}
+                                                    >
+                                                        <option value="">Sem coletividade</option>
+                                                        {coletividades.map((c) => (
+                                                            <option key={c.id} value={c.id}>{c.nome}</option>
+                                                        ))}
+                                                    </select>
+                                                </td>
 
-                                        <td>
-                                            <select
-                                                className="input"
-                                                value={draft.atividadeId ?? ""}
-                                                onChange={(e) => updateAfetacaoField(u.id, "atividadeId", e.target.value)}
-                                                disabled={saving || u.role === "SUPER_ADMIN"}
-                                            >
-                                                <option value="">Sem atividade</option>
-                                                {atividades.map((a) => (
-                                                    <option key={a.id} value={a.id}>{a.nome}</option>
-                                                ))}
-                                            </select>
-                                        </td>
+                                                <td>
+                                                    <select
+                                                        className="input"
+                                                        value={draft.atividadeId ?? ""}
+                                                        onChange={(e) => updateAfetacaoField(u.id, "atividadeId", e.target.value)}
+                                                        disabled={saving}
+                                                    >
+                                                        <option value="">Sem atividade</option>
+                                                        {atividades.map((a) => (
+                                                            <option key={a.id} value={a.id}>{a.nome}</option>
+                                                        ))}
+                                                    </select>
+                                                </td>
+                                            </>
+                                        )}
 
                                         <td>
                                             <div className="table-actions">
-                                                <button className="btn" type="button" onClick={() => guardarAfetacao(u)} disabled={saving || u.role === "SUPER_ADMIN"}>
-                                                    Guardar afetação
-                                                </button>
+                                                {isSuperAdmin && (
+                                                    <button className="btn" type="button" onClick={() => guardarAfetacao(u)} disabled={saving}>
+                                                        Guardar afetação
+                                                    </button>
+                                                )}
                                                 <button className="btn btn-primary" type="button" onClick={() => aprovar(u)} disabled={saving}>
                                                     Aprovar
                                                 </button>

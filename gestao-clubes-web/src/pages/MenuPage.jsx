@@ -95,7 +95,7 @@ export default function MenuPage() {
         { label: "Home", to: homePath },
         ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
         ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
-        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
+        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users/approved" }] : []),
         ...(canOpenGestaoEventos ? [{ label: "Eventos", to: "/gestao/eventos" }] : []),
         {
             label: "Logout",
@@ -127,7 +127,7 @@ export default function MenuPage() {
             ? [
                   {
                       label: "Perfis",
-                      to: "/admin/users",
+                      to: "/admin/users/approved",
                       icon: MENU_ICONS.Perfis,
                       colorClass: "quick-action-red",
                   },

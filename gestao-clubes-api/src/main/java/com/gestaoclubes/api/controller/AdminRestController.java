@@ -93,12 +93,12 @@ public class AdminRestController {
 
     @GetMapping("/users")
     public List<UtilizadorAdminDto> listarUsers(@RequestParam(value = "estado", required = false) String estado) {
-        if (!SecurityUtils.isSuperAdmin() && !SecurityUtils.isAdministradorEstrutura()) {
+        if (!SecurityUtils.isSuperAdmin() && !isGestorLocal()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissões para consultar utilizadores.");
         }
 
         String estadoFiltro = (estado == null || estado.isBlank()) ? null : estado.trim().toUpperCase();
-        if (SecurityUtils.isAdministradorEstrutura()
+        if (isGestorLocal()
                 && estadoFiltro != null
                 && !"PENDENTE".equals(estadoFiltro)
                 && !"APROVADO".equals(estadoFiltro)) {
@@ -107,7 +107,7 @@ public class AdminRestController {
                     "Os administradores de estrutura só podem consultar registos pendentes ou aprovados."
             );
         }
-        if (SecurityUtils.isAdministradorEstrutura() && estadoFiltro == null) {
+        if (isGestorLocal() && estadoFiltro == null) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "Os administradores de estrutura devem filtrar por estado (PENDENTE ou APROVADO)."
@@ -699,7 +699,7 @@ public class AdminRestController {
 
         String role = perfilDAO.obterDescricaoPerfil(utilizador.getPerfilId());
         if (SecurityUtils.isSuperAdmin()) {
-            return !"PENDENTE".equals(estadoFiltro) || PerfilDAO.ADMINISTRADOR.equals(role);
+            return true;
         }
 
         if ("PENDENTE".equals(estadoFiltro)) {
@@ -714,7 +714,7 @@ public class AdminRestController {
     }
 
     private boolean podeConsultarAprovado(Utilizador utilizador, String role) {
-        if (!SecurityUtils.isAdministradorEstrutura()) return false;
+        if (!isGestorLocal()) return false;
         if (utilizador == null || role == null) return false;
         if (!"APROVADO".equalsIgnoreCase(utilizador.getEstadoRegisto())) return false;
         if (perfilDAO.isPerfilAdministrativo(role)) return false;
@@ -731,7 +731,7 @@ public class AdminRestController {
         if (utilizador == null || role == null) return false;
 
         if (SecurityUtils.isSuperAdmin()) {
-            return PerfilDAO.ADMINISTRADOR.equals(role);
+            return true;
         }
 
         return podeGerirPedidoPendente(utilizador, role);
@@ -756,7 +756,7 @@ public class AdminRestController {
     }
 
     private boolean podeGerirPedidoPendente(Utilizador utilizador, String role) {
-        if (!SecurityUtils.isAdministradorEstrutura()) return false;
+        if (!isGestorLocal()) return false;
         if (utilizador == null || role == null) return false;
         if (!"PENDENTE".equalsIgnoreCase(utilizador.getEstadoRegisto())) return false;
         if (perfilDAO.isPerfilAdministrativo(role)) return false;
@@ -779,5 +779,9 @@ public class AdminRestController {
             auditLogDAO.inserir(adminId, acao, "utilizadores", entidadeId, antesJson, depoisJson);
         } catch (Exception ignored) {
         }
+    }
+
+    private boolean isGestorLocal() {
+        return SecurityUtils.isAdministradorEstrutura() || SecurityUtils.isSecretario();
     }
 }
