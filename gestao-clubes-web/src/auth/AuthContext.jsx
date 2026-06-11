@@ -53,10 +53,11 @@ export function AuthProvider({ children }) {
         const isScopedAdmin = role === "ADMINISTRADOR";
         const scopedAdminActive = isScopedAdmin && (session?.user?.privilegiosAtivos ?? false);
         const isAdmin = isSuperAdmin || scopedAdminActive;
+        const isSecretario = role === "SECRETARIO";
+        const isGestorLocal = scopedAdminActive || isSecretario;
 
         const isDepartamentoMedico = role === "DEPARTAMENTO_MEDICO";
         const isTreinador = role === "TREINADOR_PRINCIPAL";
-        const isSecretario = role === "SECRETARIO";
         const isProfessorColetividade = role === "PROFESSOR" && !!session?.user?.coletividadeId;
         const isTreinadorColetividade = role === "TREINADOR_COLETIVIDADE" && !!session?.user?.coletividadeId;
         const isProfessorOuTreinadorColetividade = isProfessorColetividade || isTreinadorColetividade;
@@ -72,9 +73,10 @@ export function AuthProvider({ children }) {
             isAdmin,
             isSuperAdmin,
             isScopedAdmin,
+            isSecretario,
+            isGestorLocal,
             isDepartamentoMedico,
             isTreinador,
-            isSecretario,
             isProfessorColetividade,
             isTreinadorColetividade,
             isProfessorOuTreinadorColetividade,

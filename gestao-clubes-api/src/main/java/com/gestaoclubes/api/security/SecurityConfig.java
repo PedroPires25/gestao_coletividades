@@ -55,9 +55,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/atividades").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/uploads/**").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/admin/users").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.PUT, "/api/admin/users/*/estado-registo").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.PUT, "/api/admin/users/*/afetacao").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/users").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR", "SECRETARIO")
+                        .requestMatchers(HttpMethod.PUT, "/api/admin/users/*/estado-registo").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR", "SECRETARIO")
+                        .requestMatchers(HttpMethod.PUT, "/api/admin/users/*/afetacao").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR", "SECRETARIO")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/profiles").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR", "SECRETARIO")
                         .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
 
 

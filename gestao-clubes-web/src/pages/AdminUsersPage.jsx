@@ -31,6 +31,11 @@ export default function AdminUsersPage() {
     ];
 
     useEffect(() => {
+        if (!isSuperAdmin) {
+            navigate("/admin/users/approved", { replace: true });
+            return;
+        }
+
         async function load() {
             setLoading(true);
             try {
@@ -47,7 +52,7 @@ export default function AdminUsersPage() {
             }
         }
         load();
-    }, []);
+    }, [isSuperAdmin, navigate]);
 
     async function handleUpdate(userId, action, value) {
         try {
@@ -69,6 +74,10 @@ export default function AdminUsersPage() {
         } catch (e) {
             alert(e.message || "Erro ao atualizar.");
         }
+    }
+
+    if (!isSuperAdmin) {
+        return null; // or a loading indicator
     }
 
     return (
