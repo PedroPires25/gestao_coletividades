@@ -10,6 +10,7 @@ import { getModalidadesByClube, getAtletasByClubeModalidade } from "../services/
 import { getAtividadesByColetividade } from "../services/coletividadeAtividades";
 import { getUtentesByColetividadeAtividade } from "../services/utentes";
 import { API_BASE } from "../config/apiBase";
+import { getHomePathByRole } from "../utils/navigation";
 
 const LS_KEY = "gc_user";
 
@@ -67,6 +68,7 @@ const FORM_EMPTY = {
 
 export default function GestaoEventosPage() {
     const {
+        user,
         logout,
         isAdmin,
         isSuperAdmin,
@@ -182,8 +184,9 @@ export default function GestaoEventosPage() {
         }
     }, []);
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    useEffect(() => { carregarEventos(); }, [carregarEventos]);
+    useEffect(() => {
+        carregarEventos();
+    }, [carregarEventos]);
 
     useEffect(() => {
         let active = true;
@@ -238,7 +241,6 @@ export default function GestaoEventosPage() {
 
     useEffect(() => {
         if (!showForm && !editingId) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setForm(criarFormularioBase(form.tipo));
         }
     }, [
@@ -246,10 +248,6 @@ export default function GestaoEventosPage() {
         editingId,
         form.tipo,
         criarFormularioBase,
-        currentClubeId,
-        currentModalidadeId,
-        currentColetividadeId,
-        currentAtividadeId,
     ]);
 
     // Carrega modalidades quando o clube muda
@@ -265,7 +263,6 @@ export default function GestaoEventosPage() {
                 })
                 .catch(() => setModalidades([]));
         } else {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setModalidades([]);
         }
     }, [form.clubeId, form.tipo, canChooseEstruturaLivremente, currentModalidadeId]);
@@ -277,7 +274,6 @@ export default function GestaoEventosPage() {
                 .then(d => setAtletas(Array.isArray(d) ? d : []))
                 .catch(() => setAtletas([]));
         } else {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setAtletas([]);
         }
     }, [form.clubeModalidadeId, form.clubeId, form.tipo]);
@@ -295,7 +291,6 @@ export default function GestaoEventosPage() {
                 })
                 .catch(() => setAtividades([]));
         } else {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setAtividades([]);
         }
     }, [form.coletividadeId, form.tipo, canChooseEstruturaLivremente, currentAtividadeId]);
@@ -307,7 +302,6 @@ export default function GestaoEventosPage() {
                 .then(d => setUtentes(Array.isArray(d) ? d : []))
                 .catch(() => setUtentes([]));
         } else {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setUtentes([]);
         }
     }, [form.coletividadeAtividadeId, form.coletividadeId, form.tipo]);
@@ -423,8 +417,10 @@ export default function GestaoEventosPage() {
         !convocadosSearch || (p.nome || "").toLowerCase().includes(convocadosSearch.toLowerCase())
     );
 
+    const homePath = useMemo(() => getHomePathByRole(user), [user]);
+
     const menuItems = [
-        { label: "Home", to: "/menu" },
+        { label: "Home", to: homePath },
         ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
         ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
@@ -440,7 +436,7 @@ export default function GestaoEventosPage() {
             <SideMenu
                 title="Gestão de Eventos"
                 subtitle="Eventos"
-                logoHref="/menu"
+                logoHref={homePath}
                 logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
@@ -450,10 +446,10 @@ export default function GestaoEventosPage() {
                     <button
                         type="button"
                         className="btn btn-secondary"
-                        onClick={() => navigate("/menu")}
+                        onClick={() => navigate(homePath)}
                         style={{ whiteSpace: "nowrap" }}
                     >
-                        ← Voltar ao Menu
+                        ← Voltar
                     </button>
                     <h1 className="page-title" style={{ margin: 0, flex: 1 }}>📅 Gestão de Eventos</h1>
                     {canManage && !showForm && (

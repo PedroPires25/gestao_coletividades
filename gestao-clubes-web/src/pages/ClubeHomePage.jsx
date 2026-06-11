@@ -4,6 +4,7 @@ import SideMenu from "../components/SideMenu";
 import { getClubeById } from "../api";
 import { useAuth } from "../auth/AuthContext";
 import { getUploadUrl } from "../api";
+import { getHomePathByRole } from "../utils/navigation";
 import defaultLogo from "../assets/default-logo.svg";
 
 import modalidadesIcon from "../assets/modalidades.svg";
@@ -33,7 +34,7 @@ const QUICK_ICONS = {
 export default function ClubeHomePage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin, isScopedAdmin, isDepartamentoMedico, isTreinador, isSecretario, canManageClube } = useAuth();
+    const { user, logout, isAdmin, isSuperAdmin, isScopedAdmin, isDepartamentoMedico, isTreinador, isSecretario, canManageClube } = useAuth();
 
     const [clube, setClube] = useState(null);
     const [erro, setErro] = useState("");
@@ -72,10 +73,11 @@ export default function ClubeHomePage() {
     }, [clubeId]);
 
     const subtitle = loading ? "A carregar..." : clube?.nome || `Clube #${clubeId}`;
+    const homePath = useMemo(() => getHomePathByRole(user), [user]);
 
     const menuItems = useMemo(
         () => [
-            { label: "Home", to: "/menu" },
+            { label: "Home", to: homePath },
             ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
             ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
@@ -92,7 +94,7 @@ export default function ClubeHomePage() {
                 },
             },
         ],
-        [clubeId, isAdmin, isScopedAdmin, isSuperAdmin, isDepartamentoMedico, isTreinador, isSecretario, canManageClube, logout, navigate]
+        [clubeId, isAdmin, isScopedAdmin, isSuperAdmin, isDepartamentoMedico, isTreinador, isSecretario, canManageClube, logout, navigate, homePath]
     );
 
     const quickLinks = [
@@ -121,7 +123,7 @@ export default function ClubeHomePage() {
             <SideMenu
                 title="Gestão de Coletividades"
                 subtitle={subtitle}
-                logoHref="/menu"
+                logoHref={homePath}
                 logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />

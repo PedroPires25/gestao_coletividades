@@ -1,105 +1,10 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { apiLogin } from "../api";
 import { useTheme } from "../theme/ThemeContext";
+import { getHomePathByRole } from "../utils/navigation";
 
 const AuthContext = createContext(null);
 const LS_KEY = "gc_user";
-
-function calcularRedirectUrl(user) {
-    if (!user) return "/menu";
-    
-    const { role, clubeId, modalidadeId, coletividadeId, atividadeId, estadoRegisto } = user;
-
-    // Se não está aprovado, será tratado em outro lugar
-    if (estadoRegisto !== "APROVADO") {
-        return null;
-    }
-
-    switch (role) {
-        case "SUPER_ADMIN":
-            return "/admin/users";
-
-        case "ADMINISTRADOR":
-            if (clubeId) {
-                return `/clubes/${clubeId}`;
-            }
-            if (coletividadeId) {
-                return `/coletividades/${coletividadeId}`;
-            }
-            return "/menu";
-
-        case "ATLETA":
-            if (clubeId && modalidadeId) {
-                return `/clubes/${clubeId}/clube-modalidade/${modalidadeId}/modalidade`;
-            }
-            return null;
-
-        case "TREINADOR_PRINCIPAL":
-            if (clubeId) {
-                // Redireciona diretamente para o Módulo de Treinador
-                return `/clubes/${clubeId}/treinador`;
-            }
-            return null;
-
-        case "DEPARTAMENTO_MEDICO":
-            if (clubeId) {
-                return `/clubes/${clubeId}/medico`;
-            }
-            return null;
-
-        case "STAFF":
-            if (clubeId && modalidadeId) {
-                return `/clubes/${clubeId}/clube-modalidade/${modalidadeId}/modalidade`;
-            }
-            if (clubeId) {
-                return `/clubes/${clubeId}`;
-            }
-            if (coletividadeId) {
-                return `/coletividades/${coletividadeId}`;
-            }
-            return null;
-
-        case "PROFESSOR":
-            if (clubeId && modalidadeId) {
-                return `/clubes/${clubeId}/clube-modalidade/${modalidadeId}/modalidade`;
-            }
-            if (clubeId) {
-                return `/clubes/${clubeId}`;
-            }
-            if (coletividadeId) {
-                return `/coletividades/${coletividadeId}/professor`;
-            }
-            return null;
-
-        case "TREINADOR_COLETIVIDADE":
-            if (coletividadeId) {
-                return `/coletividades/${coletividadeId}/treinador`;
-            }
-            return null;
-
-        case "SECRETARIO":
-            if (clubeId) return `/clubes/${clubeId}`;
-            if (coletividadeId) return `/coletividades/${coletividadeId}`;
-            return "/menu";
-
-        case "UTENTE":
-            if (coletividadeId && atividadeId) {
-                return `/coletividades/${coletividadeId}/utentes/atividades/${atividadeId}`;
-            }
-            return null;
-
-        case "USER": {
-            const clubeId = user.clubeId ?? null;
-            const coletividadeId = user.coletividadeId ?? null;
-            if (clubeId) return `/minha-area/clube/${clubeId}`;
-            if (coletividadeId) return `/minha-area/coletividade/${coletividadeId}`;
-            return "/menu";
-        }
-
-        default:
-            return "/menu";
-    }
-}
 
 export function AuthProvider({ children }) {
     const { resetTheme, applyUserTheme } = useTheme();
@@ -117,7 +22,7 @@ export function AuthProvider({ children }) {
         const response = await apiLogin(email.trim(), password);
         
         if (response?.user) {
-            response.redirectUrl = calcularRedirectUrl(response.user);
+            response.redirectUrl = getHomePathByRole(response.user);
             applyUserTheme(response.user.temaPreferido);
         }
         
@@ -143,7 +48,7 @@ export function AuthProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const value = useMemo(() => {
         const role = session?.user?.role ?? null;
-        const redirectUrl = session?.redirectUrl ?? calcularRedirectUrl(session?.user) ?? "/menu";
+        const redirectUrl = session?.redirectUrl ?? getHomePathByRole(session?.user) ?? "/menu";
         const isSuperAdmin = role === "SUPER_ADMIN";
         const isScopedAdmin = role === "ADMINISTRADOR";
         const scopedAdminActive = isScopedAdmin && (session?.user?.privilegiosAtivos ?? false);

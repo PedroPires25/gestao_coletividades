@@ -1,29 +1,37 @@
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { getHomePathByRole } from "../utils/navigation";
 
 export default function AcessoNegadoPage() {
+    const { user } = useAuth();
     const navigate = useNavigate();
-    const { clubeId, coletividadeId, isSuperAdmin } = useAuth();
+    const homePath = useMemo(() => getHomePathByRole(user), [user]);
 
-    function voltar() {
-        if (isSuperAdmin) {
-            navigate("/menu");
-        } else if (clubeId) {
-            navigate(`/clubes/${clubeId}`);
-        } else if (coletividadeId) {
-            navigate(`/coletividades/${coletividadeId}`);
-        } else {
-            navigate("/menu");
-        }
-    }
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (homePath) {
+                navigate(homePath, { replace: true });
+            }
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [homePath, navigate]);
 
     return (
-        <div style={{ padding: 40, textAlign: "center" }}>
-            <h1>🚫 Acesso não autorizado</h1>
-            <p style={{ marginTop: 12 }}>Não tens permissões para aceder a esta página.</p>
-            <button className="btn btn-primary" style={{ marginTop: 24 }} onClick={voltar}>
-                Voltar
-            </button>
+        <div className="login-page">
+            <div className="login-shell">
+                <div className="login-card fade-in">
+                    <div className="login-card-top">
+                        <h1 className="login-title">🚫 Acesso Negado</h1>
+                        <p className="login-sub">
+                            Não tem permissão para aceder a esta página.
+                            <br />
+                            A ser redirecionado para a sua página inicial em 3 segundos...
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
