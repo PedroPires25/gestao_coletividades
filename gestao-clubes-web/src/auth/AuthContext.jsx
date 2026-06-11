@@ -48,7 +48,6 @@ function calcularRedirectUrl(user) {
             return null;
 
         case "STAFF":
-        case "PROFESSOR":
             if (clubeId && modalidadeId) {
                 return `/clubes/${clubeId}/clube-modalidade/${modalidadeId}/modalidade`;
             }
@@ -57,6 +56,24 @@ function calcularRedirectUrl(user) {
             }
             if (coletividadeId) {
                 return `/coletividades/${coletividadeId}`;
+            }
+            return null;
+
+        case "PROFESSOR":
+            if (clubeId && modalidadeId) {
+                return `/clubes/${clubeId}/clube-modalidade/${modalidadeId}/modalidade`;
+            }
+            if (clubeId) {
+                return `/clubes/${clubeId}`;
+            }
+            if (coletividadeId) {
+                return `/coletividades/${coletividadeId}/professor`;
+            }
+            return null;
+
+        case "TREINADOR_COLETIVIDADE":
+            if (coletividadeId) {
+                return `/coletividades/${coletividadeId}/treinador`;
             }
             return null;
 
@@ -135,6 +152,9 @@ export function AuthProvider({ children }) {
         const isDepartamentoMedico = role === "DEPARTAMENTO_MEDICO";
         const isTreinador = role === "TREINADOR_PRINCIPAL";
         const isSecretario = role === "SECRETARIO";
+        const isProfessorColetividade = role === "PROFESSOR" && !!session?.user?.coletividadeId;
+        const isTreinadorColetividade = role === "TREINADOR_COLETIVIDADE" && !!session?.user?.coletividadeId;
+        const isProfessorOuTreinadorColetividade = isProfessorColetividade || isTreinadorColetividade;
 
         return {
             session,
@@ -150,6 +170,9 @@ export function AuthProvider({ children }) {
             isDepartamentoMedico,
             isTreinador,
             isSecretario,
+            isProfessorColetividade,
+            isTreinadorColetividade,
+            isProfessorOuTreinadorColetividade,
             privilegiosAtivos: session?.user?.privilegiosAtivos ?? false,
             estadoRegisto: session?.user?.estadoRegisto ?? null,
             clubeId: session?.user?.clubeId ?? null,

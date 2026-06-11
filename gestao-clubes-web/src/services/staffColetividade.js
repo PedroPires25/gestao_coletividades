@@ -14,7 +14,6 @@ function getStoredToken() {
 
 async function http(path, options = {}) {
     const token = getStoredToken();
-
     const headers = {
         "Content-Type": "application/json",
         ...(options.headers || {}),
@@ -60,6 +59,19 @@ export async function createStaffColetividade(coletividadeId, payload) {
     return http(`/coletividades/${coletividadeId}/staff`, {
         method: "POST",
         body: JSON.stringify(payload),
+    });
+}
+
+export async function updateStaffColetividade(coletividadeId, staffId, payload) {
+    return http(`/coletividades/${coletividadeId}/staff/${staffId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function removerAfetacaoStaff(coletividadeId, staffId, afetacaoId) {
+    return http(`/coletividades/${coletividadeId}/staff/${staffId}/afetacao/${afetacaoId}`, {
+        method: "DELETE",
     });
 }
 

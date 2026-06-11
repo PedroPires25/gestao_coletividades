@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 @Repository
 public class StaffColetividadeDAO {
@@ -93,10 +94,10 @@ public class StaffColetividadeDAO {
 
             try (PreparedStatement ps = conn.prepareStatement(sqlStaff, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, nome);
-                ps.setString(2, email);
-                ps.setString(3, telefone);
-                ps.setString(4, morada);
-                ps.setString(5, numRegisto);
+                setNullableString(ps, 2, email);
+                setNullableString(ps, 3, telefone);
+                setNullableString(ps, 4, morada);
+                setNullableString(ps, 5, numRegisto);
                 ps.setDouble(6, remuneracao == null ? 0.0 : remuneracao);
                 ps.executeUpdate();
 
@@ -121,9 +122,9 @@ public class StaffColetividadeDAO {
                 ps.setInt(2, coletividadeId);
                 ps.setInt(3, coletividadeAtividadeId);
                 ps.setInt(4, cargoId);
-                ps.setString(5, dataInicio);
-                ps.setString(6, dataFim);
-                ps.setString(7, observacoes);
+                setNullableString(ps, 5, dataInicio);
+                setNullableString(ps, 6, dataFim);
+                setNullableString(ps, 7, observacoes);
                 ps.executeUpdate();
             }
 
@@ -142,5 +143,136 @@ public class StaffColetividadeDAO {
             } catch (Exception ignored) {
             }
         }
+    }
+
+    public boolean atualizarStaff(
+            int staffId,
+            String nome,
+            String email,
+            String telefone,
+            String morada,
+            String numRegisto,
+            Double remuneracao,
+            Integer afetacaoId,
+            String dataInicio,
+            String dataFim,
+            String observacoes
+    ) {
+        Connection conn = null;
+        try {
+            conn = ConexoBD.getConnection();
+            conn.setAutoCommit(false);
+
+            String sqlStaff = """
+                UPDATE staff_coletividade
+                SET nome = ?, email = ?, telefone = ?, morada = ?, num_registo = ?, remuneracao = ?
+                WHERE id = ?
+            """;
+
+            try (PreparedStatement ps = conn.prepareStatement(sqlStaff)) {
+                ps.setString(1, nome);
+                setNullableString(ps, 2, email);
+                setNullableString(ps, 3, telefone);
+                setNullableString(ps, 4, morada);
+                setNullableString(ps, 5, numRegisto);
+                ps.setDouble(6, remuneracao == null ? 0.0 : remuneracao);
+                ps.setInt(7, staffId);
+                ps.executeUpdate();
+            }
+
+            if (afetacaoId != null) {
+                String sqlAfetacao = """
+                    UPDATE staff_coletividade_afetacao
+                    SET data_inicio = ?, data_fim = ?, observacoes = ?
+                    WHERE id = ? AND staff_coletividade_id = ?
+                """;
+
+                try (PreparedStatement ps = conn.prepareStatement(sqlAfetacao)) {
+                    setNullableString(ps, 1, dataInicio);
+                    setNullableString(ps, 2, dataFim);
+                    setNullableString(ps, 3, observacoes);
+                    ps.setInt(4, afetacaoId);
+                    ps.setInt(5, staffId);
+                    ps.executeUpdate();
+                }
+            }
+
+            conn.commit();
+            return true;
+        } catch (Exception e) {
+            LOGGER.severe(e.toString());
+            try {
+                if (conn != null) conn.rollback();
+            } catch (Exception ignored) {
+            }
+            return false;
+        } finally {
+            try {
+                if (conn != null) conn.setAutoCommit(true);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    public boolean removerAfetacao(int afetacaoId) {
+        String sql = "DELETE FROM staff_coletividade_afetacao WHERE id = ?";
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, afetacaoId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            LOGGER.severe(e.toString());
+            return false;
+        }
+    }
+
+    public boolean staffPertenceColetividade(int coletividadeId, int staffId) {
+        String sql = """
+            SELECT 1
+            FROM staff_coletividade_afetacao
+            WHERE coletividade_id = ?
+              AND staff_coletividade_id = ?
+            LIMIT 1
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, coletividadeId);
+            ps.setInt(2, staffId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            LOGGER.severe(e.toString());
+            return false;
+        }
+    }
+
+    public boolean afetacaoPertenceAoStaff(int coletividadeId, int staffId, int afetacaoId) {
+        String sql = """
+            SELECT 1
+            FROM staff_coletividade_afetacao
+            WHERE id = ?
+              AND staff_coletividade_id = ?
+              AND coletividade_id = ?
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, afetacaoId);
+            ps.setInt(2, staffId);
+            ps.setInt(3, coletividadeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            LOGGER.severe(e.toString());
+            return false;
+        }
+    }
+
+    private void setNullableString(PreparedStatement ps, int index, String value) throws SQLException {
+        if (value == null || value.isBlank()) ps.setNull(index, Types.VARCHAR);
+        else ps.setString(index, value);
     }
 }

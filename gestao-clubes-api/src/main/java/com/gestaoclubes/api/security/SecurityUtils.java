@@ -135,4 +135,36 @@ public class SecurityUtils {
         if (isSuperAdmin()) return true;
         return isAdministradorEstrutura() && coletividadeId.equals(currentColetividadeId());
     }
+
+    public static boolean isSecretario() {
+        return "ROLE_SECRETARIO".equals(currentRole());
+    }
+
+    public static boolean isProfessor() {
+        return "ROLE_PROFESSOR".equals(currentRole());
+    }
+
+    public static boolean isProfessorColetividade() {
+        return isProfessor() && currentColetividadeId() != null;
+    }
+
+    public static boolean isTreinadorColetividade() {
+        return "ROLE_TREINADOR_COLETIVIDADE".equals(currentRole());
+    }
+
+    public static boolean isTreinadorColetividadeComContext() {
+        return isTreinadorColetividade() && currentColetividadeId() != null;
+    }
+
+    /** Professor OU Treinador da Coletividade, ambos com coletividadeId atribuído */
+    public static boolean isProfessorOuTreinadorColetividade() {
+        return isProfessorColetividade() || isTreinadorColetividadeComContext();
+    }
+
+    public static boolean canAccessTesouraria(Integer clubeId) {
+        if (clubeId == null) return false;
+        if (isSuperAdmin()) return true;
+        if (isAdministradorEstrutura() && clubeId.equals(currentClubeId())) return true;
+        return isSecretario() && clubeId.equals(currentClubeId());
+    }
 }
