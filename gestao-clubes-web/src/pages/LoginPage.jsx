@@ -12,6 +12,7 @@ import PasswordChecklist from "../components/PasswordChecklist";
 import ConfirmPasswordStatus from "../components/ConfirmPasswordStatus";
 import { useTheme } from "../theme/ThemeContext";
 import { evaluatePassword } from "../utils/passwordStrength";
+import { useAppLogo } from "../hooks/useAppLogo";
 
 const EyeOpenIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -66,6 +67,7 @@ export default function LoginPage() {
     const { login } = useAuth();
     const { theme, setTheme } = useTheme();
     const navigate = useNavigate();
+    const logoSrc = useAppLogo();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -433,7 +435,7 @@ export default function LoginPage() {
         <div className="login-page">
             <a href="/" className="login-brand" aria-label="Gestão de Coletividades">
                 <img
-                    src="/LOGO_GCDC.png"
+                    src={logoSrc}
                     alt="Gestão de Clubes Desportivos e Coletividades"
                     className="login-logo-fixed"
                 />

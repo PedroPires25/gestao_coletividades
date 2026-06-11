@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../auth/AuthContext";
 import UserAvatar from "./UserAvatar";
+import { useAppLogo } from "../hooks/useAppLogo";
 
 import homeIcon from "../assets/home.svg";
 import clubesIcon from "../assets/clubes.svg";
@@ -66,7 +67,6 @@ function getIcon(label) {
 export default function SideMenu({
                                      title = "Gestão de Coletividades",
                                      subtitle = "",
-                                     logoSrc = "/LOGO_GCDC04.png",
                                      items = [],
                                      showBurger = true,
                                      eventoBadge = null,
@@ -74,6 +74,7 @@ export default function SideMenu({
     const [open, setOpen] = useState(false);
     const { theme, setTheme } = useTheme();
     const { isTreinador, isDepartamentoMedico, clubeId } = useAuth(); // Usar o hook de autenticação
+    const logoSrc = useAppLogo();
 
     // Determinar o link do logo com base no perfil
     const logoHref = useMemo(() => {
