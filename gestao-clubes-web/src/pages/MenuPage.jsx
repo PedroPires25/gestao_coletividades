@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import * as eventosService from "../services/eventos";
@@ -36,27 +36,29 @@ const MENU_ICONS = {
     "Modalidades do Clube": modalidadesIcon,
     Atletas: atletasIcon,
     Staff: staffIcon,
-    Transferências: transferenciasIcon,
+    Transferencias: transferenciasIcon,
     utilizadoresAprovar: utilizadoresAprovarIcon,
     utilizadoresAutorizados: utilizadoresAutorizadosIcon,
     Eventos: eventosIcon,
-    "Módulo Clínico": departamentoMedicoIcon,
-    "Módulo de Treinador": staffIcon,
+    "Modulo Clinico": departamentoMedicoIcon,
+    "Modulo de Treinador": staffIcon,
     "Eventos do Clube": eventosIcon,
     "Voltar ao Clube": clubesIcon,
     "Voltar": homeIcon,
-    "Direção": direcaoIcon,
-    "Treinos": treinoIcon,
+    Direcao: direcaoIcon,
+    Treinos: treinoIcon,
     "Plano de Treino": planoTreinoIcon,
-    "Estatísticas": estatisticasIcon,
-    "Convocatórias": convocatoriasIcon,
+    Estatisticas: estatisticasIcon,
+    Convocatorias: convocatoriasIcon,
 };
 
 export default function MenuPage() {
     const { user, logout, isAdmin, isSuperAdmin, role, clubeId } = useAuth();
     const navigate = useNavigate();
-    const [meusEventos, setMeusEventos] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [eventosState, setEventosState] = useState({
+        clubeId: null,
+        eventos: [],
+    });
     const canOpenGestaoEventos =
         isAdmin ||
         role === "SECRETARIO" ||
@@ -72,30 +74,38 @@ export default function MenuPage() {
         }
     }, [user, isSuperAdmin, homePath, navigate]);
 
-    const carregarMeusEventos = useCallback(async () => {
-        try {
-            setLoading(true);
-            const eventos = await eventosService.listarMeusEventos(clubeId);
-            setMeusEventos(eventos || []);
-        } catch {
-            console.log("Sem eventos convocados ou não é atleta");
-            setMeusEventos([]);
-        } finally {
-            setLoading(false);
-        }
+    useEffect(() => {
+        if (!clubeId) return;
+
+        let cancelled = false;
+
+        eventosService
+            .listarMeusEventos(clubeId)
+            .then((eventos) => {
+                if (!cancelled) {
+                    setEventosState({ clubeId, eventos: eventos || [] });
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    console.log("Sem eventos convocados ou não é atleta");
+                    setEventosState({ clubeId, eventos: [] });
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
     }, [clubeId]);
 
-    useEffect(() => {
-        if (clubeId) {
-            carregarMeusEventos();
-        }
-    }, [clubeId, carregarMeusEventos]);
+    const meusEventos = eventosState.clubeId === clubeId ? eventosState.eventos : [];
+    const loading = Boolean(clubeId && eventosState.clubeId !== clubeId);
 
     const items = [
         { label: "Home", to: homePath },
         ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
         ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
-        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users/approved" }] : []),
+        ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         ...(canOpenGestaoEventos ? [{ label: "Eventos", to: "/gestao/eventos" }] : []),
         {
             label: "Logout",
@@ -127,7 +137,7 @@ export default function MenuPage() {
             ? [
                   {
                       label: "Perfis",
-                      to: "/admin/users/approved",
+                      to: "/admin/users",
                       icon: MENU_ICONS.Perfis,
                       colorClass: "quick-action-red",
                   },
