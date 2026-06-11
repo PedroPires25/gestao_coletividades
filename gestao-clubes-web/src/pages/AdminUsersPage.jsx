@@ -1,84 +1,61 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getAdminUsers, getAdminProfiles, updateUserPerfil, updateUserPrivilegios, updateUserEstadoRegisto } from "../api";
 import { getHomePathByRole } from "../utils/navigation";
+
+import utilizadoresAprovarIcon from "../assets/utilizadores-por-aprovar.svg";
+import utilizadoresAutorizadosIcon from "../assets/utilizadores-autorizados.svg";
+
+const QUICK_ICONS = {
+    "Utilizadores por Aprovar": utilizadoresAprovarIcon,
+    "Utilizadores Autorizados": utilizadoresAutorizadosIcon,
+};
 
 export default function AdminUsersPage() {
     const { user, logout, isSuperAdmin } = useAuth();
     const navigate = useNavigate();
 
-    const [users, setUsers] = useState([]);
-    const [profiles, setProfiles] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [erro, setErro] = useState("");
-
     const homePath = useMemo(() => getHomePathByRole(user), [user]);
 
-    const menuItems = [
-        { label: "Home", to: homePath },
-        ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
-        ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
-        { label: "Perfis", to: "/admin/users" },
-        {
-            label: "Logout",
-            onClick: () => {
-                logout();
-                navigate("/login", { replace: true });
+    const menuItems = useMemo(
+        () => [
+            { label: "Home", to: homePath },
+            ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
+            ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
+            { label: "Perfis", to: "/admin/users" },
+            {
+                label: "Logout",
+                onClick: () => {
+                    logout();
+                    navigate("/login", { replace: true });
+                },
             },
+        ],
+        [homePath, isSuperAdmin, logout, navigate]
+    );
+
+    const quickLinks = [
+        {
+            label: "Utilizadores por Aprovar",
+            to: "/admin/users/pending",
+            description: isSuperAdmin
+                ? "Aprovar pedidos pendentes de administradores de clube ou coletividade."
+                : "Aprovar, rejeitar e completar a afetação dos pedidos pendentes da tua estrutura.",
+        },
+        {
+            label: "Utilizadores Autorizados",
+            to: "/admin/users/approved",
+            description: isSuperAdmin
+                ? "Editar perfil, privilégios e afetação dos utilizadores já aprovados."
+                : "Consultar e gerir a afetação dos utilizadores aprovados da tua estrutura.",
         },
     ];
 
-    useEffect(() => {
-        if (!isSuperAdmin) {
-            navigate("/admin/users/approved", { replace: true });
-            return;
-        }
-
-        async function load() {
-            setLoading(true);
-            try {
-                const [usersData, profilesData] = await Promise.all([
-                    getAdminUsers(),
-                    getAdminProfiles(),
-                ]);
-                setUsers(usersData || []);
-                setProfiles(profilesData || []);
-            } catch (e) {
-                setErro(e.message || "Erro ao carregar dados.");
-            } finally {
-                setLoading(false);
-            }
-        }
-        load();
-    }, [isSuperAdmin, navigate]);
-
-    async function handleUpdate(userId, action, value) {
-        try {
-            switch (action) {
-                case 'perfil':
-                    await updateUserPerfil(userId, value);
-                    break;
-                case 'privilegios':
-                    await updateUserPrivilegios(userId, value);
-                    break;
-                case 'estado':
-                    await updateUserEstadoRegisto(userId, value);
-                    break;
-                default:
-                    break;
-            }
-            const updatedUsers = await getAdminUsers();
-            setUsers(updatedUsers || []);
-        } catch (e) {
-            alert(e.message || "Erro ao atualizar.");
-        }
-    }
-
-    if (!isSuperAdmin) {
-        return null; // or a loading indicator
-    }
+    const colorClasses = [
+        "icon-orange",
+        "icon-green",
+    ];
 
     return (
         <>
@@ -89,70 +66,57 @@ export default function AdminUsersPage() {
                 logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />
+
             <div className="container" style={{ paddingTop: 24 }}>
                 <div className="page-title">
                     <h1>Gestão de Perfis</h1>
+                    <div className="hint">
+                        Escolhe a área de gestão de utilizadores que pretendes consultar.
+                    </div>
                 </div>
 
-                {erro && <div className="alert error">{erro}</div>}
+                <div className="card card-quick-links">
+                    <h2>Acessos rápidos</h2>
+                    <p className="subtle">
+                        Seleciona uma das áreas abaixo para gerir os pedidos pendentes ou os utilizadores autorizados.
+                    </p>
 
-                {loading ? (
-                    <p>A carregar...</p>
-                ) : (
-                    <div className="table-wrap">
-                        <table className="dashboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Utilizador</th>
-                                    <th>Perfil</th>
-                                    <th>Estado</th>
-                                    <th>Privilégios</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {users.map(u => (
-                                    <tr key={u.id}>
-                                        <td>{u.email}</td>
-                                        <td>
-                                            <select
-                                                className="input"
-                                                value={u.role}
-                                                onChange={e => handleUpdate(u.id, 'perfil', e.target.value)}
-                                            >
-                                                {profiles.map(p => <option key={p} value={p}>{p}</option>)}
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <select
-                                                className="input"
-                                                value={u.estadoRegisto}
-                                                onChange={e => handleUpdate(u.id, 'estado', e.target.value)}
-                                            >
-                                                <option value="PENDENTE">Pendente</option>
-                                                <option value="APROVADO">Aprovado</option>
-                                                <option value="REJEITADO">Rejeitado</option>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <label className="filter-checkbox">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={u.privilegiosAtivos}
-                                                    onChange={e => handleUpdate(u.id, 'privilegios', e.target.checked)}
-                                                />
-                                                Ativos
-                                            </label>
-                                        </td>
-                                        <td>
-                                            <button className="btn btn-sm" onClick={() => navigate(`/perfil/${u.id}`)}>Ver Detalhes</button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="icon-links-row">
+                        {quickLinks.map((item, index) => (
+                            <Link
+                                key={item.to}
+                                to={item.to}
+                                className={`icon-link-card ${colorClasses[index % colorClasses.length]}`}
+                                title={item.label}
+                            >
+                                <span className="menu-style-circle">
+                                    <span className="menu-style-icon">
+                                        <img
+                                            src={QUICK_ICONS[item.label]}
+                                            alt={item.label}
+                                        />
+                                    </span>
+                                </span>
+
+                                <span className="modalidade-figura-label">
+                                    {item.label}
+                                </span>
+
+                                <span
+                                    className="subtle"
+                                    style={{
+                                        textAlign: "center",
+                                        display: "block",
+                                        maxWidth: 260,
+                                        marginTop: 8,
+                                    }}
+                                >
+                                    {item.description}
+                                </span>
+                            </Link>
+                        ))}
                     </div>
-                )}
+                </div>
             </div>
         </>
     );
