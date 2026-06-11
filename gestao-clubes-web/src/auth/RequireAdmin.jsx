@@ -2,15 +2,16 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
 export default function RequireAdmin({ children }) {
-    const { isAuthenticated, isAdmin } = useAuth();
+    const { isAuthenticated, isAdmin, redirectPath } = useAuth();
     const location = useLocation();
 
     if (!isAuthenticated) {
-        return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+        return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
     if (!isAdmin) {
-        return <Navigate to="/menu" replace />;
+        // Redireciona para a página inicial correta em vez de /menu
+        return <Navigate to={redirectPath || "/"} replace />;
     }
 
     return children;

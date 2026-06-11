@@ -4,6 +4,7 @@ import SideMenu from "../components/SideMenu";
 import { getColetividadeById } from "../api";
 import { useAuth } from "../auth/AuthContext";
 import { getUploadUrl } from "../api";
+import { getHomePathByRole } from "../utils/navigation";
 import defaultLogo from "../assets/default-logo.svg";
 
 import modalidadesIcon from "../assets/modalidades.svg";
@@ -27,7 +28,7 @@ export default function ColetividadeHomePage() {
     const coletividadeId = params.id ?? params.coletividadeId ?? null;
 
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin, canManageColetividade } = useAuth();
+    const { user, logout, isAdmin, isSuperAdmin, canManageColetividade } = useAuth();
 
     const [coletividade, setColetividade] = useState(null);
     const [erro, setErro] = useState("");
@@ -68,10 +69,12 @@ export default function ColetividadeHomePage() {
     const subtitle = loading
         ? "A carregar..."
         : coletividade?.nome || `Coletividade #${coletividadeId}`;
+    
+    const homePath = useMemo(() => getHomePathByRole(user), [user]);
 
     const menuItems = useMemo(
         () => [
-            { label: "Home", to: "/menu" },
+            { label: "Home", to: homePath },
             ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
             ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
@@ -88,7 +91,7 @@ export default function ColetividadeHomePage() {
                 },
             },
         ],
-        [coletividadeId, isAdmin, isSuperAdmin, canManageColetividade, logout, navigate]
+        [coletividadeId, isAdmin, isSuperAdmin, canManageColetividade, logout, navigate, homePath]
     );
 
     const quickLinks = [
@@ -132,7 +135,7 @@ export default function ColetividadeHomePage() {
             <SideMenu
                 title="Gestão de Coletividades"
                 subtitle={subtitle}
-                logoHref="/menu"
+                logoHref={homePath}
                 logoSrc="/LOGO_GCDC04.png"
                 items={menuItems}
             />

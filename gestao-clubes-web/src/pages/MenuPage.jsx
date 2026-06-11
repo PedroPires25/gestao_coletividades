@@ -1,25 +1,59 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import * as eventosService from "../services/eventos";
 import EventCarousel from "../components/EventCarousel";
+import { getHomePathByRole } from "../utils/navigation";
 
+import homeIcon from "../assets/home.svg";
 import clubesIcon from "../assets/clubes.svg";
 import coletividadesIcon from "../assets/coletividades.svg";
 import perfisIcon from "../assets/perfis.svg";
-import eventosIcon from "../assets/eventos.svg";
 import logoutIcon from "../assets/logout.svg";
+import modalidadesIcon from "../assets/modalidades.svg";
+import atletasIcon from "../assets/atletas.svg";
+import staffIcon from "../assets/staff.svg";
+import transferenciasIcon from "../assets/transferencias.svg";
+import utilizadoresAprovarIcon from "../assets/utilizadores-por-aprovar.svg";
+import utilizadoresAutorizadosIcon from "../assets/utilizadores-autorizados.svg";
+import eventosIcon from "../assets/eventos.svg";
+import departamentoMedicoIcon from "../assets/departamento-medico.svg";
+import direcaoIcon from "../assets/direcao.svg";
 
-const MENU_ACTIONS = {
+// Ícones do Módulo de Treinador
+import treinoIcon from "../assets/treino.svg";
+import planoTreinoIcon from "../assets/plano-treino.svg";
+import estatisticasIcon from "../assets/estatisticas.svg";
+import convocatoriasIcon from "../assets/convocatorias.svg";
+
+const MENU_ICONS = {
+    Home: homeIcon,
     Clubes: clubesIcon,
     Coletividades: coletividadesIcon,
     Perfis: perfisIcon,
     Logout: logoutIcon,
+    "Modalidades do Clube": modalidadesIcon,
+    Atletas: atletasIcon,
+    Staff: staffIcon,
+    Transferências: transferenciasIcon,
+    utilizadoresAprovar: utilizadoresAprovarIcon,
+    utilizadoresAutorizados: utilizadoresAutorizadosIcon,
+    Eventos: eventosIcon,
+    "Módulo Clínico": departamentoMedicoIcon,
+    "Módulo de Treinador": staffIcon,
+    "Eventos do Clube": eventosIcon,
+    "Voltar ao Clube": clubesIcon,
+    "Voltar": homeIcon,
+    "Direção": direcaoIcon,
+    "Treinos": treinoIcon,
+    "Plano de Treino": planoTreinoIcon,
+    "Estatísticas": estatisticasIcon,
+    "Convocatórias": convocatoriasIcon,
 };
 
 export default function MenuPage() {
-    const { logout, isAdmin, isSuperAdmin, role, clubeId } = useAuth();
+    const { user, logout, isAdmin, isSuperAdmin, role, clubeId } = useAuth();
     const navigate = useNavigate();
     const [meusEventos, setMeusEventos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -28,6 +62,15 @@ export default function MenuPage() {
         role === "SECRETARIO" ||
         role === "TREINADOR_PRINCIPAL" ||
         role === "PROFESSOR";
+
+    const homePath = useMemo(() => getHomePathByRole(user), [user]);
+
+    // Redireciona se o utilizador não for Super Admin e tiver um home path diferente
+    useEffect(() => {
+        if (user && !isSuperAdmin && homePath !== "/menu") {
+            navigate(homePath, { replace: true });
+        }
+    }, [user, isSuperAdmin, homePath, navigate]);
 
     const carregarMeusEventos = useCallback(async () => {
         try {
@@ -49,7 +92,7 @@ export default function MenuPage() {
     }, [clubeId, carregarMeusEventos]);
 
     const items = [
-        { label: "Home", to: "/menu" },
+        { label: "Home", to: homePath },
         ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
         ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
@@ -69,13 +112,13 @@ export default function MenuPage() {
                   {
                       label: "Clubes",
                       to: "/clubes",
-                      icon: MENU_ACTIONS.Clubes,
+                      icon: MENU_ICONS.Clubes,
                       colorClass: "quick-action-cyan",
                   },
                   {
                       label: "Coletividades",
                       to: "/coletividades",
-                      icon: MENU_ACTIONS.Coletividades,
+                      icon: MENU_ICONS.Coletividades,
                       colorClass: "quick-action-orange",
                   },
               ]
@@ -85,7 +128,7 @@ export default function MenuPage() {
                   {
                       label: "Perfis",
                       to: "/admin/users",
-                      icon: MENU_ACTIONS.Perfis,
+                      icon: MENU_ICONS.Perfis,
                       colorClass: "quick-action-red",
                   },
               ]
@@ -102,7 +145,7 @@ export default function MenuPage() {
             : []),
         {
             label: "Logout",
-            icon: MENU_ACTIONS.Logout,
+            icon: MENU_ICONS.Logout,
             colorClass: "quick-action-green",
             onClick: () => {
                 logout();
@@ -116,7 +159,7 @@ export default function MenuPage() {
             <SideMenu
                 title="Gestão de Coletividades"
                 subtitle="Menu"
-                logoHref="/menu"
+                logoHref={homePath}
                 logoSrc="/LOGO_GCDC04.png"
                 items={items}
                 showBurger={false}

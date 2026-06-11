@@ -1,14 +1,25 @@
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
+import { getHomePathByRole } from "../utils/navigation";
 
 export default function TransferenciasPage() {
-  const { isSuperAdmin } = useAuth();
+  const { user, logout, isSuperAdmin } = useAuth();
+  const navigate = useNavigate();
+  const homePath = useMemo(() => getHomePathByRole(user), [user]);
 
   const items = [
-    { label: "Menu", to: "/menu" },
+    { label: "Home", to: homePath },
     ...(isSuperAdmin ? [{ label: "Clubes", to: "/clubes" }] : []),
     { label: "Transferências", to: "/transferencias" },
-    { label: "Logout", to: "#", disabled: false},
+    {
+        label: "Logout",
+        onClick: () => {
+            logout();
+            navigate("/login", { replace: true });
+        },
+    },
   ];
 
   return (
@@ -16,7 +27,7 @@ export default function TransferenciasPage() {
         <SideMenu
             title="Gestão de Coletividades"
             subtitle="Transferências"
-            logoHref="/menu"
+            logoHref={homePath}
             items={items}
         />
 

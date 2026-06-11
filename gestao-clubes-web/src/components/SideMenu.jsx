@@ -4,6 +4,7 @@ import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../auth/AuthContext";
 import UserAvatar from "./UserAvatar";
 import { useAppLogo } from "../hooks/useAppLogo";
+import { getHomePathByRole } from "../utils/navigation";
 
 import homeIcon from "../assets/home.svg";
 import clubesIcon from "../assets/clubes.svg";
@@ -73,19 +74,11 @@ export default function SideMenu({
                                  }) {
     const [open, setOpen] = useState(false);
     const { theme, setTheme } = useTheme();
-    const { isTreinador, isDepartamentoMedico, clubeId } = useAuth(); // Usar o hook de autenticação
+    const { user } = useAuth(); // Usar o objeto 'user' completo
     const logoSrc = useAppLogo();
 
     // Determinar o link do logo com base no perfil
-    const logoHref = useMemo(() => {
-        if (isTreinador && clubeId) {
-            return `/clubes/${clubeId}/treinador`;
-        }
-        if (isDepartamentoMedico && clubeId) {
-            return `/clubes/${clubeId}/medico`;
-        }
-        return "/menu";
-    }, [isTreinador, isDepartamentoMedico, clubeId]);
+    const logoHref = useMemo(() => getHomePathByRole(user), [user]);
 
 
     function closeMenu() {
@@ -125,7 +118,7 @@ export default function SideMenu({
                     <Link
                         to={logoHref}
                         className="appbar-logo appbar-logo-centered"
-                        title="Voltar"
+                        title="Voltar à página inicial"
                         onClick={closeMenu}
                     >
                         <img src={logoSrc} alt="Logo" />
