@@ -39,6 +39,7 @@ public class StaffColetividadeRestController {
         public Double remuneracao;
         public Integer cargoId;
         public Integer coletividadeAtividadeId;
+        public Integer afetacaoId;
         public String dataInicio;
         public String dataFim;
         public String observacoes;
@@ -74,6 +75,57 @@ public class StaffColetividadeRestController {
 
         if (id == null) return ResponseEntity.badRequest().body("Não foi possível criar staff.");
         return ResponseEntity.ok(id);
+    }
+
+    @PutMapping("/{coletividadeId}/staff/{staffId}")
+    public ResponseEntity<?> atualizarStaff(
+            @PathVariable int coletividadeId,
+            @PathVariable int staffId,
+            @RequestBody CriarStaffRequest body
+    ) {
+        exigirGestaoColetividade(coletividadeId);
+
+        if (body == null || body.nome == null || body.nome.isBlank()) {
+            return ResponseEntity.badRequest().body("Nome é obrigatório.");
+        }
+        if (!staffDAO.staffPertenceColetividade(coletividadeId, staffId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Elemento de staff não encontrado.");
+        }
+
+        boolean ok = staffDAO.atualizarStaff(
+                staffId,
+                body.nome.trim(),
+                body.email,
+                body.telefone,
+                body.morada,
+                body.numRegisto,
+                body.remuneracao,
+                body.afetacaoId,
+                body.dataInicio,
+                body.dataFim,
+                body.observacoes
+        );
+
+        return ok
+                ? ResponseEntity.ok().body("Staff atualizado com sucesso.")
+                : ResponseEntity.badRequest().body("Não foi possível atualizar o staff.");
+    }
+
+    @DeleteMapping("/{coletividadeId}/staff/{staffId}/afetacao/{afetacaoId}")
+    public ResponseEntity<?> removerAfetacao(
+            @PathVariable int coletividadeId,
+            @PathVariable int staffId,
+            @PathVariable int afetacaoId
+    ) {
+        exigirGestaoColetividade(coletividadeId);
+
+        if (!staffDAO.afetacaoPertenceAoStaff(coletividadeId, staffId, afetacaoId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Afetação não encontrada.");
+        }
+
+        return staffDAO.removerAfetacao(afetacaoId)
+                ? ResponseEntity.ok().body("Afetação removida com sucesso.")
+                : ResponseEntity.badRequest().body("Não foi possível remover a afetação.");
     }
 
     private void exigirGestaoColetividade(int coletividadeId) {

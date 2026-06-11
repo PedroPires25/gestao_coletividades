@@ -141,4 +141,24 @@ public class EmailService {
 
         sendBrevoEmail(emailDestino, nomeAtleta, subject, text);
     }
+
+    public void enviarAvisoPagamento(String emailDestino, String nomeAtleta, String nomeClube,
+                                      int mes, int ano, double valorEmDivida) {
+        String[] meses = {"Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                          "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"};
+        String nomeMes = (mes >= 1 && mes <= 12) ? meses[mes - 1] : String.valueOf(mes);
+        String refAleatoria = String.format("REF%04d%02d%06d", ano, mes, (int)(Math.random() * 999999));
+        String subject = "Aviso de pagamento de mensalidade - " + nomeClube;
+        String text = "Olá " + nomeAtleta + ",\n\n" +
+                "Informamos que se encontra por regularizar a mensalidade referente a " + nomeMes + "/" + ano + ".\n\n" +
+                "Valor em dívida: " + String.format("%.2f", valorEmDivida) + " €\n\n" +
+                "Dados de pagamento:\n" +
+                "IBAN: PT50 0000 0000 0000 0000 0000 0\n" +
+                "Referência: " + refAleatoria + "\n" +
+                "Entidade: 99999\n\n" +
+                "Após pagamento, por favor envie comprovativo para a secretaria do clube.\n\n" +
+                "Cumprimentos,\n" +
+                nomeClube;
+        sendBrevoEmail(emailDestino, nomeAtleta, subject, text);
+    }
 }

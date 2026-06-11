@@ -9,13 +9,15 @@ import defaultLogo from "../assets/default-logo.svg";
 import modalidadesIcon from "../assets/modalidades.svg";
 import atletasIcon from "../assets/atletas.svg";
 import staffIcon from "../assets/staff.svg";
+import eventosIcon from "../assets/eventos.svg";
 import perfisIcon from "../assets/perfis.svg";
 import definicoesIcon from "../assets/direcao.svg";
 
 const QUICK_ICONS = {
     "Atividades": modalidadesIcon,
-    "Utentes": atletasIcon,
+    "Inscritos": atletasIcon,
     "Staff": staffIcon,
+    "Eventos": eventosIcon,
     "Perfis": perfisIcon,
     "Definições da Coletividade": definicoesIcon,
 };
@@ -74,8 +76,9 @@ export default function ColetividadeHomePage() {
             ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             { label: "Atividades", to: `/coletividades/${coletividadeId}/atividades` },
-            { label: "Utentes", to: `/coletividades/${coletividadeId}/utentes` },
+            { label: "Inscritos", to: `/coletividades/${coletividadeId}/utentes` },
             { label: "Staff", to: `/coletividades/${coletividadeId}/staff` },
+            { label: "Eventos", to: `/coletividades/${coletividadeId}/eventos` },
             ...(canManageColetividade(Number(coletividadeId)) ? [{ label: "Definições da Coletividade", to: `/coletividades/${coletividadeId}/editar` }] : []),
             {
                 label: "Logout",
@@ -94,12 +97,16 @@ export default function ColetividadeHomePage() {
             to: `/coletividades/${coletividadeId}/atividades`,
         },
         {
-            label: "Utentes",
+            label: "Inscritos",
             to: `/coletividades/${coletividadeId}/utentes`,
         },
         {
             label: "Staff",
             to: `/coletividades/${coletividadeId}/staff`,
+        },
+        {
+            label: "Eventos",
+            to: `/coletividades/${coletividadeId}/eventos`,
         },
         ...(isAdmin ? [{
             label: "Perfis",
@@ -115,6 +122,9 @@ export default function ColetividadeHomePage() {
         "icon-turquoise",
         "icon-orange",
         "icon-red",
+        "icon-green",
+        "icon-purple",
+        "icon-blue",
     ];
 
     return (

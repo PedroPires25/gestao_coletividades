@@ -15,6 +15,7 @@ import perfisIcon from "../assets/perfis.svg";
 import definicoesIcon from "../assets/direcao.svg";
 // Importar o ícone do módulo médico, se o do treinador não existir usamos o de staff como fallback
 import deptMedicoIcon from "../assets/departamento-medico.svg";
+import tesourariaIcon from "../assets/tesouraria.svg";
 
 const QUICK_ICONS = {
     "Modalidades do Clube": modalidadesIcon,
@@ -26,6 +27,7 @@ const QUICK_ICONS = {
     "Definições do Clube": definicoesIcon,
     "Módulo Clínico": deptMedicoIcon,
     "Módulo Treinador": staffIcon, // Placeholder até criarem o ícone svg próprio
+    "Tesouraria": tesourariaIcon,
 };
 
 export default function ClubeHomePage() {
@@ -79,6 +81,7 @@ export default function ClubeHomePage() {
             ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
             ...(isAdmin || isDepartamentoMedico ? [{ label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` }] : []),
             ...(isAdmin || isScopedAdmin || isSecretario || isTreinador ? [{ label: "Módulo Treinador", to: `/clubes/${clubeId}/treinador` }] : []),
+            ...(isAdmin || isScopedAdmin || isSecretario ? [{ label: "Tesouraria", to: `/clubes/${clubeId}/tesouraria` }] : []),
             { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
             ...(canManageClube(Number(clubeId)) ? [{ label: "Definições do Clube", to: `/clubes/${clubeId}/editar` }] : []),
             {
@@ -98,6 +101,7 @@ export default function ClubeHomePage() {
         { label: "Staff", to: `/clubes/${clubeId}/staff` },
         ...(isAdmin || isDepartamentoMedico ? [{ label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` }] : []),
         ...(isAdmin || isScopedAdmin || isSecretario || isTreinador ? [{ label: "Módulo Treinador", to: `/clubes/${clubeId}/treinador` }] : []),
+        ...(isAdmin || isScopedAdmin || isSecretario ? [{ label: "Tesouraria", to: `/clubes/${clubeId}/tesouraria` }] : []),
         { label: "Eventos", to: `/clubes/${clubeId}/eventos` },
         { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),

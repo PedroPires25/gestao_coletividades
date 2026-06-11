@@ -14,7 +14,6 @@ function getStoredToken() {
 
 async function http(path, options = {}) {
     const token = getStoredToken();
-
     const headers = {
         "Content-Type": "application/json",
         ...(options.headers || {}),
@@ -56,10 +55,34 @@ export async function getUtentesByColetividadeAtividade(coletividadeId, coletivi
     return http(`/coletividades/${coletividadeId}/atividades/${coletividadeAtividadeId}/utentes`);
 }
 
+export async function getTodosInscritos(coletividadeId) {
+    return http(`/coletividades/${coletividadeId}/inscritos`);
+}
+
 export async function createUtente(coletividadeId, coletividadeAtividadeId, payload) {
     return http(`/coletividades/${coletividadeId}/utentes?coletividadeAtividadeId=${coletividadeAtividadeId}`, {
         method: "POST",
         body: JSON.stringify(payload),
+    });
+}
+
+export async function updateUtente(coletividadeId, utenteId, payload) {
+    return http(`/coletividades/${coletividadeId}/utentes/${utenteId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function adicionarAtividadeInscrito(coletividadeId, utenteId, payload) {
+    return http(`/coletividades/${coletividadeId}/utentes/${utenteId}/atividades`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function removerAtividadeInscrito(coletividadeId, utenteId, inscricaoId) {
+    return http(`/coletividades/${coletividadeId}/utentes/${utenteId}/inscricao/${inscricaoId}`, {
+        method: "DELETE",
     });
 }
 

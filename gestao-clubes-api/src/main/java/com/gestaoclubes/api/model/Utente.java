@@ -2,6 +2,8 @@ package com.gestaoclubes.api.model;
 
 public class Utente {
     private Integer id;
+    private Integer inscricaoId;
+    private Integer coletividadeAtividadeId;
     private String nome;
     private String dataNascimento;
     private String email;
@@ -22,6 +24,22 @@ public class Utente {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Integer getInscricaoId() {
+        return inscricaoId;
+    }
+
+    public void setInscricaoId(Integer inscricaoId) {
+        this.inscricaoId = inscricaoId;
+    }
+
+    public Integer getColetividadeAtividadeId() {
+        return coletividadeAtividadeId;
+    }
+
+    public void setColetividadeAtividadeId(Integer coletividadeAtividadeId) {
+        this.coletividadeAtividadeId = coletividadeAtividadeId;
     }
 
     public String getNome() {

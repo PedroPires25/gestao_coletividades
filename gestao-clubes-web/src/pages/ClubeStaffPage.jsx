@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getClubeById } from "../api";
+import { getClubeById, getUploadUrl } from "../api";
 import {
     createStaff,
     getCargosStaff,
@@ -370,12 +370,27 @@ export default function ClubeStaffPage() {
 
     const handleExportPdf = () => {
         const { columns, dataToExport } = prepareExportData();
-        exportToPdf(dataToExport, columns, "Listagem Geral de Staff", clube?.nome, `staff_${clube?.nome || clubeId}.pdf`);
+        exportToPdf({
+            data: dataToExport,
+            columns,
+            title: "Listagem Geral de Staff",
+            clubName: clube?.nome,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
+            filename: `staff_${clube?.nome || clubeId}.pdf`,
+            generatedText: "Criado em",
+        });
     };
 
     const handlePrint = () => {
         const { columns, dataToExport } = prepareExportData();
-        printPdf(dataToExport, columns, "Listagem Geral de Staff", clube?.nome);
+        printPdf({
+            data: dataToExport,
+            columns,
+            title: "Listagem Geral de Staff",
+            clubName: clube?.nome,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
+            generatedText: "Criado em",
+        });
     };
 
     return (

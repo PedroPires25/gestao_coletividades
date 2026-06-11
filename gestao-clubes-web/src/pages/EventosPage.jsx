@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getClubeById } from "../api";
+import { getClubeById, getUploadUrl } from "../api";
 import { getAtletasTreinador } from "../services/treinador";
 import {
   listarEventos,
@@ -251,12 +251,27 @@ export default function EventosPage() {
 
   const handleExportPdf = () => {
     const { columns, dataToExport } = prepareExportData();
-    exportToPdf(dataToExport, columns, isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube", clube?.nome, `eventos_${clube?.nome || clubeId}.pdf`);
+    exportToPdf({
+        data: dataToExport,
+        columns,
+        title: isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube",
+        clubName: clube?.nome,
+        clubLogoUrl: getUploadUrl(clube?.logoPath),
+        filename: `eventos_${clube?.nome || clubeId}.pdf`,
+        generatedText: "Criado em",
+    });
   };
 
   const handlePrint = () => {
     const { columns, dataToExport } = prepareExportData();
-    printPdf(dataToExport, columns, isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube", clube?.nome);
+    printPdf({
+        data: dataToExport,
+        columns,
+        title: isConvocatoriasMode ? "Convocatórias" : "Eventos do Clube",
+        clubName: clube?.nome,
+        clubLogoUrl: getUploadUrl(clube?.logoPath),
+        generatedText: "Criado em",
+    });
   };
 
   if (loading) {

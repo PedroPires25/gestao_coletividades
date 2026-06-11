@@ -25,8 +25,9 @@ export default function ColetividadeStaffPage() {
         ...(isSuperAdmin ? [{ label: "Coletividades", to: "/coletividades" }] : []),
         ...(isAdmin ? [{ label: "Perfis", to: "/admin/users" }] : []),
         { label: "Atividades", to: `/coletividades/${coletividadeId}/atividades` },
-        { label: "Utentes", to: `/coletividades/${coletividadeId}/utentes` },
+        { label: "Inscritos", to: `/coletividades/${coletividadeId}/utentes` },
         { label: "Staff", to: `/coletividades/${coletividadeId}/staff` },
+        { label: "Eventos", to: `/coletividades/${coletividadeId}/eventos` },
         {
             label: "Logout",
             onClick: () => {

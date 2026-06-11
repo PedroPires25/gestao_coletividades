@@ -12,6 +12,7 @@ import PasswordChecklist from "../components/PasswordChecklist";
 import ConfirmPasswordStatus from "../components/ConfirmPasswordStatus";
 import { useTheme } from "../theme/ThemeContext";
 import { evaluatePassword } from "../utils/passwordStrength";
+import { useAppLogo } from "../hooks/useAppLogo";
 
 const EyeOpenIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -47,12 +48,26 @@ const eyeButtonStyle = {
 
 const PERFIS_CLUBE = ["ATLETA", "TREINADOR_PRINCIPAL", "DEPARTAMENTO_MEDICO"];
 const PERFIS_COLETIVIDADE = ["UTENTE"];
-const PERFIS_MISTOS = ["ADMINISTRADOR", "STAFF", "SECRETARIO", "PROFESSOR", "USER"];
+const PERFIS_MISTOS = ["ADMINISTRADOR", "STAFF", "SECRETARIO", "PROFESSOR", "TREINADOR_COLETIVIDADE", "USER"];
+
+const PERFIL_LABELS = {
+    ADMINISTRADOR: "Administrador",
+    USER: "Utilizador",
+    ATLETA: "Atleta",
+    UTENTE: "Inscrito (Coletividade)",
+    STAFF: "Staff",
+    PROFESSOR: "Professor (Coletividade/Clube)",
+    TREINADOR_COLETIVIDADE: "Treinador da Coletividade",
+    TREINADOR_PRINCIPAL: "Treinador Principal",
+    DEPARTAMENTO_MEDICO: "Departamento Médico",
+    SECRETARIO: "Secretário",
+};
 
 export default function LoginPage() {
     const { login } = useAuth();
     const { theme, setTheme } = useTheme();
     const navigate = useNavigate();
+    const logoSrc = useAppLogo();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -149,23 +164,29 @@ export default function LoginPage() {
 
     useEffect(() => {
         if (PERFIS_CLUBE.includes(rPerfil)) {
-            setREstruturaTipo("CLUBE");
-            setRColetividadeId("");
-            setRAtividadeId("");
+            void Promise.resolve().then(() => {
+                setREstruturaTipo("CLUBE");
+                setRColetividadeId("");
+                setRAtividadeId("");
+            });
         } else if (PERFIS_COLETIVIDADE.includes(rPerfil)) {
-            setREstruturaTipo("COLETIVIDADE");
-            setRClubeId("");
-            setRModalidadeId("");
+            void Promise.resolve().then(() => {
+                setREstruturaTipo("COLETIVIDADE");
+                setRClubeId("");
+                setRModalidadeId("");
+            });
         } else if (PERFIS_MISTOS.includes(rPerfil)) {
             if (!["CLUBE", "COLETIVIDADE"].includes(rEstruturaTipo)) {
-                setREstruturaTipo("CLUBE");
+                void Promise.resolve().then(() => setREstruturaTipo("CLUBE"));
             }
         } else {
-            setREstruturaTipo("");
-            setRClubeId("");
-            setRModalidadeId("");
-            setRColetividadeId("");
-            setRAtividadeId("");
+            void Promise.resolve().then(() => {
+                setREstruturaTipo("");
+                setRClubeId("");
+                setRModalidadeId("");
+                setRColetividadeId("");
+                setRAtividadeId("");
+            });
         }
     }, [rPerfil, rEstruturaTipo]);
 
@@ -353,6 +374,10 @@ export default function LoginPage() {
                 setRErro("Seleciona CLUBE ou COLETIVIDADE.");
                 return;
             }
+            if (rPerfil === "TREINADOR_COLETIVIDADE" && rEstruturaTipo === "CLUBE") {
+                setRErro("O perfil Treinador da Coletividade só pode ser associado a uma Coletividade.");
+                return;
+            }
             if (rEstruturaTipo === "CLUBE" && clubes.length === 0) {
                 setRErro("Nenhum clube disponível.");
                 return;
@@ -410,7 +435,7 @@ export default function LoginPage() {
         <div className="login-page">
             <a href="/" className="login-brand" aria-label="Gestão de Coletividades">
                 <img
-                    src="/LOGO_GCDC.png"
+                    src={logoSrc}
                     alt="Gestão de Clubes Desportivos e Coletividades"
                     className="login-logo-fixed"
                 />
@@ -555,7 +580,7 @@ export default function LoginPage() {
                             >
                                 {profiles.map((p) => (
                                     <option key={p} value={p}>
-                                        {p}
+                                        {PERFIL_LABELS[p] || p}
                                     </option>
                                 ))}
                             </select>

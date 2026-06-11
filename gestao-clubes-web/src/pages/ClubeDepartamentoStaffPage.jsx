@@ -11,6 +11,7 @@ import {
     updateStaff,
     updateStaffAfetacao,
 } from "../services/staff";
+import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 
 import direcaoIcon from "../assets/direcao.svg";
 import deptMedicoIcon from "../assets/departamento-medico.svg";
@@ -57,6 +58,7 @@ function staffToEditForm(item) {
             : Array.isArray(item?.escaloes_ids)
                 ? item.escaloes_ids.map((v) => String(v))
                 : [],
+        fotoPath: item?.fotoPath || item?.foto_path || null,
     };
 }
 
@@ -103,18 +105,18 @@ function getOptionValue(item) {
 export default function ClubeDepartamentoStaffPage() {
     const { clubeId, tipo } = useParams();
     const navigate = useNavigate();
-    const { logout, isAdmin, isSuperAdmin, isDepartamentoMedico, user } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, isDepartamentoMedico, user, isScopedAdmin, isSecretario } = useAuth();
+    
+    const canManageFotos = isSuperAdmin || isAdmin || isScopedAdmin || isSecretario;
 
     const config = DEPT_CONFIG[tipo];
 
-    // Redireciona médico se tentar aceder ao departamento de direção
     useEffect(() => {
         if (isDepartamentoMedico && tipo !== "medico") {
             navigate(`/clubes/${clubeId}/medico`, { replace: true });
         }
     }, [isDepartamentoMedico, tipo, clubeId, navigate]);
 
-    // Para médicos: identifica o próprio registo pelo utilizadorId
     const isOwnRow = (row) => row.utilizadorId != null && row.utilizadorId === user?.id;
 
     const [clube, setClube] = useState(null);
@@ -125,7 +127,6 @@ export default function ClubeDepartamentoStaffPage() {
     const [erro, setErro] = useState("");
     const [msg, setMsg] = useState("");
 
-    // Formulário de criação
     const [showForm, setShowForm] = useState(false);
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState({
@@ -143,15 +144,14 @@ export default function ClubeDepartamentoStaffPage() {
         escaloesIds: [],
     });
 
-    // Edit modal
     const [editOpen, setEditOpen] = useState(false);
     const [savingEdit, setSavingEdit] = useState(false);
     const [editForm, setEditForm] = useState(staffToEditForm(null));
 
     const fotoInputRef = useRef(null);
+    const formFotoInputRef = useRef(null);
     const [fotoTargetId, setFotoTargetId] = useState(null);
 
-    // Filter cargos to only those relevant to this department
     const deptCargos = useMemo(
         () => {
             if (!config) return [];
@@ -224,10 +224,10 @@ export default function ClubeDepartamentoStaffPage() {
         }
 
         carregar();
-    }, [clubeId, tipo]);
+    }, [clubeId, tipo, config]);
 
-    // --- Photo upload ---
     function handleAvatarClick(staffId) {
+        if (!canManageFotos) return;
         setFotoTargetId(staffId);
         if (fotoInputRef.current) {
             fotoInputRef.current.value = "";
@@ -250,8 +250,36 @@ export default function ClubeDepartamentoStaffPage() {
         }
         setFotoTargetId(null);
     }
+    
+    async function handleFormFotoChange(e) {
+        const file = e.target.files?.[0];
+        if (!file || !editForm.id) return;
+        
+        try {
+            const res = await uploadStaffFoto(editForm.id, file);
+            if (res?.fotoPath) {
+                setEditForm(prev => ({ ...prev, fotoPath: res.fotoPath }));
+                setStaffRows(prev =>
+                    prev.map(s => s.id === editForm.id ? { ...s, fotoPath: res.fotoPath } : s)
+                );
+            }
+        } catch (err) {
+            alert("Erro ao fazer upload da foto: " + (err.message || ""));
+        }
+    }
+    
+    async function handleRemoverFoto() {
+        if (!editForm.id) return;
+        if (!window.confirm("Tem a certeza que deseja remover a foto?")) return;
+        
+        try {
+             setEditForm(prev => ({ ...prev, fotoPath: null }));
+             alert("Aviso: A remoção da foto apenas será efetiva ao guardar as alterações, caso o servidor o suporte.");
+        } catch {
+             alert("Erro ao remover foto.");
+        }
+    }
 
-    // --- Create form ---
     function onChange(e) {
         const { name, value, type, checked } = e.target;
         setForm((prev) => ({
@@ -331,7 +359,6 @@ export default function ClubeDepartamentoStaffPage() {
         }
     }
 
-    // --- Edit modal ---
     function abrirEditar(item) {
         setEditForm(staffToEditForm(item));
         setEditOpen(true);
@@ -378,9 +405,9 @@ export default function ClubeDepartamentoStaffPage() {
                 morada: editForm.morada,
                 ...(isDepartamentoMedico ? {} : { numRegisto: editForm.numRegisto }),
                 ...(isDepartamentoMedico ? {} : { remuneracao: Number(editForm.remuneracao || 0) }),
+                fotoPath: editForm.fotoPath,
             });
 
-            // Médico não pode atualizar afetações (cargo, remuneração, datas, etc.)
             if (!isDepartamentoMedico) {
                 await updateStaffAfetacao(clubeId, editForm.id, editForm.afetacaoId, {
                     cargoId: editForm.cargoId ? Number(editForm.cargoId) : null,
@@ -411,15 +438,74 @@ export default function ClubeDepartamentoStaffPage() {
         );
     }
 
+    function prepareExportData() {
+        const isNotMedico = !isDepartamentoMedico;
+        const columns = [
+            { key: "nome", label: "Nome" },
+            { key: "email", label: "Email" },
+            { key: "telefone", label: "Telefone" },
+            { key: "cargo", label: "Cargo" },
+            { key: "numRegisto", label: "Nº Registo" },
+            ...(isNotMedico ? [
+                { key: "remuneracao", label: "Remuneração" },
+                { key: "dataInicio", label: "Data Início" },
+            ] : []),
+        ];
+        const dataToExport = staffRows.map((row) => ({
+            nome: row.nome || "-",
+            email: row.email || "-",
+            telefone: row.telefone || "-",
+            cargo: row.cargo || "-",
+            numRegisto: row.numRegisto || row.num_registo || "-",
+            remuneracao: isNotMedico ? (row.remuneracao != null ? row.remuneracao : "-") : undefined,
+            dataInicio: isNotMedico ? (row.dataInicio || row.data_inicio
+                ? new Date(row.dataInicio || row.data_inicio).toLocaleDateString("pt-PT")
+                : "-") : undefined,
+        }));
+        return { columns, dataToExport };
+    }
+
+    function handleExportCsv() {
+        const { columns, dataToExport } = prepareExportData();
+        exportToCsv(dataToExport, columns, `${tipo}_${clube?.nome || clubeId}.csv`);
+    }
+
+    function handleExportPdf() {
+        const { columns, dataToExport } = prepareExportData();
+        exportToPdf({
+            data: dataToExport,
+            columns,
+            title: `${config.titulo} — Membros`,
+            clubName: clube?.nome,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
+            filename: `${tipo}_${clube?.nome || clubeId}.pdf`,
+            generatedText: "Criado em",
+        });
+    }
+
+    function handlePrint() {
+        const { columns, dataToExport } = prepareExportData();
+        printPdf({
+            data: dataToExport,
+            columns,
+            title: `${config.titulo} — Membros`,
+            clubName: clube?.nome,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
+            generatedText: "Criado em",
+        });
+    }
+
     return (
         <>
-            <input
-                type="file"
-                accept="image/*"
-                ref={fotoInputRef}
-                style={{ display: "none" }}
-                onChange={handleFotoChange}
-            />
+            {canManageFotos && (
+                <input
+                    type="file"
+                    accept="image/*"
+                    ref={fotoInputRef}
+                    style={{ display: "none" }}
+                    onChange={handleFotoChange}
+                />
+            )}
             <SideMenu
                 title="Gestão de Coletividades"
                 subtitle={clube?.nome || "Clube"}
@@ -457,13 +543,19 @@ export default function ClubeDepartamentoStaffPage() {
                 {msg ? <div className="alert ok">{msg}</div> : null}
 
                 <div className="stack-sections">
-                    {/* Listagem */}
                     <div className="card">
                         <div className="modalidades-toolbar">
                             <div className="toolbar-title-group">
                                 <h2>Membros</h2>
                                 <span className="toolbar-count">{staffRows.length} registo(s)</span>
                             </div>
+                            {staffRows.length > 0 && (
+                                <div className="toolbar-actions" style={{ display: "flex", gap: 6 }}>
+                                    <button type="button" className="btn btn-sm" onClick={handleExportCsv}>CSV</button>
+                                    <button type="button" className="btn btn-sm" onClick={handleExportPdf}>PDF</button>
+                                    <button type="button" className="btn btn-sm" onClick={handlePrint}>Imprimir</button>
+                                </div>
+                            )}
                         </div>
 
                         {loading ? (
@@ -504,9 +596,10 @@ export default function ClubeDepartamentoStaffPage() {
                                                 <td className="nowrap">
                                                     <span className="nome-com-avatar">
                                                         <span
-                                                            className={canEdit ? "avatar-upload-trigger" : ""}
-                                                            title={canEdit ? "Clique para alterar foto" : undefined}
-                                                            onClick={canEdit ? (e) => { e.stopPropagation(); handleAvatarClick(row.id); } : undefined}
+                                                            className={canManageFotos ? "avatar-upload-trigger clickable" : ""}
+                                                            title={canManageFotos ? "Clique para alterar foto" : undefined}
+                                                            onClick={canManageFotos ? (e) => { e.stopPropagation(); handleAvatarClick(row.id); } : undefined}
+                                                            style={{ cursor: canManageFotos ? 'pointer' : 'default' }}
                                                         >
                                                             {row.fotoPath ? (
                                                                 <img
@@ -547,7 +640,6 @@ export default function ClubeDepartamentoStaffPage() {
                         )}
                     </div>
 
-                    {/* Formulário de registo — oculto para Departamento Médico */}
                     {!isDepartamentoMedico && (
                     <div className="card">
                         <div className="modalidades-toolbar">
@@ -660,7 +752,6 @@ export default function ClubeDepartamentoStaffPage() {
                 </div>
             </div>
 
-            {/* Edit modal */}
             {editOpen ? (
                 <div className="modal-backdrop" onClick={fecharEditar}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -671,48 +762,83 @@ export default function ClubeDepartamentoStaffPage() {
                             </button>
                         </div>
 
+                        {canManageFotos && (
+                            <div className="row" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', padding: '10px', background: '#f8f9fa', borderRadius: '8px' }}>
+                                <div className="avatar-preview" style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {editForm.fotoPath ? (
+                                        <img src={getUploadUrl(editForm.fotoPath)} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <span style={{ fontSize: '24px', color: '#64748b' }}>{(editForm.nome || "?")[0].toUpperCase()}</span>
+                                    )}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#334155' }}>Foto de Perfil</h4>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <input 
+                                            type="file" 
+                                            ref={formFotoInputRef} 
+                                            style={{ display: 'none' }} 
+                                            accept="image/*"
+                                            onChange={handleFormFotoChange}
+                                        />
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-sm btn-upload-photo" 
+                                            onClick={() => formFotoInputRef.current?.click()}
+                                        >
+                                            Alterar foto
+                                        </button>
+                                        {editForm.fotoPath && (
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-sm btn-danger"
+                                                onClick={handleRemoverFoto}
+                                            >
+                                                Remover foto
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="row">
-                            {/* Campos visíveis para todos */}
-                            <div className="row2">
-                                {/* Nº Registo: editável apenas no perfil do utilizador, aqui é só leitura para médico */}
-                                {!isDepartamentoMedico && (
+                            {!isDepartamentoMedico && (
+                                <div className="row2">
+                                    <div className="row">
+                                        <label className="field-label" htmlFor="editNome">Nome</label>
+                                        <input id="editNome" className="input" name="nome" value={editForm.nome} onChange={onEditChange} />
+                                    </div>
                                     <div className="row">
                                         <label className="field-label" htmlFor="editNumRegisto">Nº Registo</label>
                                         <input id="editNumRegisto" className="input" name="numRegisto" value={editForm.numRegisto} onChange={onEditChange} />
                                     </div>
-                                )}
+                                </div>
+                            )}
+
+                            <div className="row2">
                                 <div className="row">
                                     <label className="field-label" htmlFor="editEmail">Email</label>
                                     <input id="editEmail" className="input" name="email" type="email" value={editForm.email} onChange={onEditChange} />
                                 </div>
-                            </div>
-
-                            <div className="row2">
                                 <div className="row">
                                     <label className="field-label" htmlFor="editTelefone">Telefone</label>
                                     <input id="editTelefone" className="input" name="telefone" value={editForm.telefone} onChange={onEditChange} />
                                 </div>
-                                <div className="row">
-                                    <label className="field-label" htmlFor="editMorada">Morada</label>
-                                    <input id="editMorada" className="input" name="morada" value={editForm.morada} onChange={onEditChange} />
-                                </div>
                             </div>
 
-                            {/* Campos administrativos — apenas visíveis para Administrador/Secretário */}
+                            <div className="row">
+                                <label className="field-label" htmlFor="editMorada">Morada</label>
+                                <input id="editMorada" className="input" name="morada" value={editForm.morada} onChange={onEditChange} />
+                            </div>
+
                             {!isDepartamentoMedico && (
                                 <>
                                     <div className="row2">
                                         <div className="row">
-                                            <label className="field-label" htmlFor="editNome">Nome</label>
-                                            <input id="editNome" className="input" name="nome" value={editForm.nome} onChange={onEditChange} />
-                                        </div>
-                                        <div className="row">
                                             <label className="field-label" htmlFor="editRemuneracao">Remuneração</label>
                                             <input id="editRemuneracao" className="input" name="remuneracao" type="number" min="0" step="0.01" value={editForm.remuneracao} onChange={onEditChange} />
                                         </div>
-                                    </div>
-
-                                    <div className="row2">
                                         <div className="row">
                                             <label className="field-label" htmlFor="editCargoId">Cargo</label>
                                             <select id="editCargoId" className="input" name="cargoId" value={editForm.cargoId} onChange={onEditChange}>
@@ -724,13 +850,13 @@ export default function ClubeDepartamentoStaffPage() {
                                                 })}
                                             </select>
                                         </div>
+                                    </div>
+
+                                    <div className="row2">
                                         <div className="row">
                                             <label className="field-label" htmlFor="editDataInicio">Data início</label>
                                             <input id="editDataInicio" className="input" name="dataInicio" type="date" value={editForm.dataInicio} onChange={onEditChange} />
                                         </div>
-                                    </div>
-
-                                    <div className="row2">
                                         <div className="row">
                                             <label className="field-label" htmlFor="editDataFim">Data fim</label>
                                             <input id="editDataFim" className="input" name="dataFim" type="date" value={editForm.dataFim} onChange={onEditChange} />

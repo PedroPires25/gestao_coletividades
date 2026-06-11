@@ -4,7 +4,7 @@ import SideMenu from "../components/SideMenu";
 import MapPicker from "../components/MapPicker";
 import MiniMap from "../components/MiniMap";
 import { useAuth } from "../auth/AuthContext";
-import { getModalidadesDoClube, getUploadUrl } from "../api";
+import { getClubeById, getModalidadesDoClube, getUploadUrl } from "../api";
 import {
     createConvocatoriaTreinador,
     getAtletasConvocatoriasTreinador,
@@ -13,6 +13,7 @@ import {
     getEscaloesTreinador,
     updateConvocatoriaTreinador,
 } from "../services/treinador";
+import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 
 const SUBTIPOS = [
     { value: "CONVOCATORIA", label: "Convocatória" },
@@ -92,6 +93,7 @@ export default function ConvocatoriasPage() {
     const [viewingMap, setViewingMap] = useState(null);
     const [viewingConvocados, setViewingConvocados] = useState(null);
     const [convocadosList, setConvocadosList] = useState([]);
+    const [clubeInfo, setClubeInfo] = useState(null);
 
     const menuItems = useMemo(
         () => [
@@ -114,11 +116,13 @@ export default function ConvocatoriasPage() {
         setErro("");
         setLoading(true);
         try {
-            const [eventosData, escaloesData, modalidadesData] = await Promise.all([
+            const [clubeData, eventosData, escaloesData, modalidadesData] = await Promise.all([
+                getClubeById(clubeId).catch(() => null),
                 getConvocatoriasTreinador(clubeId),
                 getEscaloesTreinador(clubeId),
                 getModalidadesDoClube(clubeId, { apenasAtivas: true }),
             ]);
+            setClubeInfo(clubeData || null);
             setEventos(Array.isArray(eventosData) ? eventosData : []);
             const escaloesLista = Array.isArray(escaloesData) ? escaloesData : [];
             const modalidadesLista = Array.isArray(modalidadesData) ? modalidadesData : [];
@@ -263,6 +267,56 @@ export default function ConvocatoriasPage() {
         !searchAtletas || (a.nome || "").toLowerCase().includes(searchAtletas.toLowerCase())
     );
 
+    function prepareExportData() {
+        const columns = [
+            { key: "titulo", label: "Título" },
+            { key: "subtipo", label: "Tipo" },
+            { key: "modalidade", label: "Modalidade" },
+            { key: "dataHora", label: "Data/Hora" },
+            { key: "local", label: "Local" },
+            { key: "convocados", label: "Convocados" },
+        ];
+        const dataToExport = eventos.map((ev) => ({
+            titulo: ev.titulo || "-",
+            subtipo: subtipoLabel(ev.subtipo),
+            modalidade: ev.modalidadeNome || "-",
+            dataHora: ev.dataHora ? formatDateTimeFromTs(ev.dataHora) : "-",
+            local: ev.local || "-",
+            convocados: ev.totalConvocados ?? 0,
+        }));
+        return { columns, dataToExport };
+    }
+
+    function handleExportCsv() {
+        const { columns, dataToExport } = prepareExportData();
+        exportToCsv(dataToExport, columns, `convocatorias_${clubeInfo?.nome || clubeId}.csv`);
+    }
+
+    function handleExportPdf() {
+        const { columns, dataToExport } = prepareExportData();
+        exportToPdf({
+            data: dataToExport,
+            columns,
+            title: "Convocatórias",
+            clubName: clubeInfo?.nome,
+            clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
+            filename: `convocatorias_${clubeInfo?.nome || clubeId}.pdf`,
+            generatedText: "Criado em",
+        });
+    }
+
+    function handlePrint() {
+        const { columns, dataToExport } = prepareExportData();
+        printPdf({
+            data: dataToExport,
+            columns,
+            title: "Convocatórias",
+            clubName: clubeInfo?.nome,
+            clubLogoUrl: getUploadUrl(clubeInfo?.logoPath),
+            generatedText: "Criado em",
+        });
+    }
+
     return (
         <>
             <SideMenu title="Gestão de Clubes" subtitle="Convocatórias" logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
@@ -278,6 +332,13 @@ export default function ConvocatoriasPage() {
                     </div>
                     <div className="actions" style={{ display: "flex", gap: 8 }}>
                         <button type="button" className="btn" onClick={() => navigate(`/clubes/${clubeId}/eventos`)}>Eventos do Clube</button>
+                        {!showForm && eventos.length > 0 && (
+                            <>
+                                <button type="button" className="btn btn-sm" onClick={handleExportCsv}>CSV</button>
+                                <button type="button" className="btn btn-sm" onClick={handleExportPdf}>PDF</button>
+                                <button type="button" className="btn btn-sm" onClick={handlePrint}>Imprimir</button>
+                            </>
+                        )}
                         {!showForm && (
                             <button type="button" className="btn btn-primary" onClick={abrirNovoEvento}>Novo evento</button>
                         )}

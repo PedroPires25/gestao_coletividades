@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getClubeById } from "../api";
+import { getClubeById, getUploadUrl } from "../api";
 import { getExames, createExame, updateExame, uploadExameFicheiro, getExameFileUrl } from "../services/medico";
 import { getStaffByDepartamento } from "../services/staff";
 import { getAtletasByClube } from "../services/atletas";
+import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 
 const TIPOS_EXAME = [
     "Análises clínicas", "Electrocardiograma", "Ecocardiograma", "Raio-X",
@@ -223,6 +224,56 @@ export default function ExamesMedicosPage() {
         }
     }
 
+    function prepareExportData() {
+        const columns = [
+            { key: "atleta", label: "Atleta" },
+            { key: "data", label: "Data" },
+            { key: "tipo", label: "Tipo" },
+            { key: "resultado", label: "Resultado" },
+            { key: "staff", label: "Médico/Staff" },
+            { key: "notas", label: "Notas" },
+        ];
+        const dataToExport = exames.map((row) => ({
+            atleta: row.atletaNome || `#${row.atletaId}`,
+            data: fmt(row.dataExame),
+            tipo: row.tipo || "-",
+            resultado: row.resultado || "-",
+            staff: row.staffNome || "-",
+            notas: row.notas || "-",
+        }));
+        return { columns, dataToExport };
+    }
+
+    function handleExportCsv() {
+        const { columns, dataToExport } = prepareExportData();
+        exportToCsv(dataToExport, columns, `exames_medicos_${clube?.nome || clubeId}.csv`);
+    }
+
+    function handleExportPdf() {
+        const { columns, dataToExport } = prepareExportData();
+        exportToPdf({
+            data: dataToExport,
+            columns,
+            title: "Exames Médicos",
+            clubName: clube?.nome,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
+            filename: `exames_medicos_${clube?.nome || clubeId}.pdf`,
+            generatedText: "Documento emitido em",
+        });
+    }
+
+    function handlePrint() {
+        const { columns, dataToExport } = prepareExportData();
+        printPdf({
+            data: dataToExport,
+            columns,
+            title: "Exames Médicos",
+            clubName: clube?.nome,
+            clubLogoUrl: getUploadUrl(clube?.logoPath),
+            generatedText: "Documento emitido em",
+        });
+    }
+
     return (
         <>
             <SideMenu title="Gestão de Clubes" subtitle={clube?.nome || "Clube"} logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
@@ -251,6 +302,13 @@ export default function ExamesMedicosPage() {
                                 <h2>Exames</h2>
                                 <span className="toolbar-count">{exames.length} registo(s)</span>
                             </div>
+                            {exames.length > 0 && (
+                                <div style={{ display: "flex", gap: 6 }}>
+                                    <button type="button" className="btn btn-sm" onClick={handleExportCsv}>CSV</button>
+                                    <button type="button" className="btn btn-sm" onClick={handleExportPdf}>PDF</button>
+                                    <button type="button" className="btn btn-sm" onClick={handlePrint}>Imprimir</button>
+                                </div>
+                            )}
                         </div>
                         {loading ? (
                             <p className="subtle">A carregar...</p>
