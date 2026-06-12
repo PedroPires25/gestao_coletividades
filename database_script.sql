@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS perfis (
 
 CREATE TABLE IF NOT EXISTS utilizadores (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  utilizador VARCHAR(120) NOT NULL UNIQUE,
+  utilizador VARCHAR(120) NOT NULL,
   palavra_chave VARCHAR(255) NOT NULL,
   perfil_id INT NOT NULL,
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
@@ -1287,3 +1287,24 @@ CREATE TABLE IF NOT EXISTS pagamento_seguro (
     CONSTRAINT fk_ps_escalao FOREIGN KEY (escalao_id) REFERENCES escalao(id) ON DELETE SET NULL,
     CONSTRAINT fk_ps_reg FOREIGN KEY (registado_por) REFERENCES utilizadores(id) ON DELETE SET NULL
 );
+
+-- =========================================================
+-- UNICIDADE DE EMAIL POR ESTRUTURA (CLUBE / COLETIVIDADE)
+-- Permite o mesmo email em clubes/coletividades diferentes,
+-- mas impede duplicação dentro da mesma estrutura.
+-- =========================================================
+
+-- Remover restrição global de unicidade do email (se existir em bases de dados antigas)
+ALTER TABLE utilizadores DROP INDEX IF EXISTS utilizador;
+
+-- Unicidade composta: mesmo email não pode ser registado duas vezes no mesmo clube
+ALTER TABLE utilizadores
+  ADD UNIQUE KEY IF NOT EXISTS uq_utilizador_clube (utilizador, clube_id);
+
+-- Unicidade composta: mesmo email não pode ser registado duas vezes na mesma coletividade
+ALTER TABLE utilizadores
+  ADD UNIQUE KEY IF NOT EXISTS uq_utilizador_coletividade (utilizador, coletividade_id);
+
+-- Nota: Em MySQL, valores NULL em índices UNIQUE são tratados como distintos,
+-- pelo que a validação de unicidade para utilizadores sem estrutura (ex: SUPER_ADMIN)
+-- é assegurada ao nível da aplicação em UtilizadorDAO.existeEmailNaEstrutura().

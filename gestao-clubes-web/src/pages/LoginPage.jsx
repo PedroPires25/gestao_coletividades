@@ -64,7 +64,7 @@ const PERFIL_LABELS = {
 };
 
 export default function LoginPage() {
-    const { login } = useAuth();
+    const { login, loginConfirm } = useAuth();
     const { theme, setTheme } = useTheme();
     const navigate = useNavigate();
     const logoSrc = useAppLogo();
@@ -74,6 +74,11 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [erro, setErro] = useState("");
     const [loading, setLoading] = useState(false);
+
+    // Seleção de conta quando o mesmo email existe em múltiplas estruturas
+    const [contasPendentes, setContasPendentes] = useState(null);
+    const [loadingConta, setLoadingConta] = useState(false);
+    const [erroSelecao, setErroSelecao] = useState("");
 
     const [open, setOpen] = useState(false);
     const [rEmail, setREmail] = useState("");
@@ -284,19 +289,45 @@ export default function LoginPage() {
         try {
             const response = await login(email.trim(), password);
 
+            // Múltiplas contas: mostrar seletor
+            if (response?.requiresSelection) {
+                setContasPendentes(response.contas);
+                return;
+            }
+
             // Verificar se está pendente de aprovação
             if (response?.user?.estadoRegisto !== "APROVADO") {
                 navigate("/pending-approval", { replace: true });
                 return;
             }
 
-            // Usar redirectUrl calculado no AuthContext
             const redirectUrl = response?.redirectUrl || "/menu";
             navigate(redirectUrl, { replace: true });
         } catch (e) {
             setErro(e.message || "Credenciais inválidas.");
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function onSelecionarConta(userId) {
+        setErroSelecao("");
+        setLoadingConta(true);
+        try {
+            const response = await loginConfirm(userId, email.trim(), password);
+
+            if (response?.user?.estadoRegisto !== "APROVADO") {
+                navigate("/pending-approval", { replace: true });
+                return;
+            }
+
+            setContasPendentes(null);
+            const redirectUrl = response?.redirectUrl || "/menu";
+            navigate(redirectUrl, { replace: true });
+        } catch (e) {
+            setErroSelecao(e.message || "Erro ao entrar nesta conta.");
+        } finally {
+            setLoadingConta(false);
         }
     }
 
@@ -541,6 +572,52 @@ export default function LoginPage() {
                         <polyline points="20 6 9 17 4 12" />
                     </svg>
                     <span>{successToast}</span>
+                </div>
+            )}
+
+            {contasPendentes && (
+                <div className="modal-backdrop" onMouseDown={() => setContasPendentes(null)}>
+                    <div className="modal scale-in" onMouseDown={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Selecionar conta</h3>
+                            <button
+                                className="btn modal-close"
+                                type="button"
+                                onClick={() => { setContasPendentes(null); setErroSelecao(""); }}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <p style={{ marginBottom: 16, color: "var(--text-secondary, #666)" }}>
+                                O email <strong>{email}</strong> está associado a várias contas. Seleciona a que pretendes usar:
+                            </p>
+                            {erroSelecao && <div className="alert error">{erroSelecao}</div>}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                                {contasPendentes.map((conta) => (
+                                    <button
+                                        key={conta.userId}
+                                        className="btn"
+                                        disabled={loadingConta}
+                                        onClick={() => onSelecionarConta(conta.userId)}
+                                        style={{
+                                            textAlign: "left",
+                                            padding: "12px 16px",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            gap: 2,
+                                        }}
+                                    >
+                                        <span style={{ fontWeight: 600 }}>{conta.estruturaNome}</span>
+                                        <span style={{ fontSize: 12, opacity: 0.75 }}>
+                                            {conta.estruturaTipo === "CLUBE" ? "🏟 Clube" : conta.estruturaTipo === "COLETIVIDADE" ? "🏛 Coletividade" : "⚙ Sistema"}
+                                            {" · "}{conta.role}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 

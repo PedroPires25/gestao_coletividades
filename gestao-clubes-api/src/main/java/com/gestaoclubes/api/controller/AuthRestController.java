@@ -139,6 +139,35 @@ public class AuthRestController {
         }
     }
 
+    public static class ContaSelecaoDto {
+        public int userId;
+        public String estruturaTipo;
+        public String estruturaNome;
+        public String role;
+
+        public ContaSelecaoDto(int userId, String estruturaTipo, String estruturaNome, String role) {
+            this.userId = userId;
+            this.estruturaTipo = estruturaTipo;
+            this.estruturaNome = estruturaNome;
+            this.role = role;
+        }
+    }
+
+    public static class LoginSelecaoResponse {
+        public boolean requiresSelection = true;
+        public List<ContaSelecaoDto> contas;
+
+        public LoginSelecaoResponse(List<ContaSelecaoDto> contas) {
+            this.contas = contas;
+        }
+    }
+
+    public static class LoginConfirmRequest {
+        public int userId;
+        public String email;
+        public String password;
+    }
+
     @GetMapping("/profiles")
     public ResponseEntity<?> listarPerfisRegistaveis() {
         return ResponseEntity.ok(
@@ -171,10 +200,70 @@ public class AuthRestController {
             return ResponseEntity.badRequest().body("Pedido inválido.");
         }
 
-        Utilizador u = utilizadorDAO.autenticar(req.email.trim(), req.password);
-        if (u == null) {
+        List<Utilizador> contas = utilizadorDAO.autenticarTodos(req.email.trim(), req.password);
+
+        if (contas.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Utilizador ou palavra-passe incorretos.");
+        }
+
+        // Filtrar apenas contas aprovadas
+        List<Utilizador> aprovadas = contas.stream()
+                .filter(u -> "APROVADO".equalsIgnoreCase(u.getEstadoRegisto()))
+                .toList();
+
+        // Se só existem contas pendentes/rejeitadas
+        if (aprovadas.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("O registo ainda não foi aprovado.");
+        }
+
+        // Conta única aprovada → login direto
+        if (aprovadas.size() == 1) {
+            return concluirLogin(aprovadas.get(0));
+        }
+
+        // Múltiplas contas aprovadas → devolver lista para seleção
+        List<ContaSelecaoDto> opcoes = aprovadas.stream()
+                .map(u -> {
+                    String role = perfilDAO.obterDescricaoPerfil(u.getPerfilId());
+                    String estruturaTipo;
+                    String estruturaNome;
+                    if (u.getClubeId() != null) {
+                        estruturaTipo = "CLUBE";
+                        var clube = clubeDAO.buscarPorId(u.getClubeId());
+                        estruturaNome = clube != null ? clube.getNome() : "Clube #" + u.getClubeId();
+                    } else if (u.getColetividadeId() != null) {
+                        estruturaTipo = "COLETIVIDADE";
+                        var col = coletividadeDAO.buscarPorId(u.getColetividadeId());
+                        estruturaNome = col != null ? col.getNome() : "Coletividade #" + u.getColetividadeId();
+                    } else {
+                        estruturaTipo = "SISTEMA";
+                        estruturaNome = "Administração global";
+                    }
+                    return new ContaSelecaoDto(u.getId(), estruturaTipo, estruturaNome, role);
+                })
+                .toList();
+
+        return ResponseEntity.ok(new LoginSelecaoResponse(opcoes));
+    }
+
+    @PostMapping("/login/confirm")
+    public ResponseEntity<?> loginConfirm(@RequestBody LoginConfirmRequest req) {
+        if (req == null || req.email == null || req.password == null || req.userId <= 0) {
+            return ResponseEntity.badRequest().body("Pedido inválido.");
+        }
+
+        // Revalidar credenciais por segurança
+        List<Utilizador> contas = utilizadorDAO.autenticarTodos(req.email.trim(), req.password);
+        Utilizador u = contas.stream()
+                .filter(c -> c.getId() == req.userId)
+                .findFirst()
+                .orElse(null);
+
+        if (u == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Credenciais inválidas.");
         }
 
         if (!"APROVADO".equalsIgnoreCase(u.getEstadoRegisto())) {
@@ -182,6 +271,10 @@ public class AuthRestController {
                     .body("O registo ainda não foi aprovado.");
         }
 
+        return concluirLogin(u);
+    }
+
+    private ResponseEntity<?> concluirLogin(Utilizador u) {
         String rolePlain = perfilDAO.obterDescricaoPerfil(u.getPerfilId());
         if (rolePlain == null || rolePlain.isBlank()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -453,6 +546,20 @@ public class AuthRestController {
             atividadeId = null;
         }
 
+        // Validar duplicação de email dentro da mesma estrutura antes de tentar inserir
+        if (utilizadorDAO.existeEmailNaEstrutura(email, clubeId, coletividadeId)) {
+            if (clubeId != null) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Já existe um utilizador com este email neste clube.");
+            } else if (coletividadeId != null) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Já existe um utilizador com este email nesta coletividade.");
+            } else {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Já existe um utilizador com este email no sistema.");
+            }
+        }
+
         String estadoRegisto = perfilDAO.isPerfilAutoAprovado(perfil) ? "APROVADO" : "PENDENTE";
 
         boolean ok = utilizadorDAO.inserir(
@@ -468,8 +575,8 @@ public class AuthRestController {
         );
 
         if (!ok) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Não foi possível registar. O email já existe?");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Não foi possível registar. Tente novamente.");
         }
 
         if ("PENDENTE".equals(estadoRegisto)) {
