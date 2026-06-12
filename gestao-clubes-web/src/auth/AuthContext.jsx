@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState } from "react";
-import { apiLogin } from "../api";
+import { apiLogin, apiLoginConfirm } from "../api";
 import { useTheme } from "../theme/ThemeContext";
 import { getHomePathByRole } from "../utils/navigation";
 
@@ -20,12 +20,30 @@ export function AuthProvider({ children }) {
 
     async function login(email, password) {
         const response = await apiLogin(email.trim(), password);
-        
+
+        // Múltiplas contas: devolver para o caller lidar com a seleção
+        if (response?.requiresSelection) {
+            return response;
+        }
+
         if (response?.user) {
             response.redirectUrl = getHomePathByRole(response.user);
             applyUserTheme(response.user.temaPreferido);
         }
         
+        setSession(response);
+        localStorage.setItem(LS_KEY, JSON.stringify(response));
+        return response;
+    }
+
+    async function loginConfirm(userId, email, password) {
+        const response = await apiLoginConfirm(userId, email, password);
+
+        if (response?.user) {
+            response.redirectUrl = getHomePathByRole(response.user);
+            applyUserTheme(response.user.temaPreferido);
+        }
+
         setSession(response);
         localStorage.setItem(LS_KEY, JSON.stringify(response));
         return response;
@@ -91,6 +109,7 @@ export function AuthProvider({ children }) {
             canManageClube: (targetClubeId) => isSuperAdmin || (scopedAdminActive && Number(targetClubeId) === (session?.user?.clubeId ?? null)),
             canManageColetividade: (targetColetividadeId) => isSuperAdmin || (scopedAdminActive && Number(targetColetividadeId) === (session?.user?.coletividadeId ?? null)),
             login,
+            loginConfirm,
             logout,
             updateSession,
         };

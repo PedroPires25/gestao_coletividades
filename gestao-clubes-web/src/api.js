@@ -46,6 +46,13 @@ export async function apiLogin(email, password) {
     });
 }
 
+export async function apiLoginConfirm(userId, email, password) {
+    return http("/auth/login/confirm", {
+        method: "POST",
+        body: JSON.stringify({ userId, email, password }),
+    });
+}
+
 export async function apiForgotPassword(email) {
     return http("/auth/forgot-password", {
         method: "POST",

@@ -16,6 +16,36 @@ public class UtilizadorDAO {
 
     private static final Logger LOGGER = Logger.getLogger(UtilizadorDAO.class.getName());
 
+    /**
+     * Devolve todas as contas ativas cujo email e palavra-passe correspondem.
+     * Usado quando o mesmo email existe em múltiplas estruturas.
+     */
+    public List<Utilizador> autenticarTodos(String email, String palavraChave) {
+        String sql = "SELECT * FROM utilizadores WHERE LOWER(utilizador) = LOWER(?) AND ativo = 1";
+        List<Utilizador> resultado = new ArrayList<>();
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, email.trim());
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String hash = rs.getString("palavra_chave");
+                    if (PasswordUtil.verificarPassword(palavraChave, hash)) {
+                        resultado.add(mapUtilizador(rs, false));
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            LOGGER.warning("Erro ao autenticar todos: " + e.getMessage());
+            LOGGER.severe(e.toString());
+        }
+
+        return resultado;
+    }
+
     public Utilizador autenticar(String email, String palavraChave) {
         String sql = "SELECT * FROM utilizadores WHERE utilizador = ? AND ativo = 1";
 
@@ -65,6 +95,50 @@ public class UtilizadorDAO {
         }
     }
 
+    /**
+     * Verifica se já existe um utilizador com o mesmo email dentro da mesma estrutura.
+     * O mesmo email pode existir em clubes ou coletividades diferentes.
+     */
+    public boolean existeEmailNaEstrutura(String email, Integer clubeId, Integer coletividadeId) {
+        if (email == null || email.trim().isEmpty()) return false;
+
+        try (Connection conn = ConexoBD.getConnection()) {
+            if (clubeId != null) {
+                String sql = "SELECT COUNT(*) FROM utilizadores WHERE LOWER(utilizador) = LOWER(?) AND clube_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setString(1, email.trim());
+                    stmt.setInt(2, clubeId);
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next() && rs.getInt(1) > 0) return true;
+                    }
+                }
+            }
+
+            if (coletividadeId != null) {
+                String sql = "SELECT COUNT(*) FROM utilizadores WHERE LOWER(utilizador) = LOWER(?) AND coletividade_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setString(1, email.trim());
+                    stmt.setInt(2, coletividadeId);
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next() && rs.getInt(1) > 0) return true;
+                    }
+                }
+            }
+
+            // Sem estrutura definida (ex: SUPER_ADMIN): mantém verificação global
+            if (clubeId == null && coletividadeId == null) {
+                return existeEmail(email.trim());
+            }
+
+            return false;
+
+        } catch (SQLException e) {
+            LOGGER.warning("Erro ao verificar email na estrutura: " + e.getMessage());
+            LOGGER.severe(e.toString());
+            return false;
+        }
+    }
+
     public boolean inserir(String email, String palavraChave, int perfilId, boolean privilegiosAtivos,
                            String estadoRegisto, Integer clubeId, Integer modalidadeId,
                            Integer coletividadeId, Integer atividadeId) {
@@ -73,7 +147,7 @@ public class UtilizadorDAO {
         if (palavraChave == null || palavraChave.isEmpty()) return false;
         if (perfilId <= 0) return false;
         if (estadoRegisto == null || estadoRegisto.isBlank()) return false;
-        if (existeEmail(email)) return false;
+        if (existeEmailNaEstrutura(email, clubeId, coletividadeId)) return false;
 
         if (!PasswordPolicyUtil.isValid(palavraChave)) {
             throw new IllegalArgumentException(
