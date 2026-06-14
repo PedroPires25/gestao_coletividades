@@ -11,6 +11,7 @@ import com.gestaoclubes.api.model.ClubeModalidade;
 import com.gestaoclubes.api.model.Escalao;
 import com.gestaoclubes.api.model.Staff;
 import com.gestaoclubes.api.security.SecurityUtils;
+import com.gestaoclubes.api.util.ValidationUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -162,6 +163,7 @@ public class StaffRestController {
         if (atual == null) {
             throw new IllegalArgumentException("Membro do staff não encontrado.");
         }
+        ValidationUtil.validateTelefone(body.telefone);
 
         if (SecurityUtils.isDepartamentoMedico()) {
             // Médico só pode editar o seu próprio registo, apenas campos pessoais
@@ -305,6 +307,7 @@ public class StaffRestController {
         if (body.cargoId == null || body.cargoId <= 0) {
             throw new IllegalArgumentException("O cargo é obrigatório.");
         }
+        ValidationUtil.validateTelefone(body.telefone);
     }
 
     private static String blankToNull(String value) {

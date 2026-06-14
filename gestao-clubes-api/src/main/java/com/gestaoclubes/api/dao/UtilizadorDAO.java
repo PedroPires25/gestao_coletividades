@@ -856,6 +856,9 @@ public class UtilizadorDAO {
         try { u.setTelefone(rs.getString("telefone")); } catch (SQLException ignored) {}
         try { u.setEmailNotificacoes(rs.getString("email_notificacoes")); } catch (SQLException ignored) {}
         try { u.setTemaPreferido(rs.getString("tema_preferido")); } catch (SQLException ignored) {}
+        try { u.setNif(rs.getString("nif")); } catch (SQLException ignored) {}
+        try { u.setCodigoPostal(rs.getString("codigo_postal")); } catch (SQLException ignored) {}
+        try { u.setNumeroContribuinte(rs.getString("numero_contribuinte")); } catch (SQLException ignored) {}
         return u;
     }
 
@@ -925,8 +928,10 @@ public class UtilizadorDAO {
         }
     }
 
-    public boolean atualizarDadosPessoais(int userId, String morada, String telefone, String emailNotificacoes) {
-        String sql = "UPDATE utilizadores SET morada=?, telefone=?, email_notificacoes=? WHERE id=?";
+    public boolean atualizarDadosPessoais(int userId, String morada, String telefone, String emailNotificacoes,
+                                          String nif, String codigoPostal, String numeroContribuinte) {
+        String sql = "UPDATE utilizadores SET morada=?, telefone=?, email_notificacoes=?, " +
+                     "nif=?, codigo_postal=?, numero_contribuinte=? WHERE id=?";
 
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -934,7 +939,10 @@ public class UtilizadorDAO {
             ps.setString(1, morada);
             ps.setString(2, telefone);
             ps.setString(3, emailNotificacoes);
-            ps.setInt(4, userId);
+            ps.setString(4, nif);
+            ps.setString(5, codigoPostal);
+            ps.setString(6, numeroContribuinte);
+            ps.setInt(7, userId);
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {

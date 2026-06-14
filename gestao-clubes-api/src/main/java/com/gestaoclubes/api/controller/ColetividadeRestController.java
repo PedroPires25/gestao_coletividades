@@ -5,6 +5,7 @@ import com.gestaoclubes.api.security.SecurityUtils;
 import com.gestaoclubes.api.dao.AuditLogDAO;
 import com.gestaoclubes.api.dao.ColetividadeDAO;
 import com.gestaoclubes.api.model.Coletividade;
+import com.gestaoclubes.api.util.ValidationUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +41,13 @@ public class ColetividadeRestController {
     @PostMapping
     public ResponseEntity<String> inserir(@RequestBody Coletividade coletividade) {
         exigirSuperAdmin();
+        try {
+            ValidationUtil.validateNif(coletividade.getNif());
+            ValidationUtil.validateTelefone(coletividade.getTelefone());
+            ValidationUtil.validateCodigoPostal(coletividade.getCodigoPostal());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
         boolean ok = coletividadeDAO.inserir(coletividade);
         if (!ok) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -60,6 +68,13 @@ public class ColetividadeRestController {
     @PutMapping("/{id}")
     public ResponseEntity<String> atualizar(@PathVariable int id, @RequestBody Coletividade coletividade) {
         exigirGestaoColetividade(id);
+        try {
+            ValidationUtil.validateNif(coletividade.getNif());
+            ValidationUtil.validateTelefone(coletividade.getTelefone());
+            ValidationUtil.validateCodigoPostal(coletividade.getCodigoPostal());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
         Coletividade antesObj = coletividadeDAO.buscarPorId(id);
 
         boolean ok = coletividadeDAO.atualizar(id, coletividade);

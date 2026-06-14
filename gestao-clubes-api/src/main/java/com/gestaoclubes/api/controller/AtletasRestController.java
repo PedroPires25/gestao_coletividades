@@ -12,6 +12,7 @@ import com.gestaoclubes.api.model.Atleta;
 import com.gestaoclubes.api.model.ClubeModalidade;
 import com.gestaoclubes.api.model.Escalao;
 import com.gestaoclubes.api.model.EstadoAtleta;
+import com.gestaoclubes.api.util.ValidationUtil;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -69,6 +70,11 @@ public class AtletasRestController {
         }
         if (body.estadoId == null || body.estadoId <= 0) {
             throw new IllegalArgumentException("O estado é obrigatório.");
+        }
+        try {
+            ValidationUtil.validateTelefone(body.telefone);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
 
         ClubeModalidade clubeModalidade = clubeModalidadeDAO.buscarAtivaPorClubeEModalidade(clubeId, modalidadeId);
@@ -148,6 +154,11 @@ public class AtletasRestController {
         }
         if (body.estadoId == null || body.estadoId <= 0) {
             throw new IllegalArgumentException("O estado é obrigatório.");
+        }
+        try {
+            ValidationUtil.validateTelefone(body.telefone);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
 
         ClubeModalidade clubeModalidade = clubeModalidadeDAO.buscarPorId(clubeModalidadeId);

@@ -5,6 +5,7 @@ import com.gestaoclubes.api.security.SecurityUtils;
 import com.gestaoclubes.api.dao.AuditLogDAO;
 import com.gestaoclubes.api.dao.ClubeDAO;
 import com.gestaoclubes.api.model.Clube;
+import com.gestaoclubes.api.util.ValidationUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -51,6 +52,13 @@ public class ClubeRestController {
     @PostMapping
     public ResponseEntity<String> inserir(@RequestBody Clube clube) {
         exigirSuperAdmin();
+        try {
+            ValidationUtil.validateNif(clube.getNif());
+            ValidationUtil.validateTelefone(clube.getTelefone());
+            ValidationUtil.validateCodigoPostal(clube.getCodigoPostal());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
         boolean ok = clubeDAO.inserir(clube);
         if (!ok) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -74,6 +82,13 @@ public class ClubeRestController {
     @PutMapping("/{id}")
     public ResponseEntity<String> atualizar(@PathVariable int id, @RequestBody Clube clube) {
         exigirGestaoClube(id);
+        try {
+            ValidationUtil.validateNif(clube.getNif());
+            ValidationUtil.validateTelefone(clube.getTelefone());
+            ValidationUtil.validateCodigoPostal(clube.getCodigoPostal());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
         Clube antesObj = clubeDAO.buscarPorId(id);
 
         boolean ok = clubeDAO.atualizar(id, clube);

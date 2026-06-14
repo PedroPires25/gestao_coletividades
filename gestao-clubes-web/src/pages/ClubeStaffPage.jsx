@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
+import TelefoneInput from "../components/TelefoneInput";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById, getUploadUrl } from "../api";
 import {
@@ -11,6 +12,7 @@ import {
     getStaffByClube,
 } from "../services/staff";
 import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
+import { validateTelefone } from "../utils/validation";
 
 import atletasIcon from "../assets/atletas.svg";
 import direcaoIcon from "../assets/direcao.svg";
@@ -295,6 +297,11 @@ export default function ClubeStaffPage() {
         }
         if (!form.modalidadeId) {
             setErro("Seleciona uma modalidade.");
+            return;
+        }
+        const telErr = validateTelefone(form.telefone);
+        if (telErr) {
+            setErro(telErr);
             return;
         }
 
@@ -625,7 +632,7 @@ export default function ClubeStaffPage() {
                                     </div>
                                     <div className="row">
                                         <label className="field-label" htmlFor="telefone">Telefone</label>
-                                        <input id="telefone" className="input" name="telefone" value={form.telefone} onChange={onChange} placeholder="912345678" />
+                                        <TelefoneInput name="telefone" value={form.telefone} onChange={onChange} />
                                     </div>
                                 </div>
 

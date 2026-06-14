@@ -1,10 +1,15 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { useTheme } from "../theme/ThemeContext";
 import SideMenu from "../components/SideMenu";
+import TelefoneInput from "../components/TelefoneInput";
+import NifInput from "../components/NifInput";
+import CodigoPostalInput from "../components/CodigoPostalInput";
 import PasswordChecklist from "../components/PasswordChecklist";
 import ConfirmPasswordStatus from "../components/ConfirmPasswordStatus";
 import { evaluatePassword } from "../utils/passwordStrength";
+import { validateTelefone, validateNif, validateCodigoPostal, validateNumeroContribuinte } from "../utils/validation";
 import {
     getMyProfile,
     updateMyProfile,
@@ -51,12 +56,16 @@ const eyeButtonStyle = {
 export default function PerfilPage() {
     const { user, updateSession, isDepartamentoMedico } = useAuth();
     const { setTheme } = useTheme();
+    const navigate = useNavigate();
     const [nome, setNome] = useState("");
     const [loginEmail, setLoginEmail] = useState("");
     const [morada, setMorada] = useState("");
     const [telefone, setTelefone] = useState("");
     const [emailNotificacoes, setEmailNotificacoes] = useState("");
     const [numRegisto, setNumRegisto] = useState("");
+    const [nif, setNif] = useState("");
+    const [codigoPostal, setCodigoPostal] = useState("");
+    const [numeroContribuinte, setNumeroContribuinte] = useState("");
     const [temaPreferido, setTemaPreferido] = useState("");
     const [logoPath, setLogoPath] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -94,6 +103,9 @@ export default function PerfilPage() {
                 setMorada(data.morada || "");
                 setTelefone(data.telefone || "");
                 setNumRegisto(data.numRegisto || "");
+                setNif(data.nif || "");
+                setCodigoPostal(data.codigoPostal || "");
+                setNumeroContribuinte(data.numeroContribuinte || "");
                 setTemaPreferido(data.temaPreferido || "");
                 setLogoPath(data.logoPath || null);
             })
@@ -110,6 +122,7 @@ export default function PerfilPage() {
             const updated = await updateMyProfile({ nome: nome.trim() });
             updateSession({ nome: updated.nome, logoPath: updated.logoPath });
             setMsg({ type: "success", text: "Perfil atualizado com sucesso." });
+            navigate("/menu");
         } catch {
             setMsg({ type: "error", text: "Erro ao guardar perfil." });
         } finally {
@@ -158,19 +171,21 @@ export default function PerfilPage() {
     }
 
     function handleCancelDados() {
-        setEditingDados(false);
-        getMyProfile().then((data) => {
-            setLoginEmail(data.email || "");
-            setEmailNotificacoes(data.emailNotificacoes || data.email || "");
-            setMorada(data.morada || "");
-            setTelefone(data.telefone || "");
-            setNumRegisto(data.numRegisto || "");
-        });
-        setDadosMsg(null);
+        navigate("/menu");
     }
 
     async function handleSaveDados(e) {
         e.preventDefault();
+        // Validação frontend
+        const telErr = validateTelefone(telefone.trim());
+        if (telErr) { setDadosMsg({ type: "error", text: telErr }); return; }
+        const nifErr = validateNif(nif.trim());
+        if (nifErr) { setDadosMsg({ type: "error", text: nifErr }); return; }
+        const cpErr = validateCodigoPostal(codigoPostal.trim());
+        if (cpErr) { setDadosMsg({ type: "error", text: cpErr }); return; }
+        const ncErr = validateNumeroContribuinte(numeroContribuinte.trim());
+        if (ncErr) { setDadosMsg({ type: "error", text: ncErr }); return; }
+
         setSavingDados(true);
         setDadosMsg(null);
         try {
@@ -178,16 +193,23 @@ export default function PerfilPage() {
                 morada: morada.trim(),
                 telefone: telefone.trim(),
                 emailNotificacoes: emailNotificacoes.trim(),
+                nif: nif.trim() || null,
+                codigoPostal: codigoPostal.trim() || null,
+                numeroContribuinte: numeroContribuinte.trim() || null,
                 ...(isDepartamentoMedico ? { numRegisto: numRegisto.trim() } : {}),
             });
             setLoginEmail(updated.email || "");
             setEmailNotificacoes(updated.emailNotificacoes || updated.email || "");
             setMorada(updated.morada || "");
             setTelefone(updated.telefone || "");
+            setNif(updated.nif || "");
+            setCodigoPostal(updated.codigoPostal || "");
+            setNumeroContribuinte(updated.numeroContribuinte || "");
             if (isDepartamentoMedico) setNumRegisto(updated.numRegisto || "");
             updateSession({ email: updated.email, emailNotificacoes: updated.emailNotificacoes || null });
             setEditingDados(false);
             setDadosMsg({ type: "success", text: "Dados pessoais atualizados com sucesso." });
+            navigate("/menu");
         } catch (err) {
             const text = typeof err === "string" ? err
                 : err?.message || "Erro ao guardar dados pessoais.";
@@ -325,9 +347,19 @@ export default function PerfilPage() {
                             />
                         </div>
 
-                        <button type="submit" className="perfil-save-btn" disabled={saving}>
-                            {saving ? "A guardar..." : "Guardar"}
-                        </button>
+                        <div className="perfil-form-actions">
+                            <button type="submit" className="perfil-save-btn" disabled={saving}>
+                                {saving ? "A guardar..." : "Guardar"}
+                            </button>
+                            <button
+                                type="button"
+                                className="perfil-cancel-btn"
+                                onClick={() => navigate("/menu")}
+                                disabled={saving}
+                            >
+                                Cancelar
+                            </button>
+                        </div>
                     </form>
 
                     <hr className="perfil-divider" />
@@ -357,6 +389,18 @@ export default function PerfilPage() {
                             <div className="perfil-dados-row">
                                 <span className="perfil-dados-label">Telefone:</span>
                                 <span className="perfil-dados-value">{telefone || "—"}</span>
+                            </div>
+                            <div className="perfil-dados-row">
+                                <span className="perfil-dados-label">NIF:</span>
+                                <span className="perfil-dados-value">{nif || "—"}</span>
+                            </div>
+                            <div className="perfil-dados-row">
+                                <span className="perfil-dados-label">Código Postal:</span>
+                                <span className="perfil-dados-value">{codigoPostal || "—"}</span>
+                            </div>
+                            <div className="perfil-dados-row">
+                                <span className="perfil-dados-label">Nº de Contribuinte:</span>
+                                <span className="perfil-dados-value">{numeroContribuinte || "—"}</span>
                             </div>
                                 {isDepartamentoMedico && (
                                     <div className="perfil-dados-row">
@@ -412,13 +456,46 @@ export default function PerfilPage() {
 
                             <div className="perfil-field">
                                 <label htmlFor="perfil-telefone">Telefone</label>
-                                <input
-                                    id="perfil-telefone"
-                                    type="tel"
+                                <TelefoneInput
+                                    name="telefone"
                                     value={telefone}
                                     onChange={(e) => setTelefone(e.target.value)}
                                     className="perfil-input"
-                                    maxLength={30}
+                                />
+                            </div>
+
+                            <div className="perfil-field">
+                                <label htmlFor="perfil-nif">NIF</label>
+                                <NifInput
+                                    id="perfil-nif"
+                                    name="nif"
+                                    value={nif}
+                                    onChange={(e) => setNif(e.target.value)}
+                                    className="perfil-input"
+                                />
+                            </div>
+
+                            <div className="perfil-field">
+                                <label htmlFor="perfil-codigo-postal">Código Postal</label>
+                                <CodigoPostalInput
+                                    id="perfil-codigo-postal"
+                                    name="codigoPostal"
+                                    value={codigoPostal}
+                                    onChange={(e) => setCodigoPostal(e.target.value)}
+                                    className="perfil-input"
+                                />
+                            </div>
+
+                            <div className="perfil-field">
+                                <label htmlFor="perfil-num-contribuinte">Nº de Contribuinte <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.7 }}>(opcional)</span></label>
+                                <NifInput
+                                    id="perfil-num-contribuinte"
+                                    name="numeroContribuinte"
+                                    value={numeroContribuinte}
+                                    onChange={(e) => setNumeroContribuinte(e.target.value)}
+                                    className="perfil-input"
+                                    placeholder="Nº de Contribuinte"
+                                    errorMessage="O Nº de Contribuinte deve conter exatamente 9 números."
                                 />
                             </div>
 

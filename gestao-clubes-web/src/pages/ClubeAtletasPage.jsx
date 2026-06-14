@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
+import TelefoneInput from "../components/TelefoneInput";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById, getUploadUrl } from "../api";
 import {
@@ -11,6 +12,7 @@ import {
     getModalidadesByClube,
 } from "../services/atletas";
 import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
+import { validateTelefone } from "../utils/validation";
 
 import atletasIcon from "../assets/atletas.svg";
 
@@ -289,6 +291,8 @@ export default function ClubeAtletasPage() {
             setErro("Seleciona uma modalidade.");
             return;
         }
+        const telErr = validateTelefone(form.telefone);
+        if (telErr) { setErro(telErr); return; }
 
         setErro("");
         setMsg("");
@@ -686,11 +690,8 @@ export default function ClubeAtletasPage() {
                                         <label className="field-label" htmlFor="telefone">
                                             Telefone
                                         </label>
-                                        <input
-                                            id="telefone"
-                                            className="input"
+                                        <TelefoneInput
                                             name="telefone"
-                                            placeholder="912345678"
                                             value={form.telefone}
                                             onChange={onChange}
                                         />

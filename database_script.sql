@@ -955,3 +955,13 @@ ALTER TABLE utilizadores
 -- Nota: Em MySQL, valores NULL em índices UNIQUE são tratados como distintos,
 -- pelo que a validação de unicidade para utilizadores sem estrutura (ex: SUPER_ADMIN)
 -- é assegurada ao nível da aplicação em UtilizadorDAO.existeEmailNaEstrutura().
+
+-- Adicionar campos fiscais e morada ao perfil do utilizador
+ALTER TABLE utilizadores
+ADD COLUMN nif VARCHAR(9) DEFAULT NULL;
+
+ALTER TABLE utilizadores
+ADD COLUMN codigo_postal VARCHAR(8) DEFAULT NULL;
+
+ALTER TABLE utilizadores
+ADD COLUMN numero_contribuinte VARCHAR(9) DEFAULT NULL;

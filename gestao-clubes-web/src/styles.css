@@ -826,8 +826,22 @@ body.theme-light textarea::placeholder {
 }
 
 /* =========================
-   Tabelas
+   Validação de Campos
 ========================= */
+
+.input-error {
+    border-color: rgba(255,92,92,0.80) !important;
+    box-shadow: 0 0 0 2px rgba(255,92,92,0.18);
+}
+
+.field-error {
+    font-size: 0.78rem;
+    color: #ff5c5c;
+    font-weight: 500;
+    padding: 0 2px;
+}
+
+
 
 /* Legacy wrapper — kept for backward compat */
 .table-wrap {

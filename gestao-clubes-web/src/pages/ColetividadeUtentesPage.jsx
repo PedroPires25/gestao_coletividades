@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
+import TelefoneInput from "../components/TelefoneInput";
 import { useAuth } from "../auth/AuthContext";
 import { getColetividadeById } from "../api";
 import { getAtividadesByColetividade } from "../services/coletividadeAtividades";
@@ -13,6 +14,7 @@ import {
     updateUtente,
 } from "../services/utentes";
 import atletasIcon from "../assets/atletas.svg";
+import { validateTelefone } from "../utils/validation";
 
 function formatDateOnly(value) {
     if (!value) return "-";
@@ -191,6 +193,8 @@ export default function ColetividadeUtentesPage() {
             setErro("Seleciona pelo menos uma atividade.");
             return;
         }
+        const telErr = validateTelefone(form.telefone);
+        if (telErr) { setErro(telErr); return; }
 
         setSaving(true);
         setErro("");
@@ -224,6 +228,8 @@ export default function ColetividadeUtentesPage() {
             setErro("Indica o nome do inscrito.");
             return;
         }
+        const telErr = validateTelefone(editForm.telefone);
+        if (telErr) { setErro(telErr); return; }
 
         setSaving(true);
         setErro("");
@@ -355,7 +361,7 @@ export default function ColetividadeUtentesPage() {
                                         </div>
                                         <div className="row2">
                                             <input className="input" name="email" placeholder="Email" value={form.email} onChange={onFormChange} />
-                                            <input className="input" name="telefone" placeholder="Telefone" value={form.telefone} onChange={onFormChange} />
+                                            <TelefoneInput name="telefone" value={form.telefone} onChange={onFormChange} />
                                         </div>
                                         <input className="input" name="morada" placeholder="Morada" value={form.morada} onChange={onFormChange} />
                                         <div className="row2">
@@ -473,7 +479,7 @@ export default function ColetividadeUtentesPage() {
                                 </div>
                                 <div className="row2">
                                     <input className="input" name="email" placeholder="Email" value={editForm.email || ""} onChange={onEditChange} />
-                                    <input className="input" name="telefone" placeholder="Telefone" value={editForm.telefone || ""} onChange={onEditChange} />
+                                    <TelefoneInput name="telefone" value={editForm.telefone || ""} onChange={onEditChange} />
                                 </div>
                                 <input className="input" name="morada" placeholder="Morada" value={editForm.morada || ""} onChange={onEditChange} />
                             </div>

@@ -19,6 +19,9 @@ public class Utilizador {
     private String telefone;
     private String emailNotificacoes;
     private String temaPreferido;
+    private String nif;
+    private String codigoPostal;
+    private String numeroContribuinte;
 
     public Utilizador() {
     }
@@ -174,5 +177,29 @@ public class Utilizador {
 
     public void setEmailNotificacoes(String emailNotificacoes) {
         this.emailNotificacoes = emailNotificacoes;
+    }
+
+    public String getNif() {
+        return nif;
+    }
+
+    public void setNif(String nif) {
+        this.nif = nif;
+    }
+
+    public String getCodigoPostal() {
+        return codigoPostal;
+    }
+
+    public void setCodigoPostal(String codigoPostal) {
+        this.codigoPostal = codigoPostal;
+    }
+
+    public String getNumeroContribuinte() {
+        return numeroContribuinte;
+    }
+
+    public void setNumeroContribuinte(String numeroContribuinte) {
+        this.numeroContribuinte = numeroContribuinte;
     }
 }

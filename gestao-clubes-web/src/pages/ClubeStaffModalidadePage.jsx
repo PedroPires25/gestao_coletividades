@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
+import TelefoneInput from "../components/TelefoneInput";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById, getUploadUrl, uploadStaffFoto } from "../api";
 import {
@@ -12,6 +13,7 @@ import {
     updateStaffAfetacao,
 } from "../services/staff";
 import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
+import { validateTelefone } from "../utils/validation";
 
 import atletasIcon from "../assets/atletas.svg";
 
@@ -291,6 +293,8 @@ export default function ClubeStaffModalidadePage() {
 
     async function guardarEdicao() {
         if (!editForm.id || !editForm.afetacaoId) return;
+        const telErr = validateTelefone(editForm.telefone);
+        if (telErr) { setErro(telErr); return; }
 
         setSavingEdit(true);
         setErro("");
@@ -606,7 +610,7 @@ export default function ClubeStaffModalidadePage() {
                                 </div>
                                 <div className="row">
                                     <label className="field-label" htmlFor="editTelefone">Telefone</label>
-                                    <input id="editTelefone" className="input" name="telefone" value={editForm.telefone} onChange={onEditChange} />
+                                    <TelefoneInput name="telefone" value={editForm.telefone} onChange={onEditChange} />
                                 </div>
                             </div>
 
