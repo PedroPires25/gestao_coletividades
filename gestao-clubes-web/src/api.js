@@ -80,6 +80,10 @@ export async function getAdminUsers(estado) {
     return http(`/admin/users${q}`);
 }
 
+export async function getPendingUsersCount() {
+    return http("/admin/pending-count");
+}
+
 export async function getAdminProfiles() {
     return http("/admin/profiles");
 }

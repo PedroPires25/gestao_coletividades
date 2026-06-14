@@ -91,6 +91,23 @@ public class AdminRestController {
         public Integer atividadeId;
     }
 
+    @GetMapping("/pending-count")
+    public ResponseEntity<?> contarPendentes() {
+        if (!SecurityUtils.isSuperAdmin() && !isGestorLocal()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Sem permissões.");
+        }
+
+        List<Utilizador> pendentes = utilizadorDAO.listarPorEstadoRegisto("PENDENTE");
+        long count = pendentes.stream()
+                .filter(u -> {
+                    String role = perfilDAO.obterDescricaoPerfil(u.getPerfilId());
+                    return podeGerirPedidoPendente(u, role);
+                })
+                .count();
+
+        return ResponseEntity.ok(java.util.Map.of("count", count));
+    }
+
     @GetMapping("/users")
     public List<UtilizadorAdminDto> listarUsers(@RequestParam(value = "estado", required = false) String estado) {
         if (!SecurityUtils.isSuperAdmin() && !isGestorLocal()) {
