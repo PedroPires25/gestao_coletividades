@@ -422,4 +422,55 @@ public class UtenteDAO {
         if (value == null || value.isBlank()) ps.setNull(index, Types.VARCHAR);
         else ps.setString(index, value);
     }
+    
+    public List<Map<String, Object>> listarAtividadesPorUtilizador(int utilizadorId) {
+        List<Map<String, Object>> lista = new ArrayList<>();
+
+        String sql = """
+            SELECT
+                a.id AS atividade_id,
+                a.nome AS atividade_nome,
+                a.descricao AS atividade_descricao,
+                ca.id AS coletividade_atividade_id,
+                (SELECT GROUP_CONCAT(s.nome SEPARATOR ', ')
+                 FROM staff_coletividade_afetacao sca
+                 JOIN staff_coletividade s ON s.id = sca.staff_coletividade_id
+                 WHERE sca.coletividade_atividade_id = ca.id) AS professor,
+                ca.ano AS horario,
+                col.nome AS local,
+                ei.descricao AS estado
+            FROM inscrito_coletividade_atividade ica
+            JOIN inscrito i ON i.id = ica.inscrito_id
+            JOIN coletividade_atividade ca ON ca.id = ica.coletividade_atividade_id
+            JOIN atividade a ON a.id = ca.atividade_id
+            JOIN estado_inscrito ei ON ei.id = i.estado_id
+            JOIN coletividade col ON col.id = ca.coletividade_id
+            WHERE i.utilizador_id = ? AND ica.ativo = 1
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, utilizadorId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", rs.getInt("atividade_id"));
+                    row.put("nome", rs.getString("atividade_nome"));
+                    row.put("descricao", rs.getString("atividade_descricao"));
+                    row.put("coletividadeAtividadeId", rs.getInt("coletividade_atividade_id"));
+                    row.put("professor", rs.getString("professor"));
+                    row.put("horario", rs.getString("horario"));
+                    row.put("local", rs.getString("local"));
+                    row.put("estado", rs.getString("estado"));
+                    lista.add(row);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.severe(e.toString());
+        }
+
+        return lista;
+    }
 }

@@ -325,3 +325,42 @@ export async function changeMyPassword(payload) {
         body: JSON.stringify(payload),
     });
 }
+
+export async function getMinhasAtividades() {
+    return http("/coletividades/minhas-atividades");
+}
+
+export async function getEventosColetividade(coletividadeId) {
+    if (
+        coletividadeId === undefined ||
+        coletividadeId === null ||
+        coletividadeId === "" ||
+        coletividadeId === "undefined"
+    ) {
+        return [];
+    }
+    return http(`/coletividades/${coletividadeId}/eventos`);
+}
+
+export async function getAtividadeById(id) {
+    if (id === undefined || id === null || id === "" || id === "undefined") {
+        throw new Error("ID da atividade inválido.");
+    }
+    return http(`/coletividades/atividades/${id}`);
+}
+
+export async function getEventosAtividade(coletividadeId, atividadeId) {
+    if (
+        coletividadeId === undefined ||
+        coletividadeId === null ||
+        coletividadeId === "" ||
+        coletividadeId === "undefined" ||
+        atividadeId === undefined ||
+        atividadeId === null ||
+        atividadeId === "" ||
+        atividadeId === "undefined"
+    ) {
+        return [];
+    }
+    return http(`/coletividades/${coletividadeId}/atividades/${atividadeId}/eventos`);
+}

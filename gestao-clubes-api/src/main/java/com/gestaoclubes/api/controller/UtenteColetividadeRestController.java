@@ -36,6 +36,15 @@ public class UtenteColetividadeRestController {
         return ResponseEntity.ok(utenteDAO.listarTodosPorColetividade(coletividadeId));
     }
 
+    @GetMapping("/minhas-atividades")
+    public ResponseEntity<List<Map<String, Object>>> getMinhasAtividades() {
+        Integer utilizadorId = SecurityUtils.currentUserId();
+        if (utilizadorId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(utenteDAO.listarAtividadesPorUtilizador(utilizadorId));
+    }
+
     public static class CriarUtenteRequest {
         public String nome;
         public String dataNascimento;
