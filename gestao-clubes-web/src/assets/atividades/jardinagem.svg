@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- stem -->
+  <path d="M32 56L32 26" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <!-- leaf left -->
+  <path d="M32 40C28 36 18 36 16 42C18 46 28 46 32 40Z"
+        stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- leaf right -->
+  <path d="M32 34C36 30 46 30 48 36C46 40 36 40 32 34Z"
+        stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- flower center -->
+  <circle cx="32" cy="18" r="5" stroke="white" stroke-width="2.5"/>
+  <!-- petals -->
+  <circle cx="22" cy="13" r="4" stroke="white" stroke-width="2"/>
+  <circle cx="42" cy="13" r="4" stroke="white" stroke-width="2"/>
+  <circle cx="26" cy="8" r="4" stroke="white" stroke-width="2"/>
+  <circle cx="38" cy="8" r="4" stroke="white" stroke-width="2"/>
+</svg>

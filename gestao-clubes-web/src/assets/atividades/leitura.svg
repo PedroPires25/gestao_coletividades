@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- left page -->
+  <path d="M32 14L10 18L10 52L32 48Z"
+        stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- right page -->
+  <path d="M32 14L54 18L54 52L32 48Z"
+        stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- spine -->
+  <path d="M32 14L32 48" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- text lines left -->
+  <path d="M16 28L26 26" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <path d="M16 34L26 32" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <path d="M16 40L26 38" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <!-- text lines right -->
+  <path d="M38 26L48 28" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <path d="M38 32L48 34" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <path d="M38 38L48 40" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</svg>

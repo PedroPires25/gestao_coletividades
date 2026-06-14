@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- left hand -->
+  <path d="M10 36L10 24L14 24L14 18L18 18L18 14L22 14L22 18L26 18L26 36Z"
+        stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- right hand (mirror) -->
+  <path d="M54 36L54 24L50 24L50 18L46 18L46 14L42 14L42 18L38 18L38 36Z"
+        stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- object being crafted (star/gem shape) -->
+  <path d="M32 42L28 50L32 48L36 50Z" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="38" r="6" stroke="white" stroke-width="2.5"/>
+</svg>

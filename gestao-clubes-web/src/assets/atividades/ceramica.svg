@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- pottery wheel circle -->
+  <ellipse cx="32" cy="46" rx="20" ry="6" stroke="white" stroke-width="2.5"/>
+  <!-- clay pot being shaped -->
+  <path d="M22 46C20 36 22 24 32 20C42 24 44 36 42 46" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- hands shaping -->
+  <path d="M18 34C16 30 18 28 22 30" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M46 34C48 30 46 28 42 30" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- wheel spindle -->
+  <path d="M32 46L32 56" stroke="white" stroke-width="3" stroke-linecap="round"/>
+</svg>

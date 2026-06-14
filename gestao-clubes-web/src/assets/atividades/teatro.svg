@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- comedy mask (left, smiling) -->
+  <path d="M8 24C8 14 22 10 26 16C28 20 26 28 20 30C14 32 8 29 8 24Z"
+        stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M13 24Q18 30 23 24" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <!-- tragedy mask (right, frowning) -->
+  <path d="M36 20C36 10 52 8 56 14C58 18 56 26 50 28C44 30 36 26 36 20Z"
+        stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M41 24Q46 18 51 24" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <!-- comedy mask stand -->
+  <path d="M18 30L18 48" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- tragedy mask stand -->
+  <path d="M46 28L46 48" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- base -->
+  <path d="M12 48L52 48" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

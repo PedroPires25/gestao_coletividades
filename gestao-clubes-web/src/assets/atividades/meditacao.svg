@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- head -->
+  <circle cx="32" cy="12" r="5" stroke="white" stroke-width="3"/>
+  <!-- torso upright -->
+  <path d="M32 17L32 34" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <!-- arms resting on knees -->
+  <path d="M32 26L18 34" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <path d="M32 26L46 34" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <!-- crossed legs (lotus) -->
+  <path d="M18 34C16 40 20 46 32 46C44 46 48 40 46 34" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- hands resting (open circles) -->
+  <circle cx="18" cy="36" r="3" stroke="white" stroke-width="2"/>
+  <circle cx="46" cy="36" r="3" stroke="white" stroke-width="2"/>
+  <!-- aura/peace lines -->
+  <path d="M24 8C26 4 30 3 32 5" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M40 8C38 4 34 3 32 5" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+</svg>

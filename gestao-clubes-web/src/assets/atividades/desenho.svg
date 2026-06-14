@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- pencil body -->
+  <path d="M14 48L44 18L50 24L20 54Z" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- eraser end -->
+  <path d="M44 18L48 14L50 16L50 24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- tip -->
+  <path d="M14 48L12 52L18 50Z" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- writing lines -->
+  <path d="M26 42L38 30" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <!-- paper corner -->
+  <path d="M8 56L8 38L20 26" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

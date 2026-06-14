@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- hoop circle -->
+  <circle cx="32" cy="32" r="22" stroke="white" stroke-width="3"/>
+  <!-- person inside - head -->
+  <circle cx="32" cy="18" r="5" stroke="white" stroke-width="2.5"/>
+  <!-- person body -->
+  <path d="M32 23L32 36" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- arms extended to hoop -->
+  <path d="M32 28L10 32" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M32 28L54 32" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- legs -->
+  <path d="M32 36L24 50" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M32 36L40 50" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

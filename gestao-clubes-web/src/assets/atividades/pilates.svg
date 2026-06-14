@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- mat -->
+  <path d="M6 48L58 48" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <!-- body lying down -->
+  <path d="M12 44L36 44" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <!-- head -->
+  <circle cx="10" cy="42" r="5" stroke="white" stroke-width="3"/>
+  <!-- legs raised -->
+  <path d="M36 44L48 28" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <path d="M36 44L54 34" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <!-- arms reaching up -->
+  <path d="M18 44L22 32" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <path d="M26 44L30 32" stroke="white" stroke-width="3" stroke-linecap="round"/>
+</svg>
