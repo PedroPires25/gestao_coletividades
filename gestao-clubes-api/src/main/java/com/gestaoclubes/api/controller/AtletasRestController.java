@@ -1,6 +1,7 @@
 package com.gestaoclubes.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gestaoclubes.api.dao.PerfilDAO;
 import com.gestaoclubes.api.security.SecurityUtils;
 import com.gestaoclubes.api.dao.AtletaClubeModalidadeDAO;
 import com.gestaoclubes.api.dao.AtletaDAO;
@@ -33,6 +34,7 @@ public class AtletasRestController {
     private final EstadoAtletaDAO estadoAtletaDAO = new EstadoAtletaDAO();
     private final AuditLogDAO auditLogDAO = new AuditLogDAO();
     private final com.gestaoclubes.api.dao.UtilizadorDAO utilizadorDAO = new com.gestaoclubes.api.dao.UtilizadorDAO();
+    private final PerfilDAO perfilDAO = new PerfilDAO();
     private final ObjectMapper mapper = new ObjectMapper();
 
     @GetMapping("/clubes/{clubeId}/modalidades/{modalidadeId}/atletas")
@@ -94,10 +96,24 @@ public class AtletasRestController {
                 body.remuneracao == null ? 0.0 : body.remuneracao
         );
 
-        // Ligar ao utilizador se o email corresponder
+        // Ligar ao utilizador se o email corresponder e criar conta clube se ainda não existir
         if (atleta.getEmail() != null) {
             var util = utilizadorDAO.buscarPorEmail(atleta.getEmail());
-            if (util != null) atleta.setUtilizadorId(util.getId());
+            if (util != null) {
+                atleta.setUtilizadorId(util.getId());
+                // Se o utilizador existe mas não tem conta no contexto deste clube,
+                // criar automaticamente uma conta ATLETA para que o ecrã de seleção apareça no login.
+                if (!utilizadorDAO.existeEmailNaEstrutura(atleta.getEmail(), clubeId, null)) {
+                    String hash = utilizadorDAO.buscarHashPorEmail(atleta.getEmail());
+                    if (hash != null) {
+                        int atletaPerfilId = perfilDAO.obterPerfilPorDescricao(PerfilDAO.ATLETA);
+                        utilizadorDAO.inserirComHashExistente(
+                                atleta.getEmail(), hash, atletaPerfilId,
+                                "APROVADO", clubeId, modalidadeId
+                        );
+                    }
+                }
+            }
         }
 
         Integer atletaId = atletaDAO.inserirEDevolverId(atleta);
