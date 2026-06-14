@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
-import { getColetividadeById } from "../api";
+import { getColetividadeById, getMinhasAtividades } from "../api";
 import {
     getEventosColetividade,
     getInscricoesEvento,
@@ -10,6 +10,7 @@ import {
     cancelarInscricaoEvento,
 } from "../services/eventosColetividade";
 import eventosIcon from "../assets/eventos.svg";
+import AtividadeCarousel from "../components/AtividadeCarousel";
 
 function formatDateOnly(value) {
     if (!value) return "-";
@@ -54,6 +55,7 @@ export default function AreaAcessoColetividadePage() {
     const { logout, user } = useAuth();
 
     const [coletividade, setColetividade] = useState(null);
+    const [atividades, setAtividades] = useState([]);
     const [eventos, setEventos] = useState([]);
     const [minhasInscricoes, setMinhasInscricoes] = useState({}); // eventId -> inscricaoId
     const [savingEvento, setSavingEvento] = useState({}); // eventId -> bool
@@ -66,15 +68,17 @@ export default function AreaAcessoColetividadePage() {
         let active = true;
         (async () => {
             try {
-                const [coletividadeData, eventosData] = await Promise.all([
+                const [coletividadeData, eventosData, atividadesData] = await Promise.all([
                     getColetividadeById(coletividadeId),
                     getEventosColetividade(coletividadeId),
+                    getMinhasAtividades(),
                 ]);
                 if (!active) return;
 
                 const listaEventos = Array.isArray(eventosData) ? eventosData : [];
                 setColetividade(coletividadeData);
                 setEventos(listaEventos);
+                setAtividades(atividadesData || []);
 
                 // Pre-load user's inscriptions for inscribable events
                 const inscribiveis = listaEventos.filter(e => e.permiteInscricao);
@@ -181,7 +185,7 @@ export default function AreaAcessoColetividadePage() {
                             <img src={eventosIcon} alt="Eventos" className="page-title-icon" />
                         </span>
                         <div className="page-title-texts">
-                            <h1>Eventos da Coletividade</h1>
+                            <h1>A minha área</h1>
                         </div>
                     </div>
                     <div className="hint">{coletividade?.nome || ""}</div>
@@ -192,11 +196,22 @@ export default function AreaAcessoColetividadePage() {
 
                 <div className="stack-sections">
 
+                    {/* SECÇÃO 0 — Minhas Atividades */}
+                    <section className="card">
+                        <div className="modalidades-toolbar">
+                            <div className="toolbar-title-group">
+                                <h2>As minhas atividades</h2>
+                                <span className="toolbar-count">{atividades.length}</span>
+                            </div>
+                        </div>
+                        <AtividadeCarousel atividades={atividades} coletividadeId={coletividadeId} />
+                    </section>
+
                     {/* SECÇÃO 1 — Eventos */}
                     <section className="card">
                         <div className="modalidades-toolbar">
                             <div className="toolbar-title-group">
-                                <h2>Eventos</h2>
+                                <h2>Eventos da Coletividade</h2>
                                 <span className="toolbar-count">{eventos.length}</span>
                             </div>
                         </div>

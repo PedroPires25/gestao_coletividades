@@ -50,6 +50,14 @@ public class EventoColetividadeRestController {
         return ResponseEntity.ok(eventoDAO.listarEventos(coletividadeId, estado, coletividadeAtividadeId));
     }
 
+    @GetMapping("/{coletividadeId}/atividades/{coletividadeAtividadeId}/eventos")
+    public ResponseEntity<List<Map<String, Object>>> listarEventosAtividade(
+            @PathVariable int coletividadeId,
+            @PathVariable int coletividadeAtividadeId
+    ) {
+        return ResponseEntity.ok(eventoDAO.listarEventos(coletividadeId, null, coletividadeAtividadeId));
+    }
+
     @PostMapping("/{coletividadeId}/eventos")
     public ResponseEntity<?> criarEvento(
             @PathVariable int coletividadeId,

@@ -6,7 +6,7 @@
 export function getHomePathByRole(user) {
     if (!user) return "/login";
     
-    const { role, clubeId, modalidadeId, coletividadeId, atividadeId, estadoRegisto } = user;
+    const { role, clubeId, modalidadeId, coletividadeId, estadoRegisto } = user;
 
     // Se não está aprovado, será tratado em outro lugar
     if (estadoRegisto !== "APROVADO") {
@@ -77,8 +77,8 @@ export function getHomePathByRole(user) {
 
         case "UTENTE":
         case "INSCRITO_COLETIVIDADE":
-            if (coletividadeId && atividadeId) {
-                return `/coletividades/${coletividadeId}/utentes/atividades/${atividadeId}`;
+            if (coletividadeId) {
+                return `/minha-area/coletividade/${coletividadeId}`;
             }
             return "/menu";
 

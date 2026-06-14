@@ -35,6 +35,15 @@ public class ColetividadeAtividadeRestController {
         );
     }
 
+    @GetMapping("/atividades/{id}")
+    public ResponseEntity<ColetividadeAtividade> getAtividadeById(@PathVariable int id) {
+        ColetividadeAtividade atividade = coletividadeAtividadeDAO.obterPorId(id);
+        if (atividade == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(atividade);
+    }
+
     @GetMapping("/atividades-catalogo")
     public ResponseEntity<List<Atividade>> listarAtividadesCatalogo() {
         return ResponseEntity.ok(atividadeDAO.listarAtivas());

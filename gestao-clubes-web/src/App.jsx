@@ -46,6 +46,7 @@ const ColetividadeModuloProfessorPage = lazy(() => import("./pages/ColetividadeM
 const ColetividadeModuloTreinadorPage = lazy(() => import("./pages/ColetividadeModuloTreinadorPage"));
 const AreaAcessoClubePage = lazy(() => import("./pages/AreaAcessoClubePage"));
 const AreaAcessoColetividadePage = lazy(() => import("./pages/AreaAcessoColetividadePage"));
+const DetalheAtividadePage = lazy(() => import("./pages/DetalheAtividadePage"));
 const PerfilPage = lazy(() => import("./pages/PerfilPage"));
 const PoliticaPrivacidadePage = lazy(() => import("./pages/PoliticaPrivacidadePage"));
 
@@ -530,6 +531,19 @@ export default function App() {
                             <RequireNotMedico>
                                 <RequireNotTreinador>
                                     <AreaAcessoColetividadePage />
+                                </RequireNotTreinador>
+                            </RequireNotMedico>
+                        </RequireAuth>
+                    }
+                />
+
+                <Route
+                    path="/minha-area/coletividade/:coletividadeId/atividades/:atividadeId"
+                    element={
+                        <RequireAuth>
+                            <RequireNotMedico>
+                                <RequireNotTreinador>
+                                    <DetalheAtividadePage />
                                 </RequireNotTreinador>
                             </RequireNotMedico>
                         </RequireAuth>
