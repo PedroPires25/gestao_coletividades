@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { createClube, deleteClube, getClubes, updateClube, uploadClubeLogo, getUploadUrl } from "../api";
 import { useAuth } from "../auth/AuthContext";
@@ -21,6 +21,7 @@ function isoToInputDate(dateISO) {
 
 export default function ClubesPage() {
     const { logout, isAdmin, isSuperAdmin, canManageClube } = useAuth();
+    const location = useLocation();
     const navigate = useNavigate();
 
     const [clubes, setClubes] = useState([]);
@@ -76,6 +77,15 @@ export default function ClubesPage() {
     useEffect(() => {
         carregar();
     }, []);
+
+    useEffect(() => {
+        if (location.hash !== "#criar-clube") return;
+
+        const target = document.getElementById("criar-clube");
+        if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [location.hash]);
 
     function onChange(e) {
         setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -377,7 +387,7 @@ export default function ClubesPage() {
                     </section>
 
                     {isSuperAdmin && (
-                        <section className="card">
+                        <section className="card" id="criar-clube">
                             <h2>Criar clube</h2>
                             <p className="subtle">Preenche os campos e guarda na base de dados via API.</p>
 

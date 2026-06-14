@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { createColetividade, deleteColetividade, getColetividades, updateColetividade, uploadColetividadeLogo, getUploadUrl } from "../api";
 import { useAuth } from "../auth/AuthContext";
@@ -21,6 +21,7 @@ function isoToInputDate(dateISO) {
 
 export default function ColetividadesPage() {
     const { logout, isAdmin, isSuperAdmin, canManageColetividade } = useAuth();
+    const location = useLocation();
     const navigate = useNavigate();
 
     const [coletividades, setColetividades] = useState([]);
@@ -76,6 +77,15 @@ export default function ColetividadesPage() {
     useEffect(() => {
         carregar();
     }, []);
+
+    useEffect(() => {
+        if (location.hash !== "#criar-coletividade") return;
+
+        const target = document.getElementById("criar-coletividade");
+        if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [location.hash]);
 
     function onChange(e) {
         setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -270,7 +280,7 @@ export default function ColetividadesPage() {
 
                 <div className="stack-sections">
                     {isSuperAdmin && (
-                        <section className="card">
+                        <section className="card" id="criar-coletividade">
                             <h2>Criar coletividade</h2>
                             <p className="subtle">Preenche os campos e guarda na base de dados via API.</p>
 
