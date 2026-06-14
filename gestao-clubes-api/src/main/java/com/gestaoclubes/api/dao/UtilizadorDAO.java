@@ -912,6 +912,52 @@ public class UtilizadorDAO {
         }
     }
 
+    /**
+     * No momento do login, verifica se este email tem inscrições como atleta em clubes
+     * que ainda não têm uma linha correspondente em utilizadores. Cria-as automaticamente
+     * para que o ecrã de seleção de área apareça.
+     *
+     * @param email          email da pessoa que está a fazer login
+     * @param passwordHash   hash da password copiado da conta existente
+     * @param atletaPerfilId perfil_id correspondente a "ATLETA"
+     */
+    public void sincronizarContasAtletaNoLogin(String email, String passwordHash, int atletaPerfilId) {
+        if (email == null || email.isBlank() || passwordHash == null) return;
+
+        // Encontrar todas as inscrições ativas de atleta para este email
+        // que ainda não têm uma conta de utilizador no clube correspondente
+        String sql = """
+            SELECT DISTINCT cm.clube_id, cm.modalidade_id
+            FROM atleta a
+            JOIN atleta_clube_modalidade acm ON acm.atleta_id = a.id AND acm.ativo = 1
+            JOIN clube_modalidade cm ON cm.id = acm.clube_modalidade_id
+            WHERE LOWER(a.email) = LOWER(?)
+            AND NOT EXISTS (
+                SELECT 1 FROM utilizadores u
+                WHERE LOWER(u.utilizador) = LOWER(?) AND u.clube_id = cm.clube_id AND u.ativo = 1
+            )
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email.trim());
+            ps.setString(2, email.trim());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int clubeId   = rs.getInt("clube_id");
+                    int modalidadeId = rs.getInt("modalidade_id");
+                    inserirComHashExistente(email, passwordHash, atletaPerfilId,
+                            "APROVADO", clubeId, modalidadeId);
+                }
+            }
+
+        } catch (SQLException e) {
+            LOGGER.severe("Erro ao sincronizar contas atleta no login: " + e.getMessage());
+        }
+    }
+
     public String buscarHashPorEmail(String email) {
         String sql = "SELECT palavra_chave FROM utilizadores WHERE LOWER(utilizador) = LOWER(?) AND ativo = 1 LIMIT 1";
         try (Connection conn = ConexoBD.getConnection();

@@ -214,6 +214,20 @@ public class AuthRestController {
                     .body("Utilizador ou palavra-passe incorretos.");
         }
 
+        // Garantir que existem contas de utilizador para todas as inscrições de atleta deste email.
+        // Faz-se aqui no login para retrocompatibilidade com atletas criados antes desta lógica.
+        {
+            String hash = utilizadorDAO.buscarHashPorEmail(req.email.trim());
+            if (hash != null) {
+                int atletaPerfilId = perfilDAO.obterPerfilPorDescricao(PerfilDAO.ATLETA);
+                if (atletaPerfilId > 0) {
+                    utilizadorDAO.sincronizarContasAtletaNoLogin(req.email.trim(), hash, atletaPerfilId);
+                    // Recarregar contas após eventual criação de novas linhas
+                    contas = utilizadorDAO.autenticarTodos(req.email.trim(), req.password);
+                }
+            }
+        }
+
         // Filtrar apenas contas aprovadas
         List<Utilizador> aprovadas = contas.stream()
                 .filter(u -> "APROVADO".equalsIgnoreCase(u.getEstadoRegisto()))
