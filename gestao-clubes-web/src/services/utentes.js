@@ -59,8 +59,8 @@ export async function getTodosInscritos(coletividadeId) {
     return http(`/coletividades/${coletividadeId}/inscritos`);
 }
 
-export async function createUtente(coletividadeId, coletividadeAtividadeId, payload) {
-    return http(`/coletividades/${coletividadeId}/utentes?coletividadeAtividadeId=${coletividadeAtividadeId}`, {
+export async function createUtente(coletividadeId, payload) {
+    return http(`/coletividades/${coletividadeId}/utentes`, {
         method: "POST",
         body: JSON.stringify(payload),
     });

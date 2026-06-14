@@ -164,6 +164,71 @@ public class UtenteDAO {
         return lista;
     }
 
+    public Integer criarUtenteComAtividades(Utente u, List<Integer> atividadeIds) {
+        if (atividadeIds == null || atividadeIds.isEmpty()) return null;
+        Connection conn = null;
+        try {
+            conn = ConexoBD.getConnection();
+            conn.setAutoCommit(false);
+
+            int firstAtividadeId = atividadeIds.get(0);
+
+            String sqlInscrito = """
+                INSERT INTO inscrito (nome, data_nascimento, email, telefone, morada, coletividade_atual_id, estado_id, utilizador_id)
+                SELECT ?, ?, ?, ?, ?, ca.coletividade_id, ?,
+                       (SELECT id FROM utilizadores WHERE LOWER(utilizador) = LOWER(?) LIMIT 1)
+                FROM coletividade_atividade ca
+                WHERE ca.id = ?
+            """;
+
+            Integer inscritoId = null;
+
+            try (PreparedStatement ps = conn.prepareStatement(sqlInscrito, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, u.getNome());
+                setNullableString(ps, 2, u.getDataNascimento());
+                setNullableString(ps, 3, u.getEmail());
+                setNullableString(ps, 4, u.getTelefone());
+                setNullableString(ps, 5, u.getMorada());
+                ps.setInt(6, u.getEstadoId() == null ? 1 : u.getEstadoId());
+                setNullableString(ps, 7, u.getEmail());
+                ps.setInt(8, firstAtividadeId);
+                ps.executeUpdate();
+
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) inscritoId = rs.getInt(1);
+                }
+            }
+
+            if (inscritoId == null) {
+                conn.rollback();
+                return null;
+            }
+
+            for (int atividadeId : atividadeIds) {
+                Integer ligacaoId = adicionarAtividade(conn, inscritoId, atividadeId, u.getDataInscricao(), u.getDataFim(), u.getAtivo());
+                if (ligacaoId == null) {
+                    conn.rollback();
+                    return null;
+                }
+            }
+
+            conn.commit();
+            return inscritoId;
+        } catch (Exception e) {
+            LOGGER.severe(e.toString());
+            try {
+                if (conn != null) conn.rollback();
+            } catch (Exception ignored) {
+            }
+            return null;
+        } finally {
+            try {
+                if (conn != null) conn.setAutoCommit(true);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
     public Integer criarUtente(Utente u, int coletividadeAtividadeId) {
         Connection conn = null;
         try {
