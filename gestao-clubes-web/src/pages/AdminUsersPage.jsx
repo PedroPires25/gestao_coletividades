@@ -12,8 +12,8 @@ import coletividadesIcon from "../assets/coletividades.svg";
 const QUICK_ICONS = {
     "Utilizadores por Aprovar": utilizadoresAprovarIcon,
     "Utilizadores Autorizados": utilizadoresAutorizadosIcon,
-    "Gerir Clubes": clubesIcon,
-    "Gerir Coletividades": coletividadesIcon,
+    "Criar Clube": clubesIcon,
+    "Criar Coletividade": coletividadesIcon,
 };
 
 export default function AdminUsersPage() {
@@ -58,21 +58,21 @@ export default function AdminUsersPage() {
 
     const adminActions = isSuperAdmin ? [
         {
-            label: "Gerir Clubes",
-            to: "/clubes",
-            description: "Criar, editar e gerir todos os clubes da plataforma.",
+            label: "Criar Clube",
+            to: "/clubes#criar-clube",
+            description: "Abrir o formulário de criação de um novo clube.",
         },
         {
-            label: "Gerir Coletividades",
-            to: "/coletividades",
-            description: "Criar, editar e gerir todas as coletividades da plataforma.",
+            label: "Criar Coletividade",
+            to: "/coletividades#criar-coletividade",
+            description: "Abrir o formulário de criação de uma nova coletividade.",
         },
     ] : [];
 
     const colorClasses = [
         "icon-orange",
         "icon-green",
-        "icon-cyan",
+        "icon-turquoise",
         "icon-purple",
     ];
 
