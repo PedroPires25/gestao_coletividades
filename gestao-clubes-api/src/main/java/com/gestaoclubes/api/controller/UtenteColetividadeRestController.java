@@ -46,6 +46,7 @@ public class UtenteColetividadeRestController {
         public String dataInscricao;
         public String dataFim;
         public Boolean ativo;
+        public List<Integer> atividadeIds;
     }
 
     public static class AdicionarAtividadeRequest {
@@ -56,12 +57,14 @@ public class UtenteColetividadeRestController {
     @PostMapping("/{coletividadeId}/utentes")
     public ResponseEntity<?> criarUtente(
             @PathVariable int coletividadeId,
-            @RequestParam int coletividadeAtividadeId,
             @RequestBody CriarUtenteRequest body
     ) {
         exigirGestaoColetividade(coletividadeId);
         if (body == null || body.nome == null || body.nome.isBlank()) {
             return ResponseEntity.badRequest().body("Nome é obrigatório.");
+        }
+        if (body.atividadeIds == null || body.atividadeIds.isEmpty()) {
+            return ResponseEntity.badRequest().body("Deve selecionar pelo menos uma atividade.");
         }
 
         Utente u = new Utente();
@@ -75,7 +78,7 @@ public class UtenteColetividadeRestController {
         u.setDataFim(body.dataFim);
         u.setAtivo(body.ativo == null || body.ativo);
 
-        Integer id = utenteDAO.criarUtente(u, coletividadeAtividadeId);
+        Integer id = utenteDAO.criarUtenteComAtividades(u, body.atividadeIds);
         if (id == null) return ResponseEntity.badRequest().body("Não foi possível criar inscrito.");
 
         return ResponseEntity.ok(id);

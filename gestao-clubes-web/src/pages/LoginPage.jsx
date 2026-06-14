@@ -759,13 +759,13 @@ export default function LoginPage() {
                                     <label>Atividades</label>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                         {atividades.map((a) => (
-                                            <label key={a.atividade?.id ?? a.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <label key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                 <input
                                                     type="checkbox"
-                                                    checked={rAtividadeIds.includes(a.atividade?.id ?? a.atividadeId ?? a.id)}
-                                                    onChange={() => handleAtividadeChange(a.atividade?.id ?? a.atividadeId ?? a.id)}
+                                                    checked={rAtividadeIds.includes(a.id)}
+                                                    onChange={() => handleAtividadeChange(a.id)}
                                                 />
-                                                {a.atividade?.nome ?? a.nome ?? `Atividade ${a.atividadeId ?? a.id}`}
+                                                {a.atividade?.nome ?? a.nome ?? `Atividade ${a.id}`}
                                             </label>
                                         ))}
                                     </div>

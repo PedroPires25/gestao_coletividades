@@ -57,7 +57,7 @@ const FORM_INICIAL = {
     dataInscricao: new Date().toISOString().slice(0, 10),
     dataFim: "",
     ativo: true,
-    coletividadeAtividadeId: "",
+    coletividadeAtividadeIds: [],
 };
 
 export default function ColetividadeUtentesPage() {
@@ -111,10 +111,6 @@ export default function ColetividadeUtentesPage() {
             setAtividades(atividadesLista);
             setEstados(Array.isArray(estadosData) ? estadosData : []);
             setInscritos(Array.isArray(inscritosData) ? inscritosData : []);
-            setForm((prev) => ({
-                ...prev,
-                coletividadeAtividadeId: prev.coletividadeAtividadeId || String(atividadesLista[0]?.id || ""),
-            }));
         } catch (e) {
             setErro(e.message || "Não foi possível carregar os inscritos.");
         } finally {
@@ -191,8 +187,8 @@ export default function ColetividadeUtentesPage() {
             setErro("Indica o nome do inscrito.");
             return;
         }
-        if (!form.coletividadeAtividadeId) {
-            setErro("Seleciona uma atividade inicial.");
+        if (!form.coletividadeAtividadeIds || form.coletividadeAtividadeIds.length === 0) {
+            setErro("Seleciona pelo menos uma atividade.");
             return;
         }
 
@@ -200,7 +196,7 @@ export default function ColetividadeUtentesPage() {
         setErro("");
         setMsg("");
         try {
-            await createUtente(coletividadeId, Number(form.coletividadeAtividadeId), {
+            await createUtente(coletividadeId, {
                 nome: form.nome.trim(),
                 dataNascimento: form.dataNascimento || null,
                 email: form.email.trim() || null,
@@ -210,12 +206,10 @@ export default function ColetividadeUtentesPage() {
                 dataInscricao: form.dataInscricao || null,
                 dataFim: form.dataFim || null,
                 ativo: Boolean(form.ativo),
+                atividadeIds: form.coletividadeAtividadeIds.map(Number),
             });
             setMsg("Inscrito registado com sucesso.");
-            setForm({
-                ...FORM_INICIAL,
-                coletividadeAtividadeId: String(atividades[0]?.id || ""),
-            });
+            setForm(FORM_INICIAL);
             setShowCreateForm(false);
             await carregar();
         } catch (e) {
@@ -365,19 +359,43 @@ export default function ColetividadeUtentesPage() {
                                         </div>
                                         <input className="input" name="morada" placeholder="Morada" value={form.morada} onChange={onFormChange} />
                                         <div className="row2">
-                                            <select className="input" name="coletividadeAtividadeId" value={form.coletividadeAtividadeId} onChange={onFormChange}>
-                                                <option value="">Atividade inicial *</option>
-                                                {atividades.map((atividade) => <option key={atividade.id} value={atividade.id}>{atividade?.atividade?.nome || "Atividade"}</option>)}
-                                            </select>
                                             <input className="input" type="date" name="dataInscricao" value={form.dataInscricao} onChange={onFormChange} />
-                                        </div>
-                                        <div className="row2">
                                             <input className="input" type="date" name="dataFim" value={form.dataFim} onChange={onFormChange} />
-                                            <label className="checkbox-inline" style={{ alignSelf: "center" }}>
-                                                <input type="checkbox" name="ativo" checked={form.ativo} onChange={onFormChange} />
-                                                <span>Inscrição ativa</span>
-                                            </label>
                                         </div>
+                                        <div>
+                                            <label style={{ fontWeight: 500, marginBottom: 6, display: "block" }}>Atividades *</label>
+                                            {atividades.length === 0 ? (
+                                                <p className="subtle" style={{ margin: 0 }}>Sem atividades disponíveis.</p>
+                                            ) : (
+                                                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 20px" }}>
+                                                    {atividades.map((atividade) => {
+                                                        const sid = String(atividade.id);
+                                                        return (
+                                                            <label key={atividade.id} className="checkbox-inline" style={{ cursor: "pointer" }}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    value={sid}
+                                                                    checked={form.coletividadeAtividadeIds.includes(sid)}
+                                                                    onChange={(e) => {
+                                                                        setForm((prev) => ({
+                                                                            ...prev,
+                                                                            coletividadeAtividadeIds: e.target.checked
+                                                                                ? [...prev.coletividadeAtividadeIds, sid]
+                                                                                : prev.coletividadeAtividadeIds.filter((x) => x !== sid),
+                                                                        }));
+                                                                    }}
+                                                                />
+                                                                <span>{atividade?.atividade?.nome || "Atividade"}</span>
+                                                            </label>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <label className="checkbox-inline" style={{ alignSelf: "flex-start" }}>
+                                            <input type="checkbox" name="ativo" checked={form.ativo} onChange={onFormChange} />
+                                            <span>Inscrição ativa</span>
+                                        </label>
                                         <div className="actions">
                                             <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? "A guardar..." : "Guardar"}</button>
                                         </div>

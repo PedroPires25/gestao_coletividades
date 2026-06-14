@@ -159,8 +159,8 @@ public class UtilizadorDAO {
 
         String sql = "INSERT INTO utilizadores " +
                 "(utilizador, email_notificacoes, palavra_chave, perfil_id, ativo, privilegios_ativos, estado_registo, " +
-                "clube_id, modalidade_id, coletividade_id, atividade_id) " +
-                "VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)";
+                "clube_id, modalidade_id, coletividade_id) " +
+                "VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?)";
 
         try (Connection conn = ConexoBD.getConnection()) {
             conn.setAutoCommit(false);
@@ -177,7 +177,6 @@ public class UtilizadorDAO {
                 setNullableInt(stmt, 7, clubeId);
                 setNullableInt(stmt, 8, modalidadeId);
                 setNullableInt(stmt, 9, coletividadeId);
-                setNullableInt(stmt, 10, null); // atividade_id na tabela utilizadores é agora nulo
 
                 int affectedRows = stmt.executeUpdate();
                 if (affectedRows == 0) {
@@ -236,7 +235,7 @@ public class UtilizadorDAO {
     public List<Utilizador> listarTodos() {
         List<Utilizador> lista = new ArrayList<>();
         String sql = "SELECT id, utilizador, perfil_id, ativo, privilegios_ativos, estado_registo, " +
-                "clube_id, modalidade_id, coletividade_id, atividade_id, logo_path, nome, email_notificacoes " +
+                "clube_id, modalidade_id, coletividade_id, logo_path, nome, email_notificacoes " +
                 "FROM utilizadores ORDER BY utilizador";
 
         try (Connection conn = ConexoBD.getConnection();
@@ -364,7 +363,7 @@ public class UtilizadorDAO {
     public boolean atualizarAfetacao(int userId, Integer clubeId, Integer modalidadeId,
                                      Integer coletividadeId, Integer atividadeId) {
         String sql = "UPDATE utilizadores " +
-                "SET clube_id = ?, modalidade_id = ?, coletividade_id = ?, atividade_id = ? " +
+                "SET clube_id = ?, modalidade_id = ?, coletividade_id = ? " +
                 "WHERE id = ?";
 
         try (Connection conn = ConexoBD.getConnection();
@@ -373,8 +372,7 @@ public class UtilizadorDAO {
             setNullableInt(ps, 1, clubeId);
             setNullableInt(ps, 2, modalidadeId);
             setNullableInt(ps, 3, coletividadeId);
-            setNullableInt(ps, 4, atividadeId);
-            ps.setInt(5, userId);
+            ps.setInt(4, userId);
 
             return ps.executeUpdate() > 0;
 
@@ -850,7 +848,7 @@ public class UtilizadorDAO {
         u.setClubeId((Integer) rs.getObject("clube_id"));
         u.setModalidadeId((Integer) rs.getObject("modalidade_id"));
         u.setColetividadeId((Integer) rs.getObject("coletividade_id"));
-        u.setAtividadeId((Integer) rs.getObject("atividade_id"));
+        try { u.setAtividadeId(null); } catch (Exception ignored) {}
         u.setPalavraChave(incluirPassword ? rs.getString("palavra_chave") : null);
         try { u.setLogoPath(rs.getString("logo_path")); } catch (SQLException ignored) {}
         try { u.setNome(rs.getString("nome")); } catch (SQLException ignored) {}
@@ -874,7 +872,7 @@ public class UtilizadorDAO {
         List<Utilizador> lista = new ArrayList<>();
 
         String sql = "SELECT id, utilizador, perfil_id, ativo, privilegios_ativos, estado_registo, " +
-                "clube_id, modalidade_id, coletividade_id, atividade_id, logo_path, nome, email_notificacoes " +
+                "clube_id, modalidade_id, coletividade_id, logo_path, nome, email_notificacoes " +
                 "FROM utilizadores WHERE UPPER(estado_registo) = UPPER(?) ORDER BY utilizador";
 
         try (Connection conn = ConexoBD.getConnection();
