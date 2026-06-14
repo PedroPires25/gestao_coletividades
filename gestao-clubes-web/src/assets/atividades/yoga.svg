@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- head -->
+  <circle cx="32" cy="10" r="5" stroke="white" stroke-width="3"/>
+  <!-- torso -->
+  <path d="M32 15L32 34" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <!-- arms raised in V (namaste/tree pose) -->
+  <path d="M32 22L18 14" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <path d="M32 22L46 14" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <!-- standing leg -->
+  <path d="M32 34L32 54" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <!-- bent knee - tree pose -->
+  <path d="M32 42L20 48" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <path d="M20 48L28 42" stroke="white" stroke-width="3" stroke-linecap="round"/>
+</svg>
