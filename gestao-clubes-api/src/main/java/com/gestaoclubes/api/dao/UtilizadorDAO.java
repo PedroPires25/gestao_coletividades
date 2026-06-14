@@ -141,7 +141,7 @@ public class UtilizadorDAO {
 
     public boolean inserir(String email, String palavraChave, int perfilId, boolean privilegiosAtivos,
                            String estadoRegisto, Integer clubeId, Integer modalidadeId,
-                           Integer coletividadeId, Integer atividadeId) {
+                           Integer coletividadeId, List<Integer> atividadeIds) {
 
         if (email == null || email.trim().isEmpty()) return false;
         if (palavraChave == null || palavraChave.isEmpty()) return false;
@@ -162,23 +162,71 @@ public class UtilizadorDAO {
                 "clube_id, modalidade_id, coletividade_id, atividade_id) " +
                 "VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = ConexoBD.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = ConexoBD.getConnection()) {
+            conn.setAutoCommit(false);
 
-            stmt.setString(1, email.trim());
-            stmt.setString(2, email.trim());
-            stmt.setString(3, hash);
-            stmt.setInt(4, perfilId);
-            stmt.setBoolean(5, privilegiosAtivos);
-            stmt.setString(6, estadoRegisto.trim().toUpperCase());
+            try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            setNullableInt(stmt, 7, clubeId);
-            setNullableInt(stmt, 8, modalidadeId);
-            setNullableInt(stmt, 9, coletividadeId);
-            setNullableInt(stmt, 10, atividadeId);
+                stmt.setString(1, email.trim());
+                stmt.setString(2, email.trim());
+                stmt.setString(3, hash);
+                stmt.setInt(4, perfilId);
+                stmt.setBoolean(5, privilegiosAtivos);
+                stmt.setString(6, estadoRegisto.trim().toUpperCase());
 
-            return stmt.executeUpdate() == 1;
+                setNullableInt(stmt, 7, clubeId);
+                setNullableInt(stmt, 8, modalidadeId);
+                setNullableInt(stmt, 9, coletividadeId);
+                setNullableInt(stmt, 10, null); // atividade_id na tabela utilizadores é agora nulo
 
+                int affectedRows = stmt.executeUpdate();
+                if (affectedRows == 0) {
+                    conn.rollback();
+                    return false;
+                }
+
+                if (coletividadeId != null && atividadeIds != null && !atividadeIds.isEmpty()) {
+                    try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            long utilizadorId = generatedKeys.getLong(1);
+
+                            // Criar registo na tabela 'inscrito'
+                            String sqlInscrito = "INSERT INTO inscrito (nome, email, coletividade_atual_id, utilizador_id) VALUES (?, ?, ?, ?)";
+                            try (PreparedStatement stmtInscrito = conn.prepareStatement(sqlInscrito, Statement.RETURN_GENERATED_KEYS)) {
+                                stmtInscrito.setString(1, email.trim());
+                                stmtInscrito.setString(2, email.trim());
+                                stmtInscrito.setInt(3, coletividadeId);
+                                stmtInscrito.setLong(4, utilizadorId);
+                                stmtInscrito.executeUpdate();
+
+                                try (ResultSet generatedInscritoKeys = stmtInscrito.getGeneratedKeys()) {
+                                    if (generatedInscritoKeys.next()) {
+                                        long inscritoId = generatedInscritoKeys.getLong(1);
+
+                                        // Associar inscrito às atividades
+                                        String sqlAtividade = "INSERT INTO inscrito_coletividade_atividade (inscrito_id, coletividade_atividade_id, data_inscricao) VALUES (?, ?, CURDATE())";
+                                        try (PreparedStatement stmtAtividade = conn.prepareStatement(sqlAtividade)) {
+                                            for (Integer atividadeId : atividadeIds) {
+                                                stmtAtividade.setLong(1, inscritoId);
+                                                stmtAtividade.setInt(2, atividadeId);
+                                                stmtAtividade.addBatch();
+                                            }
+                                            stmtAtividade.executeBatch();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                conn.commit();
+                return true;
+
+            } catch (SQLException e) {
+                conn.rollback();
+                LOGGER.severe(e.toString());
+                return false;
+            }
         } catch (SQLException e) {
             LOGGER.severe(e.toString());
             return false;

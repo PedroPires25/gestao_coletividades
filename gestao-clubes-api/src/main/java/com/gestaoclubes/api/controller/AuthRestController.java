@@ -46,7 +46,7 @@ public class AuthRestController {
         public Integer clubeId;
         public Integer modalidadeId;
         public Integer coletividadeId;
-        public Integer atividadeId;
+        public List<Integer> atividadeIds;
     }
 
     public static class UserDto {
@@ -529,12 +529,12 @@ public class AuthRestController {
         Integer clubeId = req.clubeId;
         Integer modalidadeId = req.modalidadeId;
         Integer coletividadeId = req.coletividadeId;
-        Integer atividadeId = req.atividadeId;
+        List<Integer> atividadeIds = req.atividadeIds;
 
         // limpar o contexto oposto para evitar ambiguidade
         if ("CLUBE".equals(estruturaTipo)) {
             coletividadeId = null;
-            atividadeId = null;
+            atividadeIds = null;
         } else if ("COLETIVIDADE".equals(estruturaTipo)) {
             clubeId = null;
             modalidadeId = null;
@@ -543,7 +543,7 @@ public class AuthRestController {
         if (PerfilDAO.USER.equals(perfil)) {
             // USER só precisa de clube ou coletividade; limpar modalidade e atividade
             modalidadeId = null;
-            atividadeId = null;
+            atividadeIds = null;
         }
 
         // Validar duplicação de email dentro da mesma estrutura antes de tentar inserir
@@ -571,7 +571,7 @@ public class AuthRestController {
                 clubeId,
                 modalidadeId,
                 coletividadeId,
-                atividadeId
+                atividadeIds
         );
 
         if (!ok) {
@@ -709,6 +709,9 @@ public class AuthRestController {
                 }
                 if (req.coletividadeId == null) {
                     return "Utente tem de escolher uma coletividade.";
+                }
+                if (req.atividadeIds == null || req.atividadeIds.isEmpty()) {
+                    return "Utente tem de escolher pelo menos uma atividade.";
                 }
                 return null;
 
