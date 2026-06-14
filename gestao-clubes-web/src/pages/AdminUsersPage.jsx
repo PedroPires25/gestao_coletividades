@@ -6,10 +6,14 @@ import { getHomePathByRole } from "../utils/navigation";
 
 import utilizadoresAprovarIcon from "../assets/utilizadores-por-aprovar.svg";
 import utilizadoresAutorizadosIcon from "../assets/utilizadores-autorizados.svg";
+import clubesIcon from "../assets/clubes.svg";
+import coletividadesIcon from "../assets/coletividades.svg";
 
 const QUICK_ICONS = {
     "Utilizadores por Aprovar": utilizadoresAprovarIcon,
     "Utilizadores Autorizados": utilizadoresAutorizadosIcon,
+    "Gerir Clubes": clubesIcon,
+    "Gerir Coletividades": coletividadesIcon,
 };
 
 export default function AdminUsersPage() {
@@ -52,9 +56,24 @@ export default function AdminUsersPage() {
         },
     ];
 
+    const adminActions = isSuperAdmin ? [
+        {
+            label: "Gerir Clubes",
+            to: "/clubes",
+            description: "Criar, editar e gerir todos os clubes da plataforma.",
+        },
+        {
+            label: "Gerir Coletividades",
+            to: "/coletividades",
+            description: "Criar, editar e gerir todas as coletividades da plataforma.",
+        },
+    ] : [];
+
     const colorClasses = [
         "icon-orange",
         "icon-green",
+        "icon-cyan",
+        "icon-purple",
     ];
 
     return (
@@ -71,12 +90,51 @@ export default function AdminUsersPage() {
                 <div className="page-title">
                     <h1>Gestão de Perfis</h1>
                     <div className="hint">
-                        Escolhe a área de gestão de utilizadores que pretendes consultar.
+                        Escolhe a área de gestão que pretendes consultar.
                     </div>
                 </div>
 
+                {isSuperAdmin && (
+                    <div className="card card-quick-links" style={{ marginBottom: 24 }}>
+                        <h2>Ações rápidas</h2>
+                        <div className="icon-links-row">
+                            {adminActions.map((item, index) => (
+                                <Link
+                                    key={item.to}
+                                    to={item.to}
+                                    className={`icon-link-card ${colorClasses[index + 2]}`}
+                                    title={item.label}
+                                >
+                                    <span className="menu-style-circle">
+                                        <span className="menu-style-icon">
+                                            <img
+                                                src={QUICK_ICONS[item.label]}
+                                                alt={item.label}
+                                            />
+                                        </span>
+                                    </span>
+                                    <span className="modalidade-figura-label">
+                                        {item.label}
+                                    </span>
+                                    <span
+                                        className="subtle"
+                                        style={{
+                                            textAlign: "center",
+                                            display: "block",
+                                            maxWidth: 260,
+                                            marginTop: 8,
+                                        }}
+                                    >
+                                        {item.description}
+                                    </span>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div className="card card-quick-links">
-                    <h2>Acessos rápidos</h2>
+                    <h2>Gestão de Utilizadores</h2>
                     <p className="subtle">
                         Seleciona uma das áreas abaixo para gerir os pedidos pendentes ou os utilizadores autorizados.
                     </p>
@@ -86,7 +144,7 @@ export default function AdminUsersPage() {
                             <Link
                                 key={item.to}
                                 to={item.to}
-                                className={`icon-link-card ${colorClasses[index % colorClasses.length]}`}
+                                className={`icon-link-card ${colorClasses[index]}`}
                                 title={item.label}
                             >
                                 <span className="menu-style-circle">
