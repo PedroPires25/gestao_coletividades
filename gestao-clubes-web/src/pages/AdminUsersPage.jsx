@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getHomePathByRole } from "../utils/navigation";
+import { getPendingUsersCount } from "../api";
 
 import utilizadoresAprovarIcon from "../assets/utilizadores-por-aprovar.svg";
 import utilizadoresAutorizadosIcon from "../assets/utilizadores-autorizados.svg";
@@ -19,6 +20,15 @@ const QUICK_ICONS = {
 export default function AdminUsersPage() {
     const { user, logout, isSuperAdmin } = useAuth();
     const navigate = useNavigate();
+    const [pendingCount, setPendingCount] = useState(0);
+
+    useEffect(() => {
+        let cancelled = false;
+        getPendingUsersCount()
+            .then(d => { if (!cancelled) setPendingCount(d?.count ?? 0); })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, []);
 
     const homePath = useMemo(() => getHomePathByRole(user), [user]);
 
@@ -87,6 +97,20 @@ export default function AdminUsersPage() {
             />
 
             <div className="container" style={{ paddingTop: 24 }}>
+                {pendingCount > 0 && (
+                    <Link to="/admin/users/pending" style={{ textDecoration: "none" }}>
+                        <div className="alert-banner alert-banner--warning">
+                            <span className="alert-banner-icon">⚠️</span>
+                            <span>
+                                {pendingCount === 1
+                                    ? "Existe 1 utilizador aguarda a sua aprovação."
+                                    : `Existem ${pendingCount} utilizadores que aguardam aprovação.`}
+                            </span>
+                            <span className="alert-banner-link">Ver agora →</span>
+                        </div>
+                    </Link>
+                )}
+
                 <div className="page-title">
                     <h1>Gestão de Perfis</h1>
                     <div className="hint">

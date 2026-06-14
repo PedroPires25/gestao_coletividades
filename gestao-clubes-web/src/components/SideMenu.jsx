@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 import UserAvatar from "./UserAvatar";
 import { useAppLogo } from "../hooks/useAppLogo";
 import { getHomePathByRole } from "../utils/navigation";
+import { getPendingUsersCount } from "../api";
 
 import homeIcon from "../assets/home.svg";
 import clubesIcon from "../assets/clubes.svg";
@@ -74,8 +75,24 @@ export default function SideMenu({
                                  }) {
     const [open, setOpen] = useState(false);
     const { theme, setTheme } = useTheme();
-    const { user } = useAuth(); // Usar o objeto 'user' completo
+    const { user, isAdmin, isSecretario } = useAuth();
     const logoSrc = useAppLogo();
+
+    const [pendingCount, setPendingCount] = useState(0);
+
+    // Buscar contagem de utilizadores pendentes para admins e secretários
+    useEffect(() => {
+        if (!isAdmin && !isSecretario) return;
+        let cancelled = false;
+        function fetchCount() {
+            getPendingUsersCount()
+                .then(data => { if (!cancelled) setPendingCount(data?.count ?? 0); })
+                .catch(() => {});
+        }
+        fetchCount();
+        const interval = setInterval(fetchCount, 60_000);
+        return () => { cancelled = true; clearInterval(interval); };
+    }, [isAdmin, isSecretario]);
 
     // Determinar o link do logo com base no perfil
     const logoHref = useMemo(() => getHomePathByRole(user), [user]);
@@ -186,9 +203,25 @@ export default function SideMenu({
                         </div>
 
                         <nav className="drawer-nav">
+                            {pendingCount > 0 && (isAdmin || isSecretario) && (
+                                <Link
+                                    to="/admin/users/pending"
+                                    className="drawer-pending-alert"
+                                    onClick={closeMenu}
+                                >
+                                    <span className="drawer-pending-alert-icon">⚠️</span>
+                                    <span>
+                                        {pendingCount === 1
+                                            ? "1 utilizador aguarda aprovação"
+                                            : `${pendingCount} utilizadores aguardam aprovação`}
+                                    </span>
+                                    <span className="drawer-pending-alert-badge">{pendingCount}</span>
+                                </Link>
+                            )}
                             {items.map((it, index) => {
                                 const colorClass = MENU_ICON_COLORS[index % MENU_ICON_COLORS.length];
                                 const icon = getIcon(it.label);
+                                const isPendingItem = it.to === "/admin/users/pending";
 
                                 const content = (
                                     <>
@@ -201,7 +234,12 @@ export default function SideMenu({
                                                 />
                                             ) : null}
                                         </span>
-                                        <span className="drawer-link-text">{it.label}</span>
+                                        <span className="drawer-link-text">
+                                            {it.label === "utilizadoresAprovar" ? "Utilizadores por Aprovar" : it.label}
+                                            {isPendingItem && pendingCount > 0 && (
+                                                <span className="drawer-link-badge">{pendingCount}</span>
+                                            )}
+                                        </span>
                                     </>
                                 );
 
