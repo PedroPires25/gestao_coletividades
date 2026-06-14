@@ -13,6 +13,7 @@ import {
 } from "../api";
 
 import modalidadesIcon from "../assets/modalidades.svg";
+import { getModalidadeIcon } from "../assets/modalidade-icons";
 
 function currentEpoca() {
     const y = new Date().getFullYear();
@@ -50,7 +51,7 @@ function buildEpocas({ past = 15, future = 15 } = {}) {
 
 export default function ClubeModalidadesPage() {
     const { clubeId } = useParams();
-    const { logout, isAdmin, isSuperAdmin } = useAuth();
+    const { logout, isAdmin, isSuperAdmin, isGestorLocal } = useAuth();
     const navigate = useNavigate();
 
     const [clube, setClube] = useState(null);
@@ -188,29 +189,36 @@ export default function ClubeModalidadesPage() {
     }
 
     useEffect(() => {
-        if (!clubeId) return;
-        carregar();
+        if (!clubeId) return undefined;
+        const timeoutId = window.setTimeout(() => {
+            void carregar();
+        }, 0);
+        return () => window.clearTimeout(timeoutId);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clubeId, apenasAtivas, epocaSelecionada]);
 
     useEffect(() => {
-        const primeira = modalidadesDisponiveisParaAnexar[0];
-        if (!primeira) {
-            setModalidadeExistenteId("");
-            return;
-        }
+        const timeoutId = window.setTimeout(() => {
+            const primeira = modalidadesDisponiveisParaAnexar[0];
+            if (!primeira) {
+                setModalidadeExistenteId("");
+                return;
+            }
 
-        const atualExiste = modalidadesDisponiveisParaAnexar.some(
-            (m) => String(m.id) === String(modalidadeExistenteId)
-        );
+            const atualExiste = modalidadesDisponiveisParaAnexar.some(
+                (m) => String(m.id) === String(modalidadeExistenteId)
+            );
 
-        if (!atualExiste) {
-            setModalidadeExistenteId(String(primeira.id));
-        }
+            if (!atualExiste) {
+                setModalidadeExistenteId(String(primeira.id));
+            }
+        }, 0);
+
+        return () => window.clearTimeout(timeoutId);
     }, [modalidadesDisponiveisParaAnexar, modalidadeExistenteId]);
 
     async function onCriar() {
-        if (!isAdmin) return;
+        if (!isGestorLocal) return;
 
         setErro("");
         setMsg("");
@@ -239,7 +247,7 @@ export default function ClubeModalidadesPage() {
     }
 
     async function onAnexarExistente() {
-        if (!isAdmin) return;
+        if (!isGestorLocal) return;
 
         setErro("");
         setMsg("");
@@ -271,7 +279,7 @@ export default function ClubeModalidadesPage() {
     }
 
     function abrirEditar(mod) {
-        if (!isAdmin) return;
+        if (!isGestorLocal) return;
 
         setEditId(mod?.id ?? null);
         setEditNome(mod?.nome ?? "");
@@ -280,7 +288,7 @@ export default function ClubeModalidadesPage() {
     }
 
     async function guardarEdicao() {
-        if (!isAdmin) return;
+        if (!isGestorLocal) return;
 
         setErro("");
         setMsg("");
@@ -304,7 +312,7 @@ export default function ClubeModalidadesPage() {
     }
 
     async function apagarModalidade(clubeModalidadeId) {
-        if (!isAdmin) return;
+        if (!isGestorLocal) return;
 
         const confirmar = window.confirm(
             "Tem a certeza que pretende remover esta modalidade do clube?"
@@ -459,7 +467,7 @@ export default function ClubeModalidadesPage() {
                     </div>
                 </div>
 
-                {isAdmin && (
+                {isGestorLocal && (
                     <div className="card" style={{ marginBottom: 16 }}>
                         <h2>Anexar modalidade existente ao clube</h2>
 
@@ -511,11 +519,26 @@ export default function ClubeModalidadesPage() {
                     </div>
                 )}
 
-                {isAdmin && (
+                {isGestorLocal && (
                     <div className="card" style={{ marginBottom: 16 }}>
                         <h2>Criar nova modalidade</h2>
 
                         <div className="row">
+                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                <span className="modalidade-figura-circle" style={{ width: 74, height: 74 }}>
+                                    <span className="menu-style-icon" style={{ width: 48, height: 48 }}>
+                                        <img
+                                            className="atividade-generated-icon"
+                                            src={getModalidadeIcon(novoNome || "Modalidade")}
+                                            alt={novoNome || "Modalidade"}
+                                        />
+                                    </span>
+                                </span>
+                                <span className="subtle" style={{ fontSize: 13 }}>
+                                    Pré-visualização do ícone gerado automaticamente
+                                </span>
+                            </div>
+
                             <div className="row2">
                                 <input
                                     className="input"
@@ -567,22 +590,23 @@ export default function ClubeModalidadesPage() {
                             <table className="dashboard-table">
                                 <thead>
                                 <tr>
-                                    <th onClick={() => alternarOrdenacao("nome")} className="sortable-th">
-                                        Modalidade
-                                    </th>
-                                    <th
-                                        onClick={() => alternarOrdenacao("descricao")}
-                                        className="sortable-th"
-                                    >
-                                        Descrição
-                                    </th>
-                                    <th onClick={() => alternarOrdenacao("epoca")} className="sortable-th">
-                                        Época
-                                    </th>
-                                    <th onClick={() => alternarOrdenacao("ativo")} className="sortable-th">
-                                        Estado
-                                    </th>
-                                    {isAdmin && <th>Ações</th>}
+                                   <th>Ícone</th>
+                                   <th onClick={() => alternarOrdenacao("nome")} className="sortable-th">
+                                       Modalidade
+                                   </th>
+                                   <th
+                                       onClick={() => alternarOrdenacao("descricao")}
+                                       className="sortable-th"
+                                   >
+                                       Descrição
+                                   </th>
+                                   <th onClick={() => alternarOrdenacao("epoca")} className="sortable-th">
+                                       Época
+                                   </th>
+                                   <th onClick={() => alternarOrdenacao("ativo")} className="sortable-th">
+                                       Estado
+                                   </th>
+                                   {isGestorLocal && <th>Ações</th>}
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -591,6 +615,15 @@ export default function ClubeModalidadesPage() {
 
                                     return (
                                         <tr key={cm.id}>
+                                            <td>
+                                                <span className="menu-style-icon" style={{ width: 36, height: 36 }}>
+                                                    <img
+                                                        className="atividade-generated-icon"
+                                                        src={getModalidadeIcon(cm?.modalidade?.nome ?? "")}
+                                                        alt={cm?.modalidade?.nome ?? "Modalidade"}
+                                                    />
+                                                </span>
+                                            </td>
                                             <td className="nowrap">{cm?.modalidade?.nome ?? "-"}</td>
                                             <td className="cell-muted">{cm?.modalidade?.descricao ?? "-"}</td>
                                             <td className="nowrap">
@@ -609,7 +642,7 @@ export default function ClubeModalidadesPage() {
                                                         {cm?.ativo ? "Ativa" : "Inativa"}
                                                     </span>
                                             </td>
-                                            {isAdmin && (
+                                            {isGestorLocal && (
                                                 <td className="nowrap">
                                                     {cm?.modalidade?.id ? (
                                                         <div className="table-actions">
@@ -643,7 +676,7 @@ export default function ClubeModalidadesPage() {
                     )}
                 </div>
 
-                {isAdmin && editOpen && (
+                {isGestorLocal && editOpen && (
                     <div className="modal-backdrop" onMouseDown={() => setEditOpen(false)}>
                         <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
                             <div className="modal-header">
@@ -654,6 +687,21 @@ export default function ClubeModalidadesPage() {
                             </div>
 
                             <div className="row">
+                                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                    <span className="modalidade-figura-circle" style={{ width: 74, height: 74 }}>
+                                        <span className="menu-style-icon" style={{ width: 48, height: 48 }}>
+                                            <img
+                                                className="atividade-generated-icon"
+                                                src={getModalidadeIcon(editNome || "Modalidade")}
+                                                alt={editNome || "Modalidade"}
+                                            />
+                                        </span>
+                                    </span>
+                                    <span className="subtle" style={{ fontSize: 13 }}>
+                                        Pré-visualização do ícone gerado automaticamente
+                                    </span>
+                                </div>
+
                                 <input
                                     className="input"
                                     placeholder="Nome *"
