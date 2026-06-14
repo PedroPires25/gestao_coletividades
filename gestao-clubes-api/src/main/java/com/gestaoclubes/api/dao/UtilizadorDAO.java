@@ -912,6 +912,50 @@ public class UtilizadorDAO {
         }
     }
 
+    public String buscarHashPorEmail(String email) {
+        String sql = "SELECT palavra_chave FROM utilizadores WHERE LOWER(utilizador) = LOWER(?) AND ativo = 1 LIMIT 1";
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("palavra_chave");
+            }
+        } catch (SQLException e) {
+            LOGGER.severe(e.toString());
+        }
+        return null;
+    }
+
+    /**
+     * Cria uma nova linha em utilizadores reutilizando um hash de password já existente.
+     * Usado quando um admin regista um atleta com email de utilizador já existente noutro contexto.
+     */
+    public boolean inserirComHashExistente(String email, String passwordHash, int perfilId,
+                                           String estadoRegisto, Integer clubeId, Integer modalidadeId) {
+        if (email == null || email.isBlank() || passwordHash == null) return false;
+        if (existeEmailNaEstrutura(email, clubeId, null)) return false;
+
+        String sql = "INSERT INTO utilizadores " +
+                "(utilizador, email_notificacoes, palavra_chave, perfil_id, ativo, privilegios_ativos, estado_registo, " +
+                "clube_id, modalidade_id, coletividade_id) " +
+                "VALUES (?, ?, ?, ?, 1, 1, ?, ?, ?, NULL)";
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email.trim());
+            ps.setString(2, email.trim());
+            ps.setString(3, passwordHash);
+            ps.setInt(4, perfilId);
+            ps.setString(5, estadoRegisto.trim().toUpperCase());
+            setNullableInt(ps, 6, clubeId);
+            setNullableInt(ps, 7, modalidadeId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.severe(e.toString());
+            return false;
+        }
+    }
+
     public boolean atualizarNome(int userId, String nome) {
         String sql = "UPDATE utilizadores SET nome=? WHERE id=?";
 
