@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
+import NifInput from "../components/NifInput";
+import TelefoneInput from "../components/TelefoneInput";
+import CodigoPostalInput from "../components/CodigoPostalInput";
 import { createClube, deleteClube, getClubes, updateClube, uploadClubeLogo, getUploadUrl } from "../api";
 import { useAuth } from "../auth/AuthContext";
 import defaultLogo from "../assets/default-logo.svg";
+import { validateNif, validateTelefone, validateCodigoPostal } from "../utils/validation";
 
 function formatDateISOToPt(dateISO) {
     if (!dateISO) return "";
@@ -60,7 +64,7 @@ export default function ClubesPage() {
     const [editLogoFile, setEditLogoFile] = useState(null);
     const [editLogoPreview, setEditLogoPreview] = useState(null);
 
-    async function carregar() {
+    const carregar = useCallback(async () => {
         setErro("");
         setMsg("");
         setLoading(true);
@@ -72,10 +76,15 @@ export default function ClubesPage() {
         } finally {
             setLoading(false);
         }
-    }
+    }, []);
 
     useEffect(() => {
-        carregar();
+        let cancelled = false;
+        getClubes()
+            .then(data => { if (!cancelled) setClubes(Array.isArray(data) ? data : []); })
+            .catch(e => { if (!cancelled) setErro(e.message); })
+            .finally(() => { if (!cancelled) setLoading(false); });
+        return () => { cancelled = true; };
     }, []);
 
     useEffect(() => {
@@ -114,6 +123,14 @@ export default function ClubesPage() {
     async function onSubmit(e) {
         e.preventDefault();
         if (!isSuperAdmin) return;
+
+        const nifErr = validateNif(form.nif);
+        const telErr = validateTelefone(form.telefone);
+        const cpErr = validateCodigoPostal(form.codigoPostal);
+        if (nifErr || telErr || cpErr) {
+            setErro(nifErr || telErr || cpErr);
+            return;
+        }
 
         setErro("");
         setMsg("");
@@ -203,6 +220,14 @@ export default function ClubesPage() {
 
     async function onSaveEdit() {
         if (!canManageClube(edit.id)) return;
+
+        const nifErr = validateNif(edit.nif);
+        const telErr = validateTelefone(edit.telefone);
+        const cpErr = validateCodigoPostal(edit.codigoPostal);
+        if (nifErr || telErr || cpErr) {
+            setEditErro(nifErr || telErr || cpErr);
+            return;
+        }
 
         setEditErro("");
         try {
@@ -413,20 +438,16 @@ export default function ClubesPage() {
                                         value={form.email}
                                         onChange={onChange}
                                     />
-                                    <input
-                                        className="input"
+                                    <TelefoneInput
                                         name="telefone"
-                                        placeholder="Telefone"
                                         value={form.telefone}
                                         onChange={onChange}
                                     />
                                 </div>
 
                                 <div className="row2">
-                                    <input
-                                        className="input"
+                                    <NifInput
                                         name="nif"
-                                        placeholder="NIF"
                                         value={form.nif}
                                         onChange={onChange}
                                     />
@@ -441,10 +462,8 @@ export default function ClubesPage() {
                                 />
 
                                 <div className="row2">
-                                    <input
-                                        className="input"
+                                    <CodigoPostalInput
                                         name="codigoPostal"
-                                        placeholder="Código Postal"
                                         value={form.codigoPostal}
                                         onChange={onChange}
                                     />
@@ -549,20 +568,16 @@ export default function ClubesPage() {
                                         value={edit.email}
                                         onChange={onEditChange}
                                     />
-                                    <input
-                                        className="input"
+                                    <TelefoneInput
                                         name="telefone"
-                                        placeholder="Telefone"
                                         value={edit.telefone}
                                         onChange={onEditChange}
                                     />
                                 </div>
 
                                 <div className="row2">
-                                    <input
-                                        className="input"
+                                    <NifInput
                                         name="nif"
-                                        placeholder="NIF"
                                         value={edit.nif}
                                         onChange={onEditChange}
                                     />
@@ -577,10 +592,8 @@ export default function ClubesPage() {
                                 />
 
                                 <div className="row2">
-                                    <input
-                                        className="input"
+                                    <CodigoPostalInput
                                         name="codigoPostal"
-                                        placeholder="Código Postal"
                                         value={edit.codigoPostal}
                                         onChange={onEditChange}
                                     />

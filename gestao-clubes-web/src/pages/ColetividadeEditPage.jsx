@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
+import NifInput from "../components/NifInput";
+import TelefoneInput from "../components/TelefoneInput";
+import CodigoPostalInput from "../components/CodigoPostalInput";
 import { getColetividadeById, updateColetividade, uploadColetividadeLogo, getUploadUrl } from "../api";
 import { useAuth } from "../auth/AuthContext";
 import defaultLogo from "../assets/default-logo.svg";
+import { validateNif, validateTelefone, validateCodigoPostal } from "../utils/validation";
 
 function isoToInputDate(dateISO) {
     if (!dateISO) return "";
@@ -97,6 +101,15 @@ export default function ColetividadeEditPage() {
         e.preventDefault();
         if (!canManageColetividade(Number(coletividadeId))) return;
 
+        // Validação frontend
+        const nifErr = validateNif(form.nif);
+        const telErr = validateTelefone(form.telefone);
+        const cpErr = validateCodigoPostal(form.codigoPostal);
+        if (nifErr || telErr || cpErr) {
+            setErro(nifErr || telErr || cpErr);
+            return;
+        }
+
         setErro("");
         setMsg("");
         setSaving(true);
@@ -186,20 +199,16 @@ export default function ColetividadeEditPage() {
                                     value={form.email}
                                     onChange={onChange}
                                 />
-                                <input
-                                    className="input"
+                                <TelefoneInput
                                     name="telefone"
-                                    placeholder="Telefone"
                                     value={form.telefone}
                                     onChange={onChange}
                                 />
                             </div>
 
                             <div className="row2">
-                                <input
-                                    className="input"
+                                <NifInput
                                     name="nif"
-                                    placeholder="NIF"
                                     value={form.nif}
                                     onChange={onChange}
                                 />
@@ -214,10 +223,8 @@ export default function ColetividadeEditPage() {
                             />
 
                             <div className="row2">
-                                <input
-                                    className="input"
+                                <CodigoPostalInput
                                     name="codigoPostal"
-                                    placeholder="Código Postal"
                                     value={form.codigoPostal}
                                     onChange={onChange}
                                 />

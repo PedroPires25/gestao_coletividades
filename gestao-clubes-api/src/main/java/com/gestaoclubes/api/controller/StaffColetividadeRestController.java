@@ -3,6 +3,7 @@ package com.gestaoclubes.api.controller;
 import com.gestaoclubes.api.dao.StaffColetividadeDAO;
 import com.gestaoclubes.api.model.StaffColetividadeRow;
 import com.gestaoclubes.api.security.SecurityUtils;
+import com.gestaoclubes.api.util.ValidationUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -57,6 +58,11 @@ public class StaffColetividadeRestController {
         if (body.cargoId == null || body.coletividadeAtividadeId == null) {
             return ResponseEntity.badRequest().body("cargoId e coletividadeAtividadeId são obrigatórios.");
         }
+        try {
+            ValidationUtil.validateTelefone(body.telefone);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
 
         Integer id = staffDAO.criarStaff(
                 body.nome,
@@ -90,6 +96,11 @@ public class StaffColetividadeRestController {
         }
         if (!staffDAO.staffPertenceColetividade(coletividadeId, staffId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Elemento de staff não encontrado.");
+        }
+        try {
+            ValidationUtil.validateTelefone(body.telefone);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
 
         boolean ok = staffDAO.atualizarStaff(

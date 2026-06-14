@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
+import NifInput from "../components/NifInput";
+import TelefoneInput from "../components/TelefoneInput";
+import CodigoPostalInput from "../components/CodigoPostalInput";
 import { createColetividade, deleteColetividade, getColetividades, updateColetividade, uploadColetividadeLogo, getUploadUrl } from "../api";
 import { useAuth } from "../auth/AuthContext";
 import defaultLogo from "../assets/default-logo.svg";
+import { validateNif, validateTelefone, validateCodigoPostal } from "../utils/validation";
 
 function formatDateISOToPt(dateISO) {
     if (!dateISO) return "";
@@ -60,7 +64,7 @@ export default function ColetividadesPage() {
     const [editLogoFile, setEditLogoFile] = useState(null);
     const [editLogoPreview, setEditLogoPreview] = useState(null);
 
-    async function carregar() {
+    const carregar = useCallback(async () => {
         setErro("");
         setMsg("");
         setLoading(true);
@@ -72,10 +76,15 @@ export default function ColetividadesPage() {
         } finally {
             setLoading(false);
         }
-    }
+    }, []);
 
     useEffect(() => {
-        carregar();
+        let cancelled = false;
+        getColetividades()
+            .then(data => { if (!cancelled) setColetividades(Array.isArray(data) ? data : []); })
+            .catch(e => { if (!cancelled) setErro(e.message); })
+            .finally(() => { if (!cancelled) setLoading(false); });
+        return () => { cancelled = true; };
     }, []);
 
     useEffect(() => {
@@ -114,6 +123,14 @@ export default function ColetividadesPage() {
     async function onSubmit(e) {
         e.preventDefault();
         if (!isSuperAdmin) return;
+
+        const nifErr = validateNif(form.nif);
+        const telErr = validateTelefone(form.telefone);
+        const cpErr = validateCodigoPostal(form.codigoPostal);
+        if (nifErr || telErr || cpErr) {
+            setErro(nifErr || telErr || cpErr);
+            return;
+        }
 
         setErro("");
         setMsg("");
@@ -202,6 +219,14 @@ export default function ColetividadesPage() {
 
     async function onSaveEdit() {
         if (!canManageColetividade(edit.id)) return;
+
+        const nifErr = validateNif(edit.nif);
+        const telErr = validateTelefone(edit.telefone);
+        const cpErr = validateCodigoPostal(edit.codigoPostal);
+        if (nifErr || telErr || cpErr) {
+            setEditErro(nifErr || telErr || cpErr);
+            return;
+        }
 
         setEditErro("");
         try {
@@ -293,17 +318,17 @@ export default function ColetividadesPage() {
 
                                 <div className="row2">
                                     <input className="input" name="email" placeholder="Email" value={form.email} onChange={onChange} />
-                                    <input className="input" name="telefone" placeholder="Telefone" value={form.telefone} onChange={onChange} />
+                                    <TelefoneInput name="telefone" value={form.telefone} onChange={onChange} />
                                 </div>
 
                                 <div className="row2">
-                                    <input className="input" name="nif" placeholder="NIF" value={form.nif} onChange={onChange} />
+                                    <NifInput name="nif" value={form.nif} onChange={onChange} />
                                 </div>
 
                                 <input className="input" name="morada" placeholder="Morada" value={form.morada} onChange={onChange} />
 
                                 <div className="row2">
-                                    <input className="input" name="codigoPostal" placeholder="Código Postal" value={form.codigoPostal} onChange={onChange} />
+                                    <CodigoPostalInput name="codigoPostal" value={form.codigoPostal} onChange={onChange} />
                                     <input className="input" name="localidade" placeholder="Localidade" value={form.localidade} onChange={onChange} />
                                 </div>
 
@@ -473,17 +498,17 @@ export default function ColetividadesPage() {
 
                                 <div className="row2">
                                     <input className="input" name="email" placeholder="Email" value={edit.email} onChange={onEditChange} />
-                                    <input className="input" name="telefone" placeholder="Telefone" value={edit.telefone} onChange={onEditChange} />
+                                    <TelefoneInput name="telefone" value={edit.telefone} onChange={onEditChange} />
                                 </div>
 
                                 <div className="row2">
-                                    <input className="input" name="nif" placeholder="NIF" value={edit.nif} onChange={onEditChange} />
+                                    <NifInput name="nif" value={edit.nif} onChange={onEditChange} />
                                 </div>
 
                                 <input className="input" name="morada" placeholder="Morada" value={edit.morada} onChange={onEditChange} />
 
                                 <div className="row2">
-                                    <input className="input" name="codigoPostal" placeholder="Código Postal" value={edit.codigoPostal} onChange={onEditChange} />
+                                    <CodigoPostalInput name="codigoPostal" value={edit.codigoPostal} onChange={onEditChange} />
                                     <input className="input" name="localidade" placeholder="Localidade" value={edit.localidade} onChange={onEditChange} />
                                 </div>
 

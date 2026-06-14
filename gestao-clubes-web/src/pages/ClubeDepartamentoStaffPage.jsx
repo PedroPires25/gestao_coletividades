@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
+import TelefoneInput from "../components/TelefoneInput";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById, getUploadUrl, uploadStaffFoto } from "../api";
 import {
@@ -12,6 +13,7 @@ import {
     updateStaffAfetacao,
 } from "../services/staff";
 import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
+import { validateTelefone } from "../utils/validation";
 
 import direcaoIcon from "../assets/direcao.svg";
 import deptMedicoIcon from "../assets/departamento-medico.svg";
@@ -312,6 +314,8 @@ export default function ClubeDepartamentoStaffPage() {
             setErro("Seleciona um cargo.");
             return;
         }
+        const telErr = validateTelefone(form.telefone);
+        if (telErr) { setErro(telErr); return; }
 
         setErro("");
         setMsg("");
@@ -392,6 +396,8 @@ export default function ClubeDepartamentoStaffPage() {
 
     async function guardarEdicao() {
         if (!editForm.id || !editForm.afetacaoId) return;
+        const telErr = validateTelefone(editForm.telefone);
+        if (telErr) { setErro(telErr); return; }
 
         setSavingEdit(true);
         setErro("");
@@ -681,7 +687,7 @@ export default function ClubeDepartamentoStaffPage() {
                                     </div>
                                     <div className="row">
                                         <label className="field-label" htmlFor="telefone">Telefone</label>
-                                        <input id="telefone" className="input" name="telefone" value={form.telefone} onChange={onChange} placeholder="912345678" />
+                                        <TelefoneInput name="telefone" value={form.telefone} onChange={onChange} />
                                     </div>
                                 </div>
 
@@ -823,7 +829,7 @@ export default function ClubeDepartamentoStaffPage() {
                                 </div>
                                 <div className="row">
                                     <label className="field-label" htmlFor="editTelefone">Telefone</label>
-                                    <input id="editTelefone" className="input" name="telefone" value={editForm.telefone} onChange={onEditChange} />
+                                    <TelefoneInput name="telefone" value={editForm.telefone} onChange={onEditChange} />
                                 </div>
                             </div>
 

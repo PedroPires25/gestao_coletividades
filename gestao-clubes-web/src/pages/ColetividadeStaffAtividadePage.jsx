@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
+import TelefoneInput from "../components/TelefoneInput";
 import { useAuth } from "../auth/AuthContext";
 import { getColetividadeById } from "../api";
 import { getAtividadesByColetividade } from "../services/coletividadeAtividades";
@@ -12,6 +13,7 @@ import {
     updateStaffColetividade,
 } from "../services/staffColetividade";
 import atletasIcon from "../assets/atletas.svg";
+import { validateTelefone } from "../utils/validation";
 
 function formatDateOnly(value) {
     if (!value) return "-";
@@ -157,6 +159,8 @@ export default function ColetividadeStaffAtividadePage() {
             setErro("Indica o nome do membro do staff.");
             return;
         }
+        const telErr = validateTelefone(form.telefone);
+        if (telErr) { setErro(telErr); return; }
 
         setSaving(true);
         setErro("");
@@ -192,6 +196,8 @@ export default function ColetividadeStaffAtividadePage() {
             setErro("Indica o nome do membro do staff.");
             return;
         }
+        const telErr = validateTelefone(editForm.telefone);
+        if (telErr) { setErro(telErr); return; }
 
         setSaving(true);
         setErro("");
@@ -325,7 +331,7 @@ export default function ColetividadeStaffAtividadePage() {
                                     <input className="input" name="nome" placeholder="Nome *" value={form.nome} onChange={onChange} />
                                     <div className="row2">
                                         <input className="input" name="email" placeholder="Email" value={form.email} onChange={onChange} />
-                                        <input className="input" name="telefone" placeholder="Telefone" value={form.telefone} onChange={onChange} />
+                                        <TelefoneInput name="telefone" value={form.telefone} onChange={onChange} />
                                     </div>
                                     <input className="input" name="morada" placeholder="Morada" value={form.morada} onChange={onChange} />
                                     <div className="row2">
@@ -368,7 +374,7 @@ export default function ColetividadeStaffAtividadePage() {
                                 </div>
                                 <div className="row2">
                                     <input className="input" name="email" placeholder="Email" value={editForm.email || ""} onChange={onEditChange} />
-                                    <input className="input" name="telefone" placeholder="Telefone" value={editForm.telefone || ""} onChange={onEditChange} />
+                                    <TelefoneInput name="telefone" value={editForm.telefone || ""} onChange={onEditChange} />
                                 </div>
                                 <input className="input" name="morada" placeholder="Morada" value={editForm.morada || ""} onChange={onEditChange} />
                                 <div className="row2">

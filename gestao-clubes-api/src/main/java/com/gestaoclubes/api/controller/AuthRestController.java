@@ -9,6 +9,7 @@ import com.gestaoclubes.api.model.Staff;
 import com.gestaoclubes.api.model.Utilizador;
 import com.gestaoclubes.api.security.JwtUtil;
 import com.gestaoclubes.api.util.PasswordPolicyUtil;
+import com.gestaoclubes.api.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -69,6 +70,9 @@ public class AuthRestController {
         public String temaPreferido;
         public String numRegisto;
         public Integer staffId;
+        public String nif;
+        public String codigoPostal;
+        public String numeroContribuinte;
 
         public UserDto(Utilizador u, String role) {
             this.id = u.getId();
@@ -88,6 +92,9 @@ public class AuthRestController {
             this.telefone = u.getTelefone();
             this.emailNotificacoes = u.getEmailNotificacoes();
             this.temaPreferido = u.getTemaPreferido();
+            this.nif = u.getNif();
+            this.codigoPostal = u.getCodigoPostal();
+            this.numeroContribuinte = u.getNumeroContribuinte();
         }
     }
 
@@ -352,6 +359,9 @@ public class AuthRestController {
         public String emailNotificacoes;
         public String temaPreferido;
         public String numRegisto;
+        public String nif;
+        public String codigoPostal;
+        public String numeroContribuinte;
     }
 
     public static class ChangePasswordRequest {
@@ -400,14 +410,44 @@ public class AuthRestController {
             utilizadorDAO.atualizarNome(u.getId(), req.nome.trim());
         }
 
-        if (req.morada != null || req.telefone != null || req.emailNotificacoes != null) {
+        if (req.morada != null || req.telefone != null || req.emailNotificacoes != null
+                || req.nif != null || req.codigoPostal != null || req.numeroContribuinte != null) {
+            if (req.telefone != null) {
+                try {
+                    ValidationUtil.validateTelefone(req.telefone.trim());
+                } catch (IllegalArgumentException e) {
+                    return ResponseEntity.badRequest().body(e.getMessage());
+                }
+            }
+            if (req.nif != null && !req.nif.trim().isEmpty()) {
+                try {
+                    ValidationUtil.validateNif(req.nif.trim());
+                } catch (IllegalArgumentException e) {
+                    return ResponseEntity.badRequest().body(e.getMessage());
+                }
+            }
+            if (req.codigoPostal != null && !req.codigoPostal.trim().isEmpty()) {
+                try {
+                    ValidationUtil.validateCodigoPostal(req.codigoPostal.trim());
+                } catch (IllegalArgumentException e) {
+                    return ResponseEntity.badRequest().body(e.getMessage());
+                }
+            }
+            if (req.numeroContribuinte != null && !req.numeroContribuinte.trim().isEmpty()) {
+                if (!req.numeroContribuinte.trim().matches("\\d{9}")) {
+                    return ResponseEntity.badRequest().body("O Nº de Contribuinte deve conter exatamente 9 números.");
+                }
+            }
             String morada = req.morada != null ? req.morada.trim() : u.getMorada();
             String telefone = req.telefone != null ? req.telefone.trim() : u.getTelefone();
             String emailNotificacoes = req.emailNotificacoes != null
                     ? normalizarCampoOpcional(req.emailNotificacoes)
                     : u.getEmailNotificacoes();
+            String nif = req.nif != null ? normalizarCampoOpcional(req.nif) : u.getNif();
+            String codigoPostal = req.codigoPostal != null ? normalizarCampoOpcional(req.codigoPostal) : u.getCodigoPostal();
+            String numeroContribuinte = req.numeroContribuinte != null ? normalizarCampoOpcional(req.numeroContribuinte) : u.getNumeroContribuinte();
 
-            utilizadorDAO.atualizarDadosPessoais(u.getId(), morada, telefone, emailNotificacoes);
+            utilizadorDAO.atualizarDadosPessoais(u.getId(), morada, telefone, emailNotificacoes, nif, codigoPostal, numeroContribuinte);
         }
 
         if (req.temaPreferido != null) {

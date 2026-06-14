@@ -3,6 +3,7 @@ package com.gestaoclubes.api.controller;
 import com.gestaoclubes.api.dao.UtenteDAO;
 import com.gestaoclubes.api.model.Utente;
 import com.gestaoclubes.api.security.SecurityUtils;
+import com.gestaoclubes.api.util.ValidationUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -75,6 +76,11 @@ public class UtenteColetividadeRestController {
         if (body.atividadeIds == null || body.atividadeIds.isEmpty()) {
             return ResponseEntity.badRequest().body("Deve selecionar pelo menos uma atividade.");
         }
+        try {
+            ValidationUtil.validateTelefone(body.telefone);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
 
         Utente u = new Utente();
         u.setNome(body.nome);
@@ -106,6 +112,11 @@ public class UtenteColetividadeRestController {
         }
         if (!utenteDAO.utentePertenceColetividade(coletividadeId, utenteId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Inscrito não encontrado.");
+        }
+        try {
+            ValidationUtil.validateTelefone(body.telefone);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
 
         boolean ok = utenteDAO.atualizarUtente(
