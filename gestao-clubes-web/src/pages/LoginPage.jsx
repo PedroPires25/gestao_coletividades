@@ -89,7 +89,7 @@ export default function LoginPage() {
     const [rClubeId, setRClubeId] = useState("");
     const [rModalidadeId, setRModalidadeId] = useState("");
     const [rColetividadeId, setRColetividadeId] = useState("");
-    const [rAtividadeId, setRAtividadeId] = useState("");
+    const [rAtividadeIds, setRAtividadeIds] = useState([]);
     const [profiles, setProfiles] = useState([
         "ADMINISTRADOR",
         "USER",
@@ -172,7 +172,7 @@ export default function LoginPage() {
             void Promise.resolve().then(() => {
                 setREstruturaTipo("CLUBE");
                 setRColetividadeId("");
-                setRAtividadeId("");
+                setRAtividadeIds([]);
             });
         } else if (PERFIS_COLETIVIDADE.includes(rPerfil)) {
             void Promise.resolve().then(() => {
@@ -190,7 +190,7 @@ export default function LoginPage() {
                 setRClubeId("");
                 setRModalidadeId("");
                 setRColetividadeId("");
-                setRAtividadeId("");
+                setRAtividadeIds([]);
             });
         }
     }, [rPerfil, rEstruturaTipo]);
@@ -229,7 +229,7 @@ export default function LoginPage() {
         async function loadAtividades() {
             if (!rColetividadeId) {
                 setAtividades([]);
-                setRAtividadeId("");
+                setRAtividadeIds([]);
                 return;
             }
 
@@ -262,7 +262,7 @@ export default function LoginPage() {
         setREstruturaTipo(tipo);
         if (tipo === "CLUBE") {
             setRColetividadeId("");
-            setRAtividadeId("");
+            setRAtividadeIds([]);
             setAtividades([]);
         } else if (tipo === "COLETIVIDADE") {
             setRClubeId("");
@@ -398,6 +398,10 @@ export default function LoginPage() {
                 setRErro("Seleciona uma coletividade.");
                 return;
             }
+            if (rAtividadeIds.length === 0) {
+                setRErro("Selecione pelo menos uma atividade.");
+                return;
+            }
         }
 
         if (PERFIS_MISTOS.includes(rPerfil)) {
@@ -436,7 +440,7 @@ export default function LoginPage() {
             clubeId: rClubeId ? Number(rClubeId) : null,
             modalidadeId: rModalidadeId ? Number(rModalidadeId) : null,
             coletividadeId: rColetividadeId ? Number(rColetividadeId) : null,
-            atividadeId: rAtividadeId ? Number(rAtividadeId) : null,
+            atividadeIds: rAtividadeIds,
         };
 
         setRLoading(true);
@@ -461,6 +465,14 @@ export default function LoginPage() {
         triedSubmit && isEmpty
             ? { borderColor: "#e05252", boxShadow: "0 0 0 3px rgba(224, 82, 82, 0.18)" }
             : undefined;
+
+    function handleAtividadeChange(atividadeId) {
+        setRAtividadeIds(prev =>
+            prev.includes(atividadeId)
+                ? prev.filter(id => id !== atividadeId)
+                : [...prev, atividadeId]
+        );
+    }
 
     return (
         <div className="login-page">
@@ -743,21 +755,21 @@ export default function LoginPage() {
                             )}
 
                             {needsColetividade && rPerfil !== "USER" && (
-                                <select
-                                    className="input"
-                                    value={rAtividadeId}
-                                    onChange={(e) => setRAtividadeId(e.target.value)}
-                                >
-                                    <option value="">Selecionar atividade</option>
-                                    {atividades.map((a) => (
-                                        <option
-                                            key={a.atividade?.id ?? a.id}
-                                            value={a.atividade?.id ?? a.atividadeId ?? a.id}
-                                        >
-                                            {a.atividade?.nome ?? a.nome ?? `Atividade ${a.atividadeId ?? a.id}`}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div>
+                                    <label>Atividades</label>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        {atividades.map((a) => (
+                                            <label key={a.atividade?.id ?? a.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={rAtividadeIds.includes(a.atividade?.id ?? a.atividadeId ?? a.id)}
+                                                    onChange={() => handleAtividadeChange(a.atividade?.id ?? a.atividadeId ?? a.id)}
+                                                />
+                                                {a.atividade?.nome ?? a.nome ?? `Atividade ${a.atividadeId ?? a.id}`}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
                             )}
 
                             {perfilPrecisaAprovacao && (

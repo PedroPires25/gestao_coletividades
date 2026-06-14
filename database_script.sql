@@ -23,9 +23,36 @@ CREATE TABLE IF NOT EXISTS utilizadores (
   perfil_id INT NOT NULL,
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
   nome VARCHAR(200) DEFAULT NULL,
+  clube_id INT NULL,
+  modalidade_id INT NULL,
+  coletividade_id INT NULL,
+  privilegios_ativos BOOLEAN NOT NULL DEFAULT TRUE,
+  estado_registo VARCHAR(20) NOT NULL DEFAULT 'APROVADO',
+  logo_path VARCHAR(255) DEFAULT NULL,
+  morada VARCHAR(255) DEFAULT NULL,
+  telefone VARCHAR(30) DEFAULT NULL,
+  email_notificacoes VARCHAR(120) DEFAULT NULL,
+  tema_preferido VARCHAR(30) DEFAULT NULL,
+
   CONSTRAINT fk_utilizadores_perfis
     FOREIGN KEY (perfil_id) REFERENCES perfis(id)
-    ON DELETE RESTRICT ON UPDATE CASCADE
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_utilizadores_clube
+    FOREIGN KEY (clube_id) REFERENCES clube(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
+  CONSTRAINT fk_utilizadores_modalidade
+    FOREIGN KEY (modalidade_id) REFERENCES modalidade(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
+  CONSTRAINT fk_utilizadores_coletividade
+    FOREIGN KEY (coletividade_id) REFERENCES coletividade(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
+  -- Adicionar chaves compostas para garantir a unicidade por estrutura
+  UNIQUE KEY uq_utilizador_clube (utilizador, clube_id),
+  UNIQUE KEY uq_utilizador_coletividade (utilizador, coletividade_id)
 ) ENGINE=InnoDB;
 
 INSERT IGNORE INTO perfis (id, descricao) VALUES
@@ -42,7 +69,10 @@ CREATE TABLE IF NOT EXISTS clube (
   email VARCHAR(120),
   telefone VARCHAR(30),
   morada VARCHAR(255),
+  codigo_postal VARCHAR(20),
+  localidade VARCHAR(120),
   data_fundacao DATE,
+  logo_path VARCHAR(255) DEFAULT NULL,
   UNIQUE KEY uq_clube_nome (nome)
 ) ENGINE=InnoDB;
 
@@ -52,7 +82,8 @@ CREATE TABLE IF NOT EXISTS clube (
 CREATE TABLE IF NOT EXISTS modalidade (
   id INT AUTO_INCREMENT PRIMARY KEY,
   nome VARCHAR(80) NOT NULL UNIQUE,
-  descricao VARCHAR(255)
+  descricao VARCHAR(255),
+  ativo TINYINT(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB;
 
 -- -------------------------
@@ -98,7 +129,7 @@ INSERT IGNORE INTO estado_atleta (id, descricao) VALUES
 -- -------------------------
 CREATE TABLE IF NOT EXISTS atleta (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  nome VARCHAR(120) NOT NULL,
+  nome VARCHAR(255) NULL,
   data_nascimento DATE,
   email VARCHAR(120),
   telefone VARCHAR(30),
@@ -107,6 +138,8 @@ CREATE TABLE IF NOT EXISTS atleta (
   estado_id INT NOT NULL DEFAULT 1,
   foto_path VARCHAR(255) DEFAULT NULL,
   utilizador_id INT NULL,
+  remuneracao DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  escalao_id INT NULL,
 
   CONSTRAINT fk_atleta_clube
     FOREIGN KEY (clube_atual_id) REFERENCES clube(id)
@@ -119,6 +152,10 @@ CREATE TABLE IF NOT EXISTS atleta (
   CONSTRAINT fk_atleta_utilizador
     FOREIGN KEY (utilizador_id) REFERENCES utilizadores(id)
     ON DELETE SET NULL ON UPDATE CASCADE,
+
+  CONSTRAINT fk_atleta_escalao
+    FOREIGN KEY (escalao_id) REFERENCES escalao(id)
+    ON DELETE SET NULL,
 
   KEY idx_atleta_clube (clube_atual_id),
   KEY idx_atleta_estado (estado_id),
@@ -133,6 +170,7 @@ CREATE TABLE IF NOT EXISTS atleta_clube_modalidade (
   atleta_id INT NOT NULL,
   clube_modalidade_id INT NOT NULL,
   data_inscricao DATE NOT NULL,
+  data_fim DATE NULL,
   ativo TINYINT(1) NOT NULL DEFAULT 1,
 
   CONSTRAINT fk_acm_atleta
@@ -167,17 +205,20 @@ INSERT IGNORE INTO cargo_staff (nome) VALUES
  ('Preparador Físico'),
  ('Treinador Principal'),
  ('Treinador Adjunto'),
- ('Treinador Guarda-Redes');
+ ('Treinador Guarda-Redes'),
+ ('Professor'),
+ ('Massagista');
 
 CREATE TABLE IF NOT EXISTS staff (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  nome VARCHAR(120) NOT NULL,
+  nome VARCHAR(255) NULL,
   email VARCHAR(120),
   telefone VARCHAR(30),
   morada VARCHAR(255),
   num_registo VARCHAR(60),
   foto_path VARCHAR(255) DEFAULT NULL,
   utilizador_id INT NULL,
+  remuneracao DECIMAL(10,2) NOT NULL DEFAULT 0.00,
 
   CONSTRAINT fk_staff_utilizador
     FOREIGN KEY (utilizador_id) REFERENCES utilizadores(id)
@@ -225,7 +266,8 @@ CREATE TABLE IF NOT EXISTS transferencia_atleta (
   id INT AUTO_INCREMENT PRIMARY KEY,
   atleta_id INT NOT NULL,
   clube_origem_id INT NOT NULL,
-  clube_destino_id INT NOT NULL,
+  clube_destino_id INT NULL,
+  clube_destino_nome VARCHAR(120) NULL,
   data_transferencia DATE NOT NULL,
   observacoes VARCHAR(255),
 
@@ -245,29 +287,9 @@ CREATE TABLE IF NOT EXISTS transferencia_atleta (
   KEY idx_tr_destino_data (clube_destino_id, data_transferencia)
 ) ENGINE=InnoDB;
 
--- ---------------------------------
--- ALTERAÇÂO NA TABELA DE MODALIDADE
--- ---------------------------------
-USE gestao_clubes;
-
-ALTER TABLE modalidade
-  ADD COLUMN ativo TINYINT(1) NOT NULL DEFAULT 1;
-
-
-UPDATE modalidade SET ativo = 1 WHERE ativo IS NULL;
-
-USE gestao_clubes;
-ALTER TABLE atleta_clube_modalidade
-  ADD COLUMN data_fim DATE NULL AFTER data_inscricao;
-
-UPDATE estado_atleta SET descricao = 'Transferido' WHERE id = 2;
-
-ALTER TABLE staff
-ADD COLUMN remuneracao DECIMAL(10,2) NOT NULL DEFAULT 0.00;
-
-ALTER TABLE atleta
-ADD COLUMN remuneracao DECIMAL(10,2) NOT NULL DEFAULT 0.00;
-
+-- -------------------------
+-- ESCALAO
+-- -------------------------
 CREATE TABLE IF NOT EXISTS escalao (
   id INT AUTO_INCREMENT PRIMARY KEY,
   nome VARCHAR(30) NOT NULL UNIQUE
@@ -281,115 +303,49 @@ INSERT INTO escalao (nome) VALUES
 ('Juvenil'),
 ('Junior'),
 ('Senior'),
-('Veterano');
+('Veterano'),
+('Traquinas');
 
-ALTER TABLE atleta
-MODIFY escalao_id INT NOT NULL;
-
-CREATE TABLE staff_afetacao_escalao (
+CREATE TABLE IF NOT EXISTS staff_afetacao_escalao (
+  id INT AUTO_INCREMENT PRIMARY KEY,
   staff_afetacao_id INT NOT NULL,
   escalao_id INT NOT NULL,
 
-  PRIMARY KEY (staff_afetacao_id, escalao_id),
+  UNIQUE KEY uk_staff_afetacao_escalao (staff_afetacao_id, escalao_id),
 
-  CONSTRAINT fk_sae_afetacao
-    FOREIGN KEY (staff_afetacao_id)
-    REFERENCES staff_afetacao(id)
-    ON DELETE CASCADE,
+  CONSTRAINT fk_staff_afetacao_escalao_afetacao
+      FOREIGN KEY (staff_afetacao_id) REFERENCES staff_afetacao(id)
+      ON DELETE CASCADE,
 
-  CONSTRAINT fk_sae_escalao
-    FOREIGN KEY (escalao_id)
-    REFERENCES escalao(id)
-    ON DELETE CASCADE
+  CONSTRAINT fk_staff_afetacao_escalao_escalao
+      FOREIGN KEY (escalao_id) REFERENCES escalao(id)
+      ON DELETE CASCADE
 );
 
-UPDATE estado_atleta
-SET descricao = 'Saiu'
-WHERE descricao = 'SaíU';
-
-ALTER TABLE atleta ADD COLUMN escalao_id INT NULL;
-
-ALTER TABLE atleta
-ADD CONSTRAINT fk_atleta_escalao
-FOREIGN KEY (escalao_id)
-REFERENCES escalao(id);SELECT * FROM gestao_clubes.modalidade;
-
-ALTER TABLE clubes
-  ADD COLUMN codigo_postal VARCHAR(20),
-  ADD COLUMN localidade VARCHAR(120);
-  
-  CREATE TABLE coletividades (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  nome VARCHAR(255) NOT NULL,
-  nif VARCHAR(20),
-  email VARCHAR(255),
-  telefone VARCHAR(30),
-  morada VARCHAR(255),
-  codigo_postal VARCHAR(20),
-  localidade VARCHAR(120),
-
-  -- restantes campos que existem em clubes...
-  -- ex: data_criacao DATE, modalidade VARCHAR(100), etc
-
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
-ALTER TABLE clube
-MODIFY COLUMN codigo_postal VARCHAR(20) AFTER morada;
-
-ALTER TABLE clube
-MODIFY COLUMN localidade VARCHAR(120) AFTER codigo_postal;
-
-ALTER TABLE clube
-MODIFY COLUMN data_fundacao DATE AFTER localidade;
-
+-- -------------------------
+-- AUDIT LOG
+-- -------------------------
 CREATE TABLE IF NOT EXISTS audit_log (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-
     admin_user_id INT NOT NULL,
-
-    acao ENUM('CREATE','UPDATE','DELETE','PROMOTE','DEMOTE','ACTIVATE','DEACTIVATE') NOT NULL,
-
+    acao ENUM(
+        'CREATE', 'UPDATE', 'DELETE', 'PROMOTE', 'DEMOTE', 'ACTIVATE', 'DEACTIVATE',
+        'UPDATE_ROLE', 'UPDATE_PRIVILEGIOS', 'UPDATE_ESTADO_REGISTO', 'APPROVE_REGISTO', 'REJECT_REGISTO'
+    ) NOT NULL,
     tabela VARCHAR(64) NOT NULL,
     registo_id INT NULL,
-
     antes_json JSON NULL,
     depois_json JSON NULL,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_audit_admin
-        FOREIGN KEY (admin_user_id) REFERENCES utilizadores(id)
+    CONSTRAINT fk_audit_admin FOREIGN KEY (admin_user_id) REFERENCES utilizadores(id)
 );
 
-CREATE INDEX idx_audit_tabela_registo
-ON audit_log(tabela, registo_id);
-
-CREATE INDEX idx_audit_admin_data
-ON audit_log(admin_user_id, created_at);
-
-SELECT * 
-FROM audit_log
-ORDER BY created_at DESC;
-
-SELECT id, utilizador, ativo, palavra_chave
-FROM utilizadores
-WHERE utilizador = 'joao@hotmail.com';
-
-SELECT * 
-FROM audit_log
-WHERE tabela='clube';
-
-SELECT *
-FROM audit_log;
+CREATE INDEX idx_audit_tabela_registo ON audit_log(tabela, registo_id);
+CREATE INDEX idx_audit_admin_data ON audit_log(admin_user_id, created_at);
 
 -- =========================================================
 -- COLETIVIDADES
--- Bloco para anexar ao script atual
 -- =========================================================
-
-USE gestao_clubes;
 
 -- -------------------------
 -- COLETIVIDADE
@@ -404,7 +360,7 @@ CREATE TABLE IF NOT EXISTS coletividade (
   codigo_postal VARCHAR(20),
   localidade VARCHAR(120),
   data_fundacao DATE,
-
+  logo_path VARCHAR(255) DEFAULT NULL,
   UNIQUE KEY uq_coletividade_nome (nome)
 ) ENGINE=InnoDB;
 
@@ -460,7 +416,7 @@ INSERT IGNORE INTO estado_inscrito (id, descricao) VALUES
 -- -------------------------
 CREATE TABLE IF NOT EXISTS inscrito (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  nome VARCHAR(120) NOT NULL,
+  nome VARCHAR(255) NULL,
   data_nascimento DATE,
   email VARCHAR(120),
   telefone VARCHAR(30),
@@ -520,34 +476,18 @@ CREATE TABLE IF NOT EXISTS cargo_coletividade_staff (
 ) ENGINE=InnoDB;
 
 INSERT IGNORE INTO cargo_coletividade_staff (nome) VALUES
-  ('Presidente'),
-  ('Vice-Presidente'),
-  ('Secretário'),
-  ('Tesoureiro'),
-  ('Rececionista'),
-  ('Professor'),
-  ('Vogal'),
-  ('Auxiliar de Limpeza'),
-  ('Técnico de Manutenção'),
-  ('Maestro'),
-  ('Porteiro'),
-  ('Cozinheiro'),
-  ('Empregado de Bar'),
-  ('Ajudante de Cozinha'),
-  ('Monitor'),
-  ('Treinador'),
-  ('Roupeiro'),
-  ('Enfermeiro'),
-  ('Fisioterapeuta'),
-  ('Administrativo'),
-  ('Coordenador');
+  ('Presidente'), ('Vice-Presidente'), ('Secretário'), ('Tesoureiro'), ('Rececionista'),
+  ('Professor'), ('Vogal'), ('Auxiliar de Limpeza'), ('Técnico de Manutenção'),
+  ('Maestro'), ('Porteiro'), ('Cozinheiro'), ('Empregado de Bar'), ('Ajudante de Cozinha'),
+  ('Monitor'), ('Treinador'), ('Roupeiro'), ('Enfermeiro'), ('Fisioterapeuta'),
+  ('Administrativo'), ('Coordenador');
 
 -- -------------------------
 -- STAFF COLETIVIDADE
 -- -------------------------
 CREATE TABLE IF NOT EXISTS staff_coletividade (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  nome VARCHAR(120) NOT NULL,
+  nome VARCHAR(255) NULL,
   email VARCHAR(120),
   telefone VARCHAR(30),
   morada VARCHAR(255),
@@ -590,208 +530,6 @@ CREATE TABLE IF NOT EXISTS staff_coletividade_afetacao (
   KEY idx_sca_cargo (cargo_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE IF NOT EXISTS coletividade_evento (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  coletividade_id INT NOT NULL,
-  coletividade_atividade_id INT NULL,
-  titulo VARCHAR(200) NOT NULL,
-  descricao TEXT,
-  data_evento DATE NOT NULL,
-  hora_inicio TIME NULL,
-  hora_fim TIME NULL,
-  local_evento VARCHAR(255),
-  responsavel VARCHAR(120),
-  max_participantes INT NULL,
-  permite_inscricao TINYINT(1) NOT NULL DEFAULT 0,
-  estado ENUM('Aberto','Fechado','Cancelado','Concluído') NOT NULL DEFAULT 'Aberto',
-  criado_por INT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_ce_col FOREIGN KEY (coletividade_id) REFERENCES coletividade(id) ON DELETE CASCADE,
-  CONSTRAINT fk_ce_ca FOREIGN KEY (coletividade_atividade_id) REFERENCES coletividade_atividade(id) ON DELETE SET NULL,
-  CONSTRAINT fk_ce_criado FOREIGN KEY (criado_por) REFERENCES utilizadores(id) ON DELETE SET NULL,
-  KEY idx_ce_col (coletividade_id),
-  KEY idx_ce_data (data_evento)
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS coletividade_evento_inscricao (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  evento_id INT NOT NULL,
-  inscrito_id INT NULL,
-  utilizador_id INT NULL,
-  nome_participante VARCHAR(120),
-  estado ENUM('Confirmado','Cancelado','Lista de espera') NOT NULL DEFAULT 'Confirmado',
-  data_inscricao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_cei_evento FOREIGN KEY (evento_id) REFERENCES coletividade_evento(id) ON DELETE CASCADE,
-  CONSTRAINT fk_cei_inscrito FOREIGN KEY (inscrito_id) REFERENCES inscrito(id) ON DELETE SET NULL,
-  CONSTRAINT fk_cei_user FOREIGN KEY (utilizador_id) REFERENCES utilizadores(id) ON DELETE SET NULL,
-  UNIQUE KEY uq_cei (evento_id, inscrito_id),
-  KEY idx_cei_evento (evento_id)
-) ENGINE=InnoDB;
-
-INSERT INTO escalao (nome)
-VALUES ('Traquinas');
-
-CREATE TABLE IF NOT EXISTS staff_afetacao_escalao (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    staff_afetacao_id INT NOT NULL,
-    escalao_id INT NOT NULL,
-
-    UNIQUE KEY uk_staff_afetacao_escalao (staff_afetacao_id, escalao_id),
-
-    CONSTRAINT fk_staff_afetacao_escalao_afetacao
-        FOREIGN KEY (staff_afetacao_id) REFERENCES staff_afetacao(id)
-        ON DELETE CASCADE,
-
-    CONSTRAINT fk_staff_afetacao_escalao_escalao
-        FOREIGN KEY (escalao_id) REFERENCES escalao(id)
-        ON DELETE CASCADE
-);
-
-USE gestao_clubes;
-
--- =========================================================
--- FASE 1 - Perfis, privilégios e estado de registo
--- =========================================================
-
--- 1) PERFIS
-CREATE TABLE IF NOT EXISTS perfis (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  descricao VARCHAR(50) NOT NULL UNIQUE
-) ENGINE=InnoDB;
-
-INSERT INTO perfis (descricao)
-SELECT 'SUPER_ADMIN'
-WHERE NOT EXISTS (
-    SELECT 1 FROM perfis WHERE UPPER(descricao) IN ('SUPER_ADMIN', 'ADMIN')
-);
-
-INSERT INTO perfis (descricao)
-SELECT 'ADMINISTRADOR'
-WHERE NOT EXISTS (
-    SELECT 1 FROM perfis WHERE UPPER(descricao) = 'ADMINISTRADOR'
-);
-
-INSERT INTO perfis (descricao)
-SELECT 'SECRETARIO'
-WHERE NOT EXISTS (
-    SELECT 1 FROM perfis WHERE UPPER(descricao) = 'SECRETARIO'
-);
-
-INSERT INTO perfis (descricao)
-SELECT 'TREINADOR_PRINCIPAL'
-WHERE NOT EXISTS (
-    SELECT 1 FROM perfis WHERE UPPER(descricao) = 'TREINADOR_PRINCIPAL'
-);
-
-INSERT INTO perfis (descricao)
-SELECT 'DEPARTAMENTO_MEDICO'
-WHERE NOT EXISTS (
-    SELECT 1 FROM perfis WHERE UPPER(descricao) = 'DEPARTAMENTO_MEDICO'
-);
-
-INSERT INTO perfis (descricao)
-SELECT 'STAFF'
-WHERE NOT EXISTS (
-    SELECT 1 FROM perfis WHERE UPPER(descricao) = 'STAFF'
-);
-
-INSERT INTO perfis (descricao)
-SELECT 'ATLETA'
-WHERE NOT EXISTS (
-    SELECT 1 FROM perfis WHERE UPPER(descricao) = 'ATLETA'
-);
-
-INSERT INTO perfis (descricao)
-SELECT 'PROFESSOR'
-WHERE NOT EXISTS (
-    SELECT 1 FROM perfis WHERE UPPER(descricao) = 'PROFESSOR'
-);
-
-INSERT INTO perfis (descricao)
-SELECT 'UTENTE'
-WHERE NOT EXISTS (
-    SELECT 1 FROM perfis WHERE UPPER(descricao) = 'UTENTE'
-);
-
--- manter USER temporariamente só para compatibilidade / migração
-INSERT INTO perfis (descricao)
-SELECT 'USER'
-WHERE NOT EXISTS (
-    SELECT 1 FROM perfis WHERE UPPER(descricao) = 'USER'
-);
-
--- 2) UTILIZADORES - novas colunas da fase 1
-ALTER TABLE utilizadores
-ADD COLUMN IF NOT EXISTS privilegios_ativos BOOLEAN NOT NULL DEFAULT TRUE,
-ADD COLUMN IF NOT EXISTS estado_registo VARCHAR(20) NOT NULL DEFAULT 'APROVADO';
-
-ALTER TABLE utilizadores
-ADD COLUMN privilegios_ativos BOOLEAN NOT NULL DEFAULT TRUE;
-
-ALTER TABLE utilizadores
-ADD COLUMN estado_registo VARCHAR(20) NOT NULL DEFAULT 'APROVADO';
-
-ALTER TABLE utilizadores
-ADD COLUMN clube_id INT NULL,
-ADD COLUMN modalidade_id INT NULL;
-
-ALTER TABLE utilizadores
-ADD CONSTRAINT fk_utilizadores_clube
-FOREIGN KEY (clube_id) REFERENCES clube(id)
-ON DELETE SET NULL
-ON UPDATE CASCADE;
-
-ALTER TABLE utilizadores
-ADD CONSTRAINT fk_utilizadores_modalidade
-FOREIGN KEY (modalidade_id) REFERENCES modalidade(id)
-ON DELETE SET NULL
-ON UPDATE CASCADE;
-
-ALTER TABLE utilizadores
-ADD COLUMN coletividade_id INT NULL,
-ADD COLUMN atividade_id INT NULL;
-
-ALTER TABLE utilizadores
-ADD CONSTRAINT fk_utilizadores_coletividade
-FOREIGN KEY (coletividade_id) REFERENCES coletividade(id)
-ON DELETE SET NULL
-ON UPDATE CASCADE;
-
-ALTER TABLE utilizadores
-ADD CONSTRAINT fk_utilizadores_atividade
-FOREIGN KEY (atividade_id) REFERENCES atividade(id)
-ON DELETE SET NULL
-ON UPDATE CASCADE;
-
-
--- 3) AUDIT LOG - novas ações administrativas
-ALTER TABLE audit_log
-MODIFY COLUMN acao ENUM(
-    'CREATE',
-    'UPDATE',
-    'DELETE',
-    'PROMOTE',
-    'DEMOTE',
-    'ACTIVATE',
-    'DEACTIVATE',
-    'UPDATE_ROLE',
-    'UPDATE_PRIVILEGIOS',
-    'UPDATE_ESTADO_REGISTO',
-    'APPROVE_REGISTO',
-    'REJECT_REGISTO'
-) NOT NULL;
-
-INSERT INTO cargo_staff (nome, ativo)
-VALUES ('Professor', 1);
-
-INSERT IGNORE INTO cargo_staff (nome) VALUES ('Massagista');
-
-ALTER TABLE atleta MODIFY COLUMN nome VARCHAR(255) NULL;
-ALTER TABLE inscrito MODIFY COLUMN nome VARCHAR(255) NULL;
-ALTER TABLE staff MODIFY COLUMN nome VARCHAR(255) NULL;
-ALTER TABLE staff_coletividade MODIFY COLUMN nome VARCHAR(255) NULL;
-
 -- -------------------------
 -- EVENTOS / CONVOCATÓRIAS
 -- -------------------------
@@ -809,6 +547,7 @@ CREATE TABLE IF NOT EXISTS evento (
   criado_por INT NOT NULL,
   latitude DECIMAL(10,7) NULL,
   longitude DECIMAL(10,7) NULL,
+  escalao_id INT NULL,
 
   CONSTRAINT fk_evento_cm
     FOREIGN KEY (clube_modalidade_id) REFERENCES clube_modalidade(id)
@@ -821,6 +560,10 @@ CREATE TABLE IF NOT EXISTS evento (
   CONSTRAINT fk_evento_utilizador
     FOREIGN KEY (criado_por) REFERENCES utilizadores(id)
     ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  CONSTRAINT fk_evento_escalao
+    FOREIGN KEY (escalao_id) REFERENCES escalao(id)
+    ON DELETE SET NULL,
 
   KEY idx_evento_cm (clube_modalidade_id),
   KEY idx_evento_ca (coletividade_atividade_id)
@@ -856,88 +599,12 @@ CREATE TABLE IF NOT EXISTS evento_inscrito (
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- 1. Add new columns to existing evento table
-ALTER TABLE evento
-  ADD COLUMN descricao TEXT NULL AFTER titulo,
-  ADD COLUMN observacoes TEXT NULL AFTER local,
-  ADD COLUMN tipo ENUM('MODALIDADE','ATIVIDADE') NOT NULL DEFAULT 'MODALIDADE' AFTER observacoes,
-  ADD COLUMN coletividade_atividade_id INT NULL AFTER clube_modalidade_id,
-  MODIFY COLUMN clube_modalidade_id INT NULL,
-  ADD CONSTRAINT fk_evento_ca
-    FOREIGN KEY (coletividade_atividade_id) REFERENCES coletividade_atividade(id)
-    ON DELETE RESTRICT ON UPDATE CASCADE,
-  ADD KEY idx_evento_ca (coletividade_atividade_id);
-
--- 2. Add latitude/longitude columns to evento table
-ALTER TABLE evento
-  ADD COLUMN latitude DECIMAL(10,7) NULL AFTER criado_por,
-  ADD COLUMN longitude DECIMAL(10,7) NULL AFTER latitude;
-
--- 3. Create evento_inscrito table
-CREATE TABLE IF NOT EXISTS evento_inscrito (
-  evento_id INT NOT NULL,
-  inscrito_id INT NOT NULL,
-  PRIMARY KEY (evento_id, inscrito_id),
-  CONSTRAINT fk_ei_evento
-    FOREIGN KEY (evento_id) REFERENCES evento(id)
-    ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT fk_ei_inscrito
-    FOREIGN KEY (inscrito_id) REFERENCES inscrito(id)
-    ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB;
-
--- -------------------------
--- LOGO / AVATAR SUPPORT
--- -------------------------
-ALTER TABLE clube
-  ADD COLUMN logo_path VARCHAR(255) DEFAULT NULL;
-
-ALTER TABLE coletividade
-  ADD COLUMN logo_path VARCHAR(255) DEFAULT NULL;
-
-ALTER TABLE utilizadores
-  ADD COLUMN logo_path VARCHAR(255) DEFAULT NULL;
-
--- -------------------------
--- NOME DO UTILIZADOR + FOTO PARA ATLETA/STAFF
--- -------------------------
-ALTER TABLE utilizadores
-  ADD COLUMN nome VARCHAR(200) DEFAULT NULL;
-
-ALTER TABLE atleta
-  ADD COLUMN foto_path VARCHAR(255) DEFAULT NULL;
-
-ALTER TABLE staff
-  ADD COLUMN foto_path VARCHAR(255) DEFAULT NULL;
-
--- -------------------------
--- DADOS PESSOAIS E PREFERÊNCIA DE TEMA DO UTILIZADOR
--- -------------------------
-ALTER TABLE utilizadores
-  ADD COLUMN morada VARCHAR(255) DEFAULT NULL;
-
-ALTER TABLE utilizadores
-  ADD COLUMN telefone VARCHAR(30) DEFAULT NULL;
-
-ALTER TABLE utilizadores
-  ADD COLUMN email_notificacoes VARCHAR(120) DEFAULT NULL;
-
-UPDATE utilizadores
-SET email_notificacoes = utilizador
-WHERE id > 0
-  AND (email_notificacoes IS NULL OR TRIM(email_notificacoes) = '');
-
-ALTER TABLE utilizadores
-  ADD COLUMN tema_preferido VARCHAR(30) DEFAULT NULL;
-
 -- =========================================================
 -- MÓDULO CLÍNICO – DEPARTAMENTO MÉDICO
 -- =========================================================
 
-USE gestao_clubes;
-
 -- -------------------------
--- FICHA MÉDICA DO ATLETA (1 por atleta por clube)
+-- FICHA MÉDICA DO ATLETA
 -- -------------------------
 CREATE TABLE IF NOT EXISTS ficha_medica (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1155,26 +822,6 @@ CREATE TABLE IF NOT EXISTS notificacao (
   KEY idx_notif_evento (evento_id),
   KEY idx_notif_estado (estado)
 ) ENGINE=InnoDB;
-
-
--- Add escalao_id to evento for trainer permission filtering
-
-ALTER TABLE evento
-ADD COLUMN escalao_id INT NULL;
-ALTER TABLE evento
-ADD CONSTRAINT fk_evento_escalao
-FOREIGN KEY (escalao_id)
-REFERENCES escalao(id);
-
--- Permite clube de destino nulo (transferência para clube externo/desconhecido)
-ALTER TABLE transferencia_atleta
-MODIFY COLUMN clube_destino_id INT NULL;
-
--- Guarda o nome textual do clube de destino (pode ser externo à plataforma)
-ALTER TABLE transferencia_atleta
-ADD COLUMN clube_destino_nome VARCHAR(120) NULL;
-
-
 
 -- =========================================================
 -- MÓDULO TESOURARIA
