@@ -2168,6 +2168,10 @@ body.theme-light .page-title-icon {
     filter: brightness(0) saturate(100%);
 }
 
+body.theme-light .menu-style-icon img.atividade-generated-icon {
+    filter: none;
+}
+
 .icon-link-card .modalidade-figura-label,
 .modalidade-figura-label {
     font-weight: 800;

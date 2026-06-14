@@ -3,6 +3,7 @@ import { useAuth } from "../auth/AuthContext";
 import SideMenu from "../components/SideMenu";
 import { getMinhasAtividades, getEventosColetividade } from "../api";
 import { Link, useNavigate } from "react-router-dom";
+import { getAtividadeIcon } from "../assets/atividade-icons";
 
 export default function AreaUtentePage() {
     const { user, logout } = useAuth();
@@ -65,9 +66,16 @@ export default function AreaUtentePage() {
                         <section className="card">
                             <h2>As minhas atividades</h2>
                             <div className="grid">
-                                {atividades.map((atividade) => (
+                                {atividades.map((atividade) => {
+                                    const nome = atividade.nome || "Atividade";
+                                    return (
                                     <div key={atividade.id} className="card">
-                                        <h3>{atividade.nome}</h3>
+                                        <span className="modalidade-figura-circle" style={{ width: 82, height: 82, marginBottom: 12 }}>
+                                            <span className="menu-style-icon" style={{ width: 52, height: 52 }}>
+                                                <img className="atividade-generated-icon" src={getAtividadeIcon(nome)} alt={nome} />
+                                            </span>
+                                        </span>
+                                        <h3>{nome}</h3>
                                         <p>{atividade.descricao}</p>
                                         <p><strong>Professor:</strong> {atividade.professor}</p>
                                         <p><strong>Horário:</strong> {atividade.horario}</p>
@@ -77,7 +85,8 @@ export default function AreaUtentePage() {
                                             Ver detalhes
                                         </Link>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </section>
 

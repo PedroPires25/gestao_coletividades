@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { getAtividadeIcon } from "../assets/atividade-icons";
 
 const AUTO_ADVANCE_MS = 30000;
 
@@ -61,6 +62,7 @@ export default function AtividadeCarousel({
                 aria-label="Carrossel de atividades"
             >
                 {pageCards.map((atividade) => {
+                    const nome = atividade.nome || "Atividade";
                     return (
                         <article
                             key={atividade.id}
@@ -76,7 +78,13 @@ export default function AtividadeCarousel({
                                 </span>
                             </div>
 
-                            <h3 className="event-card-title">{atividade.nome}</h3>
+                            <span className="modalidade-figura-circle" style={{ width: 86, height: 86, marginBottom: 14 }}>
+                                <span className="menu-style-icon" style={{ width: 56, height: 56 }}>
+                                    <img className="atividade-generated-icon" src={getAtividadeIcon(nome)} alt={nome} />
+                                </span>
+                            </span>
+
+                            <h3 className="event-card-title">{nome}</h3>
 
                             {atividade.descricao && (
                                 <p className="event-card-desc subtle">{atividade.descricao}</p>

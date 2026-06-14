@@ -13,6 +13,7 @@ import {
 } from "../services/coletividadeAtividades";
 
 import modalidadesIcon from "../assets/modalidades.svg";
+import { getAtividadeIcon } from "../assets/atividade-icons";
 
 function currentAno() {
     const y = new Date().getFullYear();
@@ -435,6 +436,21 @@ export default function ColetividadeAtividadesPage() {
                                 </p>
 
                                 <div className="row">
+                                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                        <span className="modalidade-figura-circle" style={{ width: 74, height: 74 }}>
+                                            <span className="menu-style-icon" style={{ width: 48, height: 48 }}>
+                                                <img
+                                                    className="atividade-generated-icon"
+                                                    src={getAtividadeIcon(novoNome || "Nova atividade")}
+                                                    alt={novoNome || "Nova atividade"}
+                                                />
+                                            </span>
+                                        </span>
+                                        <span className="subtle">
+                                            Se existir um SVG em <code>src/assets/atividades</code> com o nome da atividade, ele é usado; caso contrário, o ícone é gerado automaticamente.
+                                        </span>
+                                    </div>
+
                                     <input
                                         className="input"
                                         placeholder="Nome da atividade *"
@@ -544,6 +560,7 @@ export default function ColetividadeAtividadesPage() {
                                 <table className="dashboard-table">
                                     <thead>
                                     <tr>
+                                        <th>Ícone</th>
                                         <th style={{ cursor: "pointer" }} onClick={() => alternarOrdenacao("nome")}>
                                             Nome
                                         </th>
@@ -561,8 +578,15 @@ export default function ColetividadeAtividadesPage() {
                                     </thead>
 
                                     <tbody>
-                                    {atividadesVisiveis.map((row) => (
+                                    {atividadesVisiveis.map((row) => {
+                                        const nomeAtividade = row?.atividade?.nome || "Atividade";
+                                        return (
                                         <tr key={row.id}>
+                                            <td>
+                                                <span className="menu-style-icon" style={{ width: 36, height: 36 }}>
+                                                    <img className="atividade-generated-icon" src={getAtividadeIcon(nomeAtividade)} alt={nomeAtividade} />
+                                                </span>
+                                            </td>
                                             <td>{row?.atividade?.nome || "-"}</td>
                                             <td>{row?.atividade?.descricao || "-"}</td>
                                             <td>{row?.ano || "-"}</td>
@@ -607,11 +631,12 @@ export default function ColetividadeAtividadesPage() {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))}
+                                        );
+                                    })}
 
                                     {!loading && atividadesVisiveis.length === 0 && (
                                         <tr>
-                                            <td colSpan={5} className="cell-muted" style={{ padding: 14 }}>
+                                            <td colSpan={6} className="cell-muted" style={{ padding: 14 }}>
                                                 Sem atividades associadas.
                                             </td>
                                         </tr>
@@ -634,18 +659,33 @@ export default function ColetividadeAtividadesPage() {
                             </div>
 
                             <div className="row">
-                                <input
-                                    className="input"
-                                    placeholder="Nome *"
-                                    value={editNome}
-                                    onChange={(e) => setEditNome(e.target.value)}
-                                />
-                                <input
-                                    className="input"
-                                    placeholder="Descrição"
-                                    value={editDescricao}
-                                    onChange={(e) => setEditDescricao(e.target.value)}
-                                />
+                                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                        <span className="modalidade-figura-circle" style={{ width: 74, height: 74 }}>
+                                            <span className="menu-style-icon" style={{ width: 48, height: 48 }}>
+                                                <img
+                                                    className="atividade-generated-icon"
+                                                    src={getAtividadeIcon(editNome || "Atividade")}
+                                                    alt={editNome || "Atividade"}
+                                                />
+                                            </span>
+                                        </span>
+                                        <span className="subtle" style={{ fontSize: 13 }}>
+                                            Pré-visualização do ícone gerado automaticamente
+                                        </span>
+                                    </div>
+
+                                    <input
+                                        className="input"
+                                        placeholder="Nome *"
+                                        value={editNome}
+                                        onChange={(e) => setEditNome(e.target.value)}
+                                    />
+                                    <input
+                                        className="input"
+                                        placeholder="Descrição"
+                                        value={editDescricao}
+                                        onChange={(e) => setEditDescricao(e.target.value)}
+                                    />
 
                                 <div className="actions">
                                     <button className="btn btn-primary" type="button" onClick={guardarEdicao}>
