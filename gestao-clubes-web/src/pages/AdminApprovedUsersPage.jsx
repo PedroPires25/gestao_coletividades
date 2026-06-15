@@ -22,7 +22,7 @@ export default function AdminApprovedUsersPage() {
         ADMINISTRADOR: "Administrador",
         USER: "Utilizador",
         ATLETA: "Atleta",
-        UTENTE: "Inscrito (Coletividade)",
+        INSCRITO: "Inscrito (Coletividade)",
         STAFF: "Staff",
         PROFESSOR: "Professor / Treinador",
         TREINADOR_PRINCIPAL: "Treinador Principal",

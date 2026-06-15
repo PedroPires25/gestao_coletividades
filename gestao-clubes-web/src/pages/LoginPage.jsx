@@ -54,7 +54,7 @@ const PERFIL_LABELS = {
     ADMINISTRADOR: "Administrador",
     USER: "Utilizador",
     ATLETA: "Atleta",
-    UTENTE: "Inscrito (Coletividade)",
+    UTENTE: "Inscrito",
     STAFF: "Staff",
     PROFESSOR: "Professor (Coletividade/Clube)",
     TREINADOR_COLETIVIDADE: "Treinador da Coletividade",
@@ -623,7 +623,7 @@ export default function LoginPage() {
                                         <span style={{ fontWeight: 600 }}>{conta.estruturaNome}</span>
                                         <span style={{ fontSize: 12, opacity: 0.75 }}>
                                             {conta.estruturaTipo === "CLUBE" ? "🏟 Clube" : conta.estruturaTipo === "COLETIVIDADE" ? "🏛 Coletividade" : "⚙ Sistema"}
-                                            {" · "}{conta.role}
+                                            {" · "}{PERFIL_LABELS[conta.role] || conta.role}
                                         </span>
                                     </button>
                                 ))}

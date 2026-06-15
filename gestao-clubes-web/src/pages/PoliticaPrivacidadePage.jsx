@@ -96,7 +96,7 @@ export default function PoliticaPrivacidadePage() {
                             <li>Restrições médicas</li>
                             <li>Informação clínica relevante</li>
                             <li>Aptidão física</li>
-                            <li>Observações médicas necessárias ao acompanhamento do atleta ou utente</li>
+                            <li>Observações médicas necessárias ao acompanhamento do atleta ou inscrito</li>
                         </ul>
                     </SubSection>
                     <SubSection title="Dados técnicos">
@@ -113,7 +113,7 @@ export default function PoliticaPrivacidadePage() {
                     <p>Os dados pessoais são recolhidos exclusivamente para:</p>
                     <ul>
                         <li>Gestão de utilizadores</li>
-                        <li>Gestão de atletas e utentes</li>
+                        <li>Gestão de atletas e inscritos</li>
                         <li>Gestão de coletividades</li>
                         <li>Gestão de inscrições</li>
                         <li>Gestão administrativa</li>
