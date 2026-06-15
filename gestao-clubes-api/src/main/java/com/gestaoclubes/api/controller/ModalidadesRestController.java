@@ -5,7 +5,9 @@ import com.gestaoclubes.api.security.SecurityUtils;
 import com.gestaoclubes.api.dao.AuditLogDAO;
 import com.gestaoclubes.api.dao.ModalidadeDAO;
 import com.gestaoclubes.api.model.Modalidade;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -27,6 +29,7 @@ public class ModalidadesRestController {
     // POST /api/modalidades
     @PostMapping
     public Modalidade criar(@RequestBody CriarModalidadeRequest body) {
+        exigirGestaoModalidades();
         if (body == null || body.nome == null || body.nome.isBlank()) {
             throw new IllegalArgumentException("O nome da modalidade é obrigatório.");
         }
@@ -57,6 +60,7 @@ public class ModalidadesRestController {
     // PUT /api/modalidades/{id}
     @PutMapping("/{id}")
     public void editar(@PathVariable int id, @RequestBody EditarModalidadeRequest body) {
+        exigirGestaoModalidades();
         if (body == null || body.nome == null || body.nome.isBlank()) {
             throw new IllegalArgumentException("O nome da modalidade é obrigatório.");
         }
@@ -93,5 +97,11 @@ public class ModalidadesRestController {
     public static class EditarModalidadeRequest {
         public String nome;
         public String descricao;
+    }
+
+    private void exigirGestaoModalidades() {
+        if (!SecurityUtils.isSuperAdmin() && !SecurityUtils.isAdministradorEstrutura() && !SecurityUtils.isSecretario()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para gerir modalidades.");
+        }
     }
 }

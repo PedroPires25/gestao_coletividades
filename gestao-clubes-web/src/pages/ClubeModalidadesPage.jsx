@@ -53,6 +53,7 @@ export default function ClubeModalidadesPage() {
     const { clubeId } = useParams();
     const { logout, isAdmin, isSuperAdmin, isGestorLocal } = useAuth();
     const navigate = useNavigate();
+    const podeGerir = isSuperAdmin || isGestorLocal;
 
     const [clube, setClube] = useState(null);
     const [modalidadesClube, setModalidadesClube] = useState([]);
@@ -218,7 +219,7 @@ export default function ClubeModalidadesPage() {
     }, [modalidadesDisponiveisParaAnexar, modalidadeExistenteId]);
 
     async function onCriar() {
-        if (!isGestorLocal) return;
+        if (!podeGerir) return;
 
         setErro("");
         setMsg("");
@@ -247,7 +248,7 @@ export default function ClubeModalidadesPage() {
     }
 
     async function onAnexarExistente() {
-        if (!isGestorLocal) return;
+        if (!podeGerir) return;
 
         setErro("");
         setMsg("");
@@ -279,7 +280,7 @@ export default function ClubeModalidadesPage() {
     }
 
     function abrirEditar(mod) {
-        if (!isGestorLocal) return;
+        if (!podeGerir) return;
 
         setEditId(mod?.id ?? null);
         setEditNome(mod?.nome ?? "");
@@ -288,7 +289,7 @@ export default function ClubeModalidadesPage() {
     }
 
     async function guardarEdicao() {
-        if (!isGestorLocal) return;
+        if (!podeGerir) return;
 
         setErro("");
         setMsg("");
@@ -312,7 +313,7 @@ export default function ClubeModalidadesPage() {
     }
 
     async function apagarModalidade(clubeModalidadeId) {
-        if (!isGestorLocal) return;
+        if (!podeGerir) return;
 
         const confirmar = window.confirm(
             "Tem a certeza que pretende remover esta modalidade do clube?"
@@ -467,7 +468,7 @@ export default function ClubeModalidadesPage() {
                     </div>
                 </div>
 
-                {isGestorLocal && (
+                {podeGerir && (
                     <div className="card" style={{ marginBottom: 16 }}>
                         <h2>Anexar modalidade existente ao clube</h2>
 
@@ -519,7 +520,7 @@ export default function ClubeModalidadesPage() {
                     </div>
                 )}
 
-                {isGestorLocal && (
+                {podeGerir && (
                     <div className="card" style={{ marginBottom: 16 }}>
                         <h2>Criar nova modalidade</h2>
 
@@ -606,7 +607,7 @@ export default function ClubeModalidadesPage() {
                                    <th onClick={() => alternarOrdenacao("ativo")} className="sortable-th">
                                        Estado
                                    </th>
-                                   {isGestorLocal && <th>Ações</th>}
+                                   {podeGerir && <th>Ações</th>}
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -642,7 +643,7 @@ export default function ClubeModalidadesPage() {
                                                         {cm?.ativo ? "Ativa" : "Inativa"}
                                                     </span>
                                             </td>
-                                            {isGestorLocal && (
+                                            {podeGerir && (
                                                 <td className="nowrap">
                                                     {cm?.modalidade?.id ? (
                                                         <div className="table-actions">
@@ -676,7 +677,7 @@ export default function ClubeModalidadesPage() {
                     )}
                 </div>
 
-                {isGestorLocal && editOpen && (
+                {podeGerir && editOpen && (
                     <div className="modal-backdrop" onMouseDown={() => setEditOpen(false)}>
                         <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
                             <div className="modal-header">
