@@ -132,15 +132,15 @@ export default function ColetividadeUtentesAtividadePage() {
         setEditForm((prev) => ({ ...prev, [name]: value }));
     }
 
-    function abrirEditar(utente) {
+    function abrirEditar(inscrito) {
         setEditForm({
-            id: utente.id,
-            nome: utente.nome || "",
-            dataNascimento: utente.dataNascimento ? String(utente.dataNascimento).slice(0, 10) : "",
-            email: utente.email || "",
-            telefone: utente.telefone || "",
-            morada: utente.morada || "",
-            estadoId: String(utente.estadoId || 1),
+            id: inscrito.id,
+            nome: inscrito.nome || "",
+            dataNascimento: inscrito.dataNascimento ? String(inscrito.dataNascimento).slice(0, 10) : "",
+            email: inscrito.email || "",
+            telefone: inscrito.telefone || "",
+            morada: inscrito.morada || "",
+            estadoId: String(inscrito.estadoId || 1),
         });
         setEditOpen(true);
     }
@@ -211,13 +211,13 @@ export default function ColetividadeUtentesAtividadePage() {
         }
     }
 
-    async function removerDaAtividade(utente) {
-        if (!window.confirm(`Remover ${utente.nome || "este inscrito"} desta atividade?`)) return;
+    async function removerDaAtividade(inscrito) {
+        if (!window.confirm(`Remover ${inscrito.nome || "este inscrito"} desta atividade?`)) return;
         setSaving(true);
         setErro("");
         setMsg("");
         try {
-            await removerAtividadeInscrito(coletividadeId, utente.id, utente.inscricaoId);
+            await removerAtividadeInscrito(coletividadeId, inscrito.id, inscrito.inscricaoId);
             setMsg("Inscrição removida com sucesso.");
             await carregar();
         } catch (e) {
