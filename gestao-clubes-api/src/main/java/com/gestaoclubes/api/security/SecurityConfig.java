@@ -59,6 +59,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/admin/users/*/estado-registo").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR", "SECRETARIO")
                         .requestMatchers(HttpMethod.PUT, "/api/admin/users/*/afetacao").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR", "SECRETARIO")
                         .requestMatchers(HttpMethod.GET, "/api/admin/profiles").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR", "SECRETARIO")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/pending-count").hasAnyRole("SUPER_ADMIN", "ADMINISTRADOR", "SECRETARIO")
                         .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
 
 

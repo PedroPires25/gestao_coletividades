@@ -324,9 +324,11 @@ public class AdminRestController {
                     ? "Para ATLETA, é obrigatório definir clube e modalidade."
                     : null;
 
-            case PerfilDAO.UTENTE -> (u.getColetividadeId() == null || u.getAtividadeId() == null)
-                    ? "Para UTENTE, é obrigatório definir coletividade e atividade."
-                    : null;
+            case PerfilDAO.UTENTE -> {
+                if (u.getColetividadeId() == null) yield "Para Inscrito, é obrigatório definir coletividade.";
+                boolean temAtividades = utilizadorDAO.utenteTemAfetacaoValida(u.getUtilizador(), u.getColetividadeId(), null);
+                yield temAtividades ? null : "O utilizador não tem atividades selecionadas.";
+            }
 
             case PerfilDAO.TREINADOR_PRINCIPAL,
                  PerfilDAO.DEPARTAMENTO_MEDICO -> (u.getClubeId() == null)
@@ -427,7 +429,7 @@ public class AdminRestController {
         boolean jaValido = utilizadorDAO.utenteTemAfetacaoValida(
                 u.getUtilizador(),
                 u.getColetividadeId(),
-                u.getAtividadeId()
+                null
         );
         if (jaValido) return;
 
