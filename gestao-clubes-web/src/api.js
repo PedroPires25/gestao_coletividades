@@ -84,6 +84,14 @@ export async function getPendingUsersCount() {
     return http("/admin/pending-count");
 }
 
+export async function getNotificacoesPendentes() {
+    return http("/notificacoes/pendentes");
+}
+
+export async function marcarNotificacaoLida(id) {
+    return http(`/notificacoes/${id}/lida`, { method: "PATCH" });
+}
+
 export async function getAdminProfiles() {
     return http("/admin/profiles");
 }

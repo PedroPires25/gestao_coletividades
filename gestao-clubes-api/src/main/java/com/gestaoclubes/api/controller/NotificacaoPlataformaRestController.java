@@ -40,6 +40,18 @@ public class NotificacaoPlataformaRestController {
         return ResponseEntity.ok(Map.of("count", count, "notificacoes", lista));
     }
 
+    /** GET /api/notificacoes/pendentes/count - fast count only */
+    @GetMapping("/pendentes/count")
+    public ResponseEntity<?> pendenteCount() {
+        Integer userId = SecurityUtils.currentUserId();
+        if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        List<Map<String, Object>> lista = dao.listarParaUtilizador(userId, true);
+        int total = lista.size();
+        String tipo = lista.isEmpty() ? null
+                : (String) lista.get(0).getOrDefault("tipo", null);
+        return ResponseEntity.ok(Map.of("totalPendentes", total, "tipo", tipo != null ? tipo : ""));
+    }
+
     /** PATCH /api/notificacoes/{id}/lida - mark notification as read */
     @PatchMapping("/{id}/lida")
     public ResponseEntity<?> marcarLida(@PathVariable long id) {

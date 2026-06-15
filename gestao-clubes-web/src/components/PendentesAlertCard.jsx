@@ -1,30 +1,32 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import { getNotificacoesPendentes } from "../api";
+import { getPendingUsersCount } from "../api";
 
 /**
  * Card de alerta de aprovações pendentes para as home pages.
- * Só aparece para administradores com notificações por resolver.
+ * Usa getPendingUsersCount (conta utilizadores pendentes reais no DB).
+ * Só aparece para ADMINISTRADOR e SUPER_ADMIN com pendentes.
  */
 export default function PendentesAlertCard() {
-    const { isAdmin } = useAuth();
+    const { user, isSuperAdmin } = useAuth();
     const navigate = useNavigate();
 
+    // Qualquer ADMINISTRADOR aprovado ou SUPER_ADMIN
+    const canSee = user?.role === "SUPER_ADMIN" || user?.role === "ADMINISTRADOR";
+
     const [count, setCount] = useState(0);
-    const [mensagem, setMensagem] = useState("");
     const isMounted = useRef(true);
 
     const fetchPendentes = useCallback(() => {
-        if (!isAdmin) return;
-        getNotificacoesPendentes()
+        if (!canSee) return;
+        getPendingUsersCount()
             .then(data => {
                 if (!isMounted.current) return;
-                setCount(data?.count ?? 0);
-                setMensagem(data?.notificacoes?.[0]?.mensagem ?? "");
+                setCount(Number(data?.count ?? 0));
             })
             .catch(() => {});
-    }, [isAdmin]);
+    }, [canSee]);
 
     useEffect(() => {
         isMounted.current = true;
@@ -38,32 +40,39 @@ export default function PendentesAlertCard() {
         };
     }, [fetchPendentes]);
 
-    if (!isAdmin || count <= 0) return null;
+    if (!canSee || count <= 0) return null;
 
-    const texto = count === 1
-        ? (mensagem || "Tem 1 registo pendente por aprovar.")
-        : `Tem ${count} registos pendentes por aprovar.`;
+    const texto = isSuperAdmin
+        ? (count === 1
+            ? "Existe 1 administrador a aguardar a sua aprovação."
+            : `Existem ${count} administradores a aguardar a sua aprovação.`)
+        : (count === 1
+            ? "Existe 1 utilizador a aguardar a sua aprovação."
+            : `Existem ${count} utilizadores a aguardar a sua aprovação.`);
 
     return (
         <div
-            className="pendentes-alert-card"
+            className="pendentes-alert-card pendentes-alert-card--visible"
             onClick={() => navigate("/admin/users/pending")}
             role="button"
             tabIndex={0}
             onKeyDown={e => e.key === "Enter" && navigate("/admin/users/pending")}
-            title="Clicar para ver registos pendentes"
+            aria-label={texto}
         >
-            <span className="pendentes-alert-icon" aria-hidden="true">⚠️</span>
+            <span className="pendentes-alert-icon" aria-hidden="true">🔔</span>
+
             <div className="pendentes-alert-content">
-                <span className="pendentes-alert-title">Aprovação pendente</span>
+                <span className="pendentes-alert-label">Aprovação pendente</span>
                 <span className="pendentes-alert-text">{texto}</span>
             </div>
-            <span className="pendentes-alert-ver">Ver pendentes →</span>
-            {count > 0 && (
-                <span className="pendentes-alert-badge" aria-label={`${count} pendentes`}>
-                    {count > 99 ? "99+" : count}
-                </span>
-            )}
+
+            <span className="pendentes-alert-count" aria-hidden="true">
+                {count > 99 ? "99+" : count}
+            </span>
+
+            <span className="pendentes-alert-cta" aria-hidden="true">
+                Ver agora →
+            </span>
         </div>
     );
 }
