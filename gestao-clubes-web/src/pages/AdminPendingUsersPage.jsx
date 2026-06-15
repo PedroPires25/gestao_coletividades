@@ -16,6 +16,20 @@ export default function AdminPendingUsersPage() {
     const { logout, isSuperAdmin, clubeId, coletividadeId } = useAuth();
     const navigate = useNavigate();
 
+    const PERFIL_LABELS = {
+        ADMINISTRADOR: "Administrador",
+        USER: "Utilizador",
+        ATLETA: "Atleta",
+        UTENTE: "Inscrito",
+        STAFF: "Staff",
+        PROFESSOR: "Professor (Coletividade/Clube)",
+        TREINADOR_COLETIVIDADE: "Treinador da Coletividade",
+        TREINADOR_PRINCIPAL: "Treinador Principal",
+        DEPARTAMENTO_MEDICO: "Departamento Médico",
+        SECRETARIO: "Secretário",
+        SUPER_ADMIN: "Super Admin",
+    };
+
     const [users, setUsers] = useState([]);
     const [clubes, setClubes] = useState([]);
     const [coletividades, setColetividades] = useState([]);
@@ -260,7 +274,7 @@ export default function AdminPendingUsersPage() {
                                     <tr key={u.id}>
                                         <td>{u.nome || "—"}</td>
                                         <td>{u.email}</td>
-                                        <td>{u.role}</td>
+                                        <td>{PERFIL_LABELS[u.role] || u.role}</td>
 
                                         {isSuperAdmin && (
                                             <>

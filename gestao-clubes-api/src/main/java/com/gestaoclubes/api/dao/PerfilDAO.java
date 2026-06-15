@@ -120,7 +120,7 @@ public class PerfilDAO {
 
     public boolean isPerfilAutoAprovado(String perfil) {
         String p = normalizar(perfil);
-        return USER.equals(p) || UTENTE.equals(p);
+        return USER.equals(p);
     }
 
     public boolean isPerfilPermitidoNoRegistoPublico(String perfil) {
