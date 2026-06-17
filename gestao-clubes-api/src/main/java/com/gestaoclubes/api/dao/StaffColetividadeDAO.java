@@ -4,7 +4,6 @@ import com.gestaoclubes.api.model.StaffColetividadeRow;
 import com.gestaoclubes.api.util.ConexoBD;
 import org.springframework.stereotype.Repository;
 
-import java.util.logging.Logger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -120,7 +119,8 @@ public class StaffColetividadeDAO {
             try (PreparedStatement ps = conn.prepareStatement(sqlAfetacao)) {
                 ps.setInt(1, staffId);
                 ps.setInt(2, coletividadeId);
-                ps.setInt(3, coletividadeAtividadeId);
+                if (coletividadeAtividadeId == null) ps.setNull(3, Types.INTEGER);
+                else ps.setInt(3, coletividadeAtividadeId);
                 ps.setInt(4, cargoId);
                 setNullableString(ps, 5, dataInicio);
                 setNullableString(ps, 6, dataFim);
@@ -131,7 +131,11 @@ public class StaffColetividadeDAO {
             conn.commit();
             return staffId;
         } catch (Exception e) {
-            LOGGER.severe(e.toString());
+            LOGGER.severe("criarStaff falhou: " + e.getMessage()
+                    + (e.getCause() != null ? " | Causa: " + e.getCause().getMessage() : ""));
+            if (e instanceof SQLException sqle && sqle.getNextException() != null) {
+                LOGGER.severe("SQL nextException: " + sqle.getNextException().getMessage());
+            }
             try {
                 if (conn != null) conn.rollback();
             } catch (Exception ignored) {
@@ -211,6 +215,52 @@ public class StaffColetividadeDAO {
                 if (conn != null) conn.setAutoCommit(true);
             } catch (Exception ignored) {
             }
+        }
+    }
+
+    /**
+     * Devolve o id da afetação ativa de staff na coletividade (independentemente da atividade).
+     * Usado para detetar se o staff já existe e deve ser atualizado em vez de criado.
+     */
+    public Integer buscarAfetacaoIdPorEmailEColetividade(String email, int coletividadeId) {
+        String sql = """
+            SELECT sca.id
+            FROM staff_coletividade_afetacao sca
+            INNER JOIN staff_coletividade sc ON sc.id = sca.staff_coletividade_id
+            WHERE LOWER(sc.email) = LOWER(?)
+              AND sca.coletividade_id = ?
+              AND (sca.data_fim IS NULL OR sca.data_fim >= CURDATE())
+            ORDER BY sca.id DESC
+            LIMIT 1
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email.trim());
+            ps.setInt(2, coletividadeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt("id") : null;
+            }
+        } catch (Exception e) {
+            LOGGER.severe("buscarAfetacaoIdPorEmailEColetividade: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Atualiza apenas o coletividade_atividade_id de uma afetação existente.
+     */
+    public boolean atualizarColetividadeAtividade(int afetacaoId, Integer coletividadeAtividadeId) {
+        String sql = "UPDATE staff_coletividade_afetacao SET coletividade_atividade_id = ? WHERE id = ?";
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (coletividadeAtividadeId == null) ps.setNull(1, Types.INTEGER);
+            else ps.setInt(1, coletividadeAtividadeId);
+            ps.setInt(2, afetacaoId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            LOGGER.severe("atualizarColetividadeAtividade: " + e.getMessage());
+            return false;
         }
     }
 

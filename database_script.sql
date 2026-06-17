@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS utilizadores (
   clube_id INT NULL,
   modalidade_id INT NULL,
   coletividade_id INT NULL,
+  atividade_id INT NULL,
   privilegios_ativos BOOLEAN NOT NULL DEFAULT TRUE,
   estado_registo VARCHAR(20) NOT NULL DEFAULT 'APROVADO',
   logo_path VARCHAR(255) DEFAULT NULL,
