@@ -1,6 +1,7 @@
 package com.gestaoclubes.api.controller;
 
 import com.gestaoclubes.api.dao.ClubeDAO;
+import com.gestaoclubes.api.dao.ColetividadeAtividadeDAO;
 import com.gestaoclubes.api.dao.ColetividadeDAO;
 import com.gestaoclubes.api.dao.PerfilDAO;
 import com.gestaoclubes.api.dao.StaffDAO;
@@ -25,6 +26,7 @@ public class AuthRestController {
     private final PerfilDAO perfilDAO = new PerfilDAO();
     private final ClubeDAO clubeDAO = new ClubeDAO();
     private final ColetividadeDAO coletividadeDAO = new ColetividadeDAO();
+    private final ColetividadeAtividadeDAO coletividadeAtividadeDAO = new ColetividadeAtividadeDAO();
     private final StaffDAO staffDAO = new StaffDAO();
 
     @Autowired
@@ -616,6 +618,15 @@ public class AuthRestController {
 
         String estadoRegisto = perfilDAO.isPerfilAutoAprovado(perfil) ? "APROVADO" : "PENDENTE";
 
+        // Para perfis ligados a atividade em coletividade (não UTENTE), resolver atividade.id
+        // a partir do primeiro coletividade_atividade.id selecionado.
+        boolean criarInscrito = PerfilDAO.UTENTE.equals(perfil);
+        Integer atividadeId = null;
+        if (!criarInscrito && coletividadeId != null && atividadeIds != null && !atividadeIds.isEmpty()) {
+            var ca = coletividadeAtividadeDAO.obterPorId(atividadeIds.get(0));
+            atividadeId = (ca != null) ? ca.getAtividadeId() : null;
+        }
+
         boolean ok = utilizadorDAO.inserir(
                 email,
                 req.password,
@@ -625,7 +636,8 @@ public class AuthRestController {
                 clubeId,
                 modalidadeId,
                 coletividadeId,
-                atividadeIds
+                atividadeId,
+                criarInscrito ? atividadeIds : null
         );
 
         if (!ok) {
@@ -771,7 +783,6 @@ public class AuthRestController {
 
             case PerfilDAO.STAFF:
             case PerfilDAO.SECRETARIO:
-            case PerfilDAO.PROFESSOR:
                 if (!"CLUBE".equals(estruturaTipo) && !"COLETIVIDADE".equals(estruturaTipo)) {
                     return "Selecione CLUBE ou COLETIVIDADE.";
                 }
@@ -780,6 +791,23 @@ public class AuthRestController {
                 }
                 if ("COLETIVIDADE".equals(estruturaTipo) && req.coletividadeId == null) {
                     return "Tem de escolher uma coletividade.";
+                }
+                return null;
+
+            case PerfilDAO.PROFESSOR:
+            case "TREINADOR_COLETIVIDADE":
+                if (!"CLUBE".equals(estruturaTipo) && !"COLETIVIDADE".equals(estruturaTipo)) {
+                    return "Selecione CLUBE ou COLETIVIDADE.";
+                }
+                if ("CLUBE".equals(estruturaTipo) && req.clubeId == null) {
+                    return "Tem de escolher um clube.";
+                }
+                if ("COLETIVIDADE".equals(estruturaTipo) && req.coletividadeId == null) {
+                    return "Tem de escolher uma coletividade.";
+                }
+                if ("COLETIVIDADE".equals(estruturaTipo)
+                        && (req.atividadeIds == null || req.atividadeIds.isEmpty())) {
+                    return "Para este perfil em coletividade, é obrigatório selecionar uma atividade.";
                 }
                 return null;
 

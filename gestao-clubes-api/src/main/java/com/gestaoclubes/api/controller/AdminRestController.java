@@ -248,10 +248,16 @@ public class AdminRestController {
                 materializarNoDominioSeNecessario(role, depois);
                 depois = utilizadorDAO.buscarPorId(id);
             } catch (IllegalArgumentException e) {
+                // Dados inválidos — revert para PENDENTE
+                utilizadorDAO.atualizarEstadoRegisto(id, "PENDENTE");
                 return ResponseEntity.badRequest().body(e.getMessage());
             } catch (Exception e) {
+                // Erro inesperado — revert para PENDENTE para não ficar APROVADO sem materialização
+                utilizadorDAO.atualizarEstadoRegisto(id, "PENDENTE");
+                LOGGER.severe("Materialização falhou para utilizador " + id + ": " + e.getMessage());
                 return ResponseEntity.internalServerError().body(
-                        "O utilizador foi aprovado, mas ocorreu um erro ao colocá-lo no espaço correspondente: " + e.getMessage()
+                        "Não foi possível concluir a aprovação: " + e.getMessage()
+                        + ". O registo foi mantido como PENDENTE."
                 );
             }
         }
@@ -579,6 +585,10 @@ public class AdminRestController {
     }
 
     private void materializarStaffColetividade(Utilizador u, String cargoNome) {
+        if (u.getColetividadeId() == null) {
+            throw new IllegalArgumentException("Coletividade não definida para o utilizador.");
+        }
+
         boolean jaValido;
 
         String role = perfilDAO.obterDescricaoPerfil(u.getPerfilId());
@@ -606,13 +616,32 @@ public class AdminRestController {
             }
         }
 
+        // Se o staff já existe nesta coletividade (e.g. foi aprovado sem atividade),
+        // apenas atualiza a atividade na afetação em vez de criar um registo duplicado.
+        Integer afetacaoExistenteId = staffColetividadeDAO.buscarAfetacaoIdPorEmailEColetividade(
+                u.getUtilizador(), u.getColetividadeId()
+        );
+        LOGGER.info("materializarStaffColetividade: utilizador=" + u.getUtilizador()
+                + " coletividadeId=" + u.getColetividadeId()
+                + " atividadeId=" + u.getAtividadeId()
+                + " coletividadeAtividadeId=" + coletividadeAtividadeId
+                + " afetacaoExistenteId=" + afetacaoExistenteId);
+        if (afetacaoExistenteId != null) {
+            boolean atualizado = staffColetividadeDAO.atualizarColetividadeAtividade(afetacaoExistenteId, coletividadeAtividadeId);
+            if (!atualizado) {
+                throw new IllegalStateException("Não foi possível atualizar a atividade do staff na coletividade.");
+            }
+            LOGGER.info("materializarStaffColetividade: afetação atualizada com sucesso (afetacaoId=" + afetacaoExistenteId + ")");
+            return;
+        }
+
         Integer cargoId = buscarCargoColetividadeStaffIdPorNome(cargoNome);
         if (cargoId == null) {
             throw new IllegalArgumentException("Não existe cargo de staff na coletividade com o nome '" + cargoNome + "'.");
         }
 
         Integer id = staffColetividadeDAO.criarStaff(
-                null,
+                u.getNome() != null && !u.getNome().isBlank() ? u.getNome() : u.getUtilizador().trim(),
                 u.getUtilizador().trim(),
                 null,
                 null,

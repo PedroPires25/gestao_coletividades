@@ -142,13 +142,21 @@ public class ConsultaMedicaDAO {
         m.put("atletaNome", rs.getString("atleta_nome"));
         m.put("staffId", rs.getObject("staff_id"));
         m.put("staffNome", rs.getString("staff_nome"));
-        m.put("dataConsulta", rs.getDate("data_consulta"));
+        m.put("dataConsulta", dateStr(rs.getDate("data_consulta")));
         m.put("tipo", rs.getString("tipo"));
         m.put("motivo", rs.getString("motivo"));
         m.put("diagnostico", rs.getString("diagnostico"));
         m.put("notas", rs.getString("notas"));
-        m.put("criadoEm", rs.getTimestamp("criado_em"));
+        m.put("criadoEm", tsStr(rs.getTimestamp("criado_em")));
         return m;
+    }
+
+    private static String dateStr(java.sql.Date d) {
+        return d != null ? d.toString() : null;
+    }
+
+    private static String tsStr(java.sql.Timestamp t) {
+        return t != null ? t.toString().substring(0, 19) : null;
     }
 
     private void setNullableInt(PreparedStatement ps, int idx, Integer val) throws SQLException {

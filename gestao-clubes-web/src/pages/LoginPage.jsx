@@ -429,6 +429,12 @@ export default function LoginPage() {
                 setRErro("Seleciona uma coletividade.");
                 return;
             }
+            if (rEstruturaTipo === "COLETIVIDADE"
+                && ["PROFESSOR", "TREINADOR_COLETIVIDADE"].includes(rPerfil)
+                && rAtividadeIds.length === 0) {
+                setRErro("Para este perfil em coletividade, é obrigatório selecionar uma atividade.");
+                return;
+            }
         }
 
         const payload = {

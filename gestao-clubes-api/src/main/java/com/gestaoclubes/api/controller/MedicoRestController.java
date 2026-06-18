@@ -2,6 +2,8 @@ package com.gestaoclubes.api.controller;
 
 import com.gestaoclubes.api.dao.*;
 import com.gestaoclubes.api.security.SecurityUtils;
+import com.gestaoclubes.api.service.NotificacaoMedicaService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,9 @@ public class MedicoRestController {
     private final PrescricaoDAO prescricaoDAO = new PrescricaoDAO();
     private final RelatorioMedicoDAO relatorioMedicoDAO = new RelatorioMedicoDAO();
     private final AtletaDAO atletaDAO = new AtletaDAO();
+
+    @Autowired
+    private NotificacaoMedicaService notificacaoMedicaService;
 
     // ==========================================
     // LISTAR ATLETAS DO CLUBE (para dropdowns)
@@ -63,6 +68,12 @@ public class MedicoRestController {
                 body.grupoSanguineo, body.alergias, body.condicoesCronicas,
                 body.contactoEmergenciaNome, body.contactoEmergenciaTelefone, body.notasGerais
         );
+        try {
+            notificacaoMedicaService.notificarAtleta(clubeId, atletaId,
+                    "Ficha Médica", "atualizada",
+                    "A sua ficha médica foi atualizada.",
+                    "Ficha médica atualizada.", false);
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(Map.of("ok", true, "id", id));
     }
 
@@ -98,10 +109,19 @@ public class MedicoRestController {
         int id = registoLesaoDAO.inserir(
                 clubeId, body.atletaId, body.staffId,
                 body.tipo, body.parteCorpo, body.gravidade,
-                parseDate(body.dataLesao), parseDate(body.dataRetornoPrevista), parseDate(body.dataRetornoEfetiva),
+                parseDate(body.dataLesao, "dataLesao"),
+                parseDate(body.dataRetornoPrevista, "dataRetornoPrevista"),
+                parseDate(body.dataRetornoEfetiva, "dataRetornoEfetiva"),
                 body.descricao, body.tratamento
         );
         if (id <= 0) throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível registar a lesão.");
+        try {
+            String detalhe = "Lesão: " + body.tipo + (body.parteCorpo != null && !body.parteCorpo.isBlank() ? " (" + body.parteCorpo + ")" : "") +
+                    (body.gravidade != null ? " — Gravidade: " + body.gravidade : "");
+            notificacaoMedicaService.notificarAtleta(clubeId, body.atletaId,
+                    "Registo de Lesão", "registada", detalhe,
+                    "Lesão " + body.tipo + " registada.", false);
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(Map.of("ok", true, "id", id));
     }
 
@@ -112,13 +132,28 @@ public class MedicoRestController {
             @RequestBody RegistoLesaoRequest body
     ) {
         exigirAcessoMedico(clubeId);
-        verificarPertenceAoClube(registoLesaoDAO.buscarPorId(id), clubeId, "Lesão não encontrada.");
+        Map<String, Object> registo = registoLesaoDAO.buscarPorId(id);
+        verificarPertenceAoClube(registo, clubeId, "Lesão não encontrada.");
         boolean ok = registoLesaoDAO.atualizar(
                 id, body.staffId,
                 body.tipo, body.parteCorpo, body.gravidade,
-                parseDate(body.dataLesao), parseDate(body.dataRetornoPrevista), parseDate(body.dataRetornoEfetiva),
+                parseDate(body.dataLesao, "dataLesao"),
+                parseDate(body.dataRetornoPrevista, "dataRetornoPrevista"),
+                parseDate(body.dataRetornoEfetiva, "dataRetornoEfetiva"),
                 body.descricao, body.tratamento
         );
+        if (ok) {
+            try {
+                Integer atletaId = registo != null ? (Integer) registo.get("atletaId") : null;
+                if (atletaId != null) {
+                    String detalhe = "Lesão atualizada: " + (body.tipo != null ? body.tipo : "") +
+                            (body.parteCorpo != null && !body.parteCorpo.isBlank() ? " (" + body.parteCorpo + ")" : "");
+                    notificacaoMedicaService.notificarAtleta(clubeId, atletaId,
+                            "Registo de Lesão", "atualizada", detalhe,
+                            "Lesão " + (body.tipo != null ? body.tipo : "") + " atualizada.", false);
+                }
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", ok));
     }
 
@@ -153,9 +188,16 @@ public class MedicoRestController {
 
         int id = consultaMedicaDAO.inserir(
                 clubeId, body.atletaId, body.staffId,
-                parseDate(body.dataConsulta), body.tipo, body.motivo, body.diagnostico, body.notas
+                parseDate(body.dataConsulta, "dataConsulta"), body.tipo, body.motivo, body.diagnostico, body.notas
         );
         if (id <= 0) throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível registar a consulta.");
+        try {
+            String detalhe = "Consulta de " + body.tipo + " em " + body.dataConsulta +
+                    (body.motivo != null && !body.motivo.isBlank() ? ". Motivo: " + body.motivo : "");
+            notificacaoMedicaService.notificarAtleta(clubeId, body.atletaId,
+                    "Consulta Médica", "registada", detalhe,
+                    "Consulta médica (" + body.tipo + ") registada em " + body.dataConsulta + ".", false);
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(Map.of("ok", true, "id", id));
     }
 
@@ -166,11 +208,23 @@ public class MedicoRestController {
             @RequestBody ConsultaMedicaRequest body
     ) {
         exigirAcessoMedico(clubeId);
-        verificarPertenceAoClube(consultaMedicaDAO.buscarPorId(id), clubeId, "Consulta não encontrada.");
+        Map<String, Object> registo = consultaMedicaDAO.buscarPorId(id);
+        verificarPertenceAoClube(registo, clubeId, "Consulta não encontrada.");
         boolean ok = consultaMedicaDAO.atualizar(
-                id, body.staffId, parseDate(body.dataConsulta),
+                id, body.staffId, parseDate(body.dataConsulta, "dataConsulta"),
                 body.tipo, body.motivo, body.diagnostico, body.notas
         );
+        if (ok) {
+            try {
+                Integer atletaId = registo != null ? (Integer) registo.get("atletaId") : null;
+                if (atletaId != null) {
+                    notificacaoMedicaService.notificarAtleta(clubeId, atletaId,
+                            "Consulta Médica", "atualizada",
+                            "Consulta de " + (body.tipo != null ? body.tipo : "") + " atualizada.",
+                            "Consulta médica atualizada.", false);
+                }
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", ok));
     }
 
@@ -205,9 +259,15 @@ public class MedicoRestController {
 
         int id = exameMedicoDAO.inserir(
                 clubeId, body.atletaId, body.staffId,
-                parseDate(body.dataExame), body.tipo, body.resultado, null, body.notas
+                parseDate(body.dataExame, "dataExame"), body.tipo, body.resultado, null, body.notas
         );
         if (id <= 0) throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível registar o exame.");
+        try {
+            notificacaoMedicaService.notificarAtleta(clubeId, body.atletaId,
+                    "Exame Médico", "registado",
+                    "Exame de " + body.tipo + " em " + body.dataExame + ".",
+                    "Exame médico (" + body.tipo + ") registado em " + body.dataExame + ".", false);
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(Map.of("ok", true, "id", id));
     }
 
@@ -218,11 +278,23 @@ public class MedicoRestController {
             @RequestBody ExameMedicoRequest body
     ) {
         exigirAcessoMedico(clubeId);
-        verificarPertenceAoClube(exameMedicoDAO.buscarPorId(id), clubeId, "Exame não encontrado.");
+        Map<String, Object> registo = exameMedicoDAO.buscarPorId(id);
+        verificarPertenceAoClube(registo, clubeId, "Exame não encontrado.");
         boolean ok = exameMedicoDAO.atualizar(
-                id, body.staffId, parseDate(body.dataExame),
+                id, body.staffId, parseDate(body.dataExame, "dataExame"),
                 body.tipo, body.resultado, body.notas
         );
+        if (ok) {
+            try {
+                Integer atletaId = registo != null ? (Integer) registo.get("atletaId") : null;
+                if (atletaId != null) {
+                    notificacaoMedicaService.notificarAtleta(clubeId, atletaId,
+                            "Exame Médico", "atualizado",
+                            "Exame de " + (body.tipo != null ? body.tipo : "") + " atualizado.",
+                            "Exame médico atualizado.", false);
+                }
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", ok));
     }
 
@@ -257,9 +329,17 @@ public class MedicoRestController {
         int id = prescricaoDAO.inserir(
                 clubeId, body.atletaId, body.staffId, body.consultaId,
                 body.medicamento, body.dosagem, body.frequencia,
-                parseDate(body.dataInicio), parseDate(body.dataFim), body.notas
+                parseDate(body.dataInicio, "dataInicio"), parseDate(body.dataFim, "dataFim"), body.notas
         );
         if (id <= 0) throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível registar a prescrição.");
+        try {
+            String detalhe = "Prescrição de " + body.medicamento +
+                    (body.dosagem != null && !body.dosagem.isBlank() ? " — Dose: " + body.dosagem : "") +
+                    (body.frequencia != null && !body.frequencia.isBlank() ? " — Frequência: " + body.frequencia : "");
+            notificacaoMedicaService.notificarAtleta(clubeId, body.atletaId,
+                    "Prescrição Médica", "registada", detalhe,
+                    "Prescrição de " + body.medicamento + " registada.", false);
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(Map.of("ok", true, "id", id));
     }
 
@@ -270,12 +350,24 @@ public class MedicoRestController {
             @RequestBody PrescricaoRequest body
     ) {
         exigirAcessoMedico(clubeId);
-        verificarPertenceAoClube(prescricaoDAO.buscarPorId(id), clubeId, "Prescrição não encontrada.");
+        Map<String, Object> registo = prescricaoDAO.buscarPorId(id);
+        verificarPertenceAoClube(registo, clubeId, "Prescrição não encontrada.");
         boolean ok = prescricaoDAO.atualizar(
                 id, body.staffId, body.consultaId,
                 body.medicamento, body.dosagem, body.frequencia,
-                parseDate(body.dataInicio), parseDate(body.dataFim), body.notas
+                parseDate(body.dataInicio, "dataInicio"), parseDate(body.dataFim, "dataFim"), body.notas
         );
+        if (ok) {
+            try {
+                Integer atletaId = registo != null ? (Integer) registo.get("atletaId") : null;
+                if (atletaId != null) {
+                    notificacaoMedicaService.notificarAtleta(clubeId, atletaId,
+                            "Prescrição Médica", "atualizada",
+                            "Prescrição de " + (body.medicamento != null ? body.medicamento : "") + " atualizada.",
+                            "Prescrição médica atualizada.", false);
+                }
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", ok));
     }
 
@@ -307,13 +399,21 @@ public class MedicoRestController {
         if (body.atletaId == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "atletaId é obrigatório.");
         if (body.dataRelatorio == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "dataRelatorio é obrigatório.");
         if (body.tipo == null || body.tipo.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "tipo é obrigatório.");
+        boolean confidencial = Boolean.TRUE.equals(body.confidencial);
 
         int id = relatorioMedicoDAO.inserir(
                 clubeId, body.atletaId, body.staffId,
-                parseDate(body.dataRelatorio), body.tipo, body.conteudo,
-                Boolean.TRUE.equals(body.confidencial)
+                parseDate(body.dataRelatorio, "dataRelatorio"), body.tipo, body.conteudo, confidencial
         );
         if (id <= 0) throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível registar o relatório.");
+        try {
+            String detalheAtleta = "Relatório de " + body.tipo + " emitido em " + body.dataRelatorio +
+                    (body.conteudo != null && !body.conteudo.isBlank() ? ".\n\n" + body.conteudo : ".");
+            notificacaoMedicaService.notificarAtleta(clubeId, body.atletaId,
+                    "Relatório Médico", "registado",
+                    detalheAtleta,
+                    "Relatório médico (" + body.tipo + ") disponível.", confidencial);
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(Map.of("ok", true, "id", id));
     }
 
@@ -324,11 +424,26 @@ public class MedicoRestController {
             @RequestBody RelatorioMedicoRequest body
     ) {
         exigirAcessoMedico(clubeId);
-        verificarPertenceAoClube(relatorioMedicoDAO.buscarPorId(id), clubeId, "Relatório não encontrado.");
+        Map<String, Object> registo = relatorioMedicoDAO.buscarPorId(id);
+        verificarPertenceAoClube(registo, clubeId, "Relatório não encontrado.");
+        boolean confidencial = Boolean.TRUE.equals(body.confidencial);
         boolean ok = relatorioMedicoDAO.atualizar(
-                id, body.staffId, parseDate(body.dataRelatorio),
-                body.tipo, body.conteudo, Boolean.TRUE.equals(body.confidencial)
+                id, body.staffId, parseDate(body.dataRelatorio, "dataRelatorio"),
+                body.tipo, body.conteudo, confidencial
         );
+        if (ok) {
+            try {
+                Integer atletaId = registo != null ? (Integer) registo.get("atletaId") : null;
+                if (atletaId != null) {
+                    String detalheAtleta = "Relatório de " + (body.tipo != null ? body.tipo : "") + " atualizado." +
+                            (body.conteudo != null && !body.conteudo.isBlank() ? "\n\n" + body.conteudo : "");
+                    notificacaoMedicaService.notificarAtleta(clubeId, atletaId,
+                            "Relatório Médico", "atualizado",
+                            detalheAtleta,
+                            "Relatório médico atualizado.", confidencial);
+                }
+            } catch (Exception ignored) {}
+        }
         return ResponseEntity.ok(Map.of("ok", ok));
     }
 
@@ -352,8 +467,14 @@ public class MedicoRestController {
         }
     }
 
-    private static Date parseDate(String value) {
-        return value == null || value.isBlank() ? null : Date.valueOf(value.trim());
+    private static Date parseDate(String value, String fieldName) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return Date.valueOf(value.trim());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "O campo '" + fieldName + "' tem um formato de data inválido. Formato esperado: YYYY-MM-DD. Valor recebido: '" + value.trim() + "'.");
+        }
     }
 
     // ==========================================

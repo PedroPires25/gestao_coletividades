@@ -141,7 +141,7 @@ public class UtilizadorDAO {
 
     public boolean inserir(String email, String palavraChave, int perfilId, boolean privilegiosAtivos,
                            String estadoRegisto, Integer clubeId, Integer modalidadeId,
-                           Integer coletividadeId, List<Integer> atividadeIds) {
+                           Integer coletividadeId, Integer atividadeId, List<Integer> atividadeIds) {
 
         if (email == null || email.trim().isEmpty()) return false;
         if (palavraChave == null || palavraChave.isEmpty()) return false;
@@ -159,8 +159,8 @@ public class UtilizadorDAO {
 
         String sql = "INSERT INTO utilizadores " +
                 "(utilizador, email_notificacoes, palavra_chave, perfil_id, ativo, privilegios_ativos, estado_registo, " +
-                "clube_id, modalidade_id, coletividade_id) " +
-                "VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?)";
+                "clube_id, modalidade_id, coletividade_id, atividade_id) " +
+                "VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = ConexoBD.getConnection()) {
             conn.setAutoCommit(false);
@@ -177,6 +177,7 @@ public class UtilizadorDAO {
                 setNullableInt(stmt, 7, clubeId);
                 setNullableInt(stmt, 8, modalidadeId);
                 setNullableInt(stmt, 9, coletividadeId);
+                setNullableInt(stmt, 10, atividadeId);
 
                 int affectedRows = stmt.executeUpdate();
                 if (affectedRows == 0) {
@@ -184,12 +185,12 @@ public class UtilizadorDAO {
                     return false;
                 }
 
-                if (coletividadeId != null && atividadeIds != null && !atividadeIds.isEmpty()) {
+                // Fluxo exclusivo de UTENTE: criar inscrito e associar às atividades
+                if (atividadeIds != null && !atividadeIds.isEmpty() && coletividadeId != null) {
                     try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                         if (generatedKeys.next()) {
                             long utilizadorId = generatedKeys.getLong(1);
 
-                            // Criar registo na tabela 'inscrito'
                             String sqlInscrito = "INSERT INTO inscrito (nome, email, coletividade_atual_id, utilizador_id) VALUES (?, ?, ?, ?)";
                             try (PreparedStatement stmtInscrito = conn.prepareStatement(sqlInscrito, Statement.RETURN_GENERATED_KEYS)) {
                                 stmtInscrito.setString(1, email.trim());
@@ -202,12 +203,11 @@ public class UtilizadorDAO {
                                     if (generatedInscritoKeys.next()) {
                                         long inscritoId = generatedInscritoKeys.getLong(1);
 
-                                        // Associar inscrito às atividades
                                         String sqlAtividade = "INSERT INTO inscrito_coletividade_atividade (inscrito_id, coletividade_atividade_id, data_inscricao) VALUES (?, ?, CURDATE())";
                                         try (PreparedStatement stmtAtividade = conn.prepareStatement(sqlAtividade)) {
-                                            for (Integer atividadeId : atividadeIds) {
+                                            for (Integer caId : atividadeIds) {
                                                 stmtAtividade.setLong(1, inscritoId);
-                                                stmtAtividade.setInt(2, atividadeId);
+                                                stmtAtividade.setInt(2, caId);
                                                 stmtAtividade.addBatch();
                                             }
                                             stmtAtividade.executeBatch();
@@ -363,7 +363,7 @@ public class UtilizadorDAO {
     public boolean atualizarAfetacao(int userId, Integer clubeId, Integer modalidadeId,
                                      Integer coletividadeId, Integer atividadeId) {
         String sql = "UPDATE utilizadores " +
-                "SET clube_id = ?, modalidade_id = ?, coletividade_id = ? " +
+                "SET clube_id = ?, modalidade_id = ?, coletividade_id = ?, atividade_id = ? " +
                 "WHERE id = ?";
 
         try (Connection conn = ConexoBD.getConnection();
@@ -372,7 +372,8 @@ public class UtilizadorDAO {
             setNullableInt(ps, 1, clubeId);
             setNullableInt(ps, 2, modalidadeId);
             setNullableInt(ps, 3, coletividadeId);
-            ps.setInt(4, userId);
+            setNullableInt(ps, 4, atividadeId);
+            ps.setInt(5, userId);
 
             return ps.executeUpdate() > 0;
 
@@ -848,7 +849,7 @@ public class UtilizadorDAO {
         u.setClubeId((Integer) rs.getObject("clube_id"));
         u.setModalidadeId((Integer) rs.getObject("modalidade_id"));
         u.setColetividadeId((Integer) rs.getObject("coletividade_id"));
-        try { u.setAtividadeId(null); } catch (Exception ignored) {}
+        try { u.setAtividadeId((Integer) rs.getObject("atividade_id")); } catch (Exception ignored) {}
         u.setPalavraChave(incluirPassword ? rs.getString("palavra_chave") : null);
         try { u.setLogoPath(rs.getString("logo_path")); } catch (SQLException ignored) {}
         try { u.setNome(rs.getString("nome")); } catch (SQLException ignored) {}

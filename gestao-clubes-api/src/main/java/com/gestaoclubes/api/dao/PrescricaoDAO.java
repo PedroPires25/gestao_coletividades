@@ -153,11 +153,19 @@ public class PrescricaoDAO {
         m.put("medicamento", rs.getString("medicamento"));
         m.put("dosagem", rs.getString("dosagem"));
         m.put("frequencia", rs.getString("frequencia"));
-        m.put("dataInicio", rs.getDate("data_inicio"));
-        m.put("dataFim", rs.getDate("data_fim"));
+        m.put("dataInicio", dateStr(rs.getDate("data_inicio")));
+        m.put("dataFim", dateStr(rs.getDate("data_fim")));
         m.put("notas", rs.getString("notas"));
-        m.put("criadoEm", rs.getTimestamp("criado_em"));
+        m.put("criadoEm", tsStr(rs.getTimestamp("criado_em")));
         return m;
+    }
+
+    private static String dateStr(java.sql.Date d) {
+        return d != null ? d.toString() : null;
+    }
+
+    private static String tsStr(java.sql.Timestamp t) {
+        return t != null ? t.toString().substring(0, 19) : null;
     }
 
     private void setNullableInt(PreparedStatement ps, int idx, Integer val) throws SQLException {

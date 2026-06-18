@@ -157,13 +157,21 @@ public class RegistoLesaoDAO {
         m.put("tipo", rs.getString("tipo"));
         m.put("parteCorpo", rs.getString("parte_corpo"));
         m.put("gravidade", rs.getString("gravidade"));
-        m.put("dataLesao", rs.getDate("data_lesao"));
-        m.put("dataRetornoPrevista", rs.getDate("data_retorno_prevista"));
-        m.put("dataRetornoEfetiva", rs.getDate("data_retorno_efetiva"));
+        m.put("dataLesao", dateStr(rs.getDate("data_lesao")));
+        m.put("dataRetornoPrevista", dateStr(rs.getDate("data_retorno_prevista")));
+        m.put("dataRetornoEfetiva", dateStr(rs.getDate("data_retorno_efetiva")));
         m.put("descricao", rs.getString("descricao"));
         m.put("tratamento", rs.getString("tratamento"));
-        m.put("criadoEm", rs.getTimestamp("criado_em"));
+        m.put("criadoEm", tsStr(rs.getTimestamp("criado_em")));
         return m;
+    }
+
+    private static String dateStr(java.sql.Date d) {
+        return d != null ? d.toString() : null;
+    }
+
+    private static String tsStr(java.sql.Timestamp t) {
+        return t != null ? t.toString().substring(0, 19) : null;
     }
 
     private void setNullableInt(PreparedStatement ps, int idx, Integer val) throws SQLException {

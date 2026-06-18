@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../auth/AuthContext";
 import UserAvatar from "./UserAvatar";
 import { useAppLogo } from "../hooks/useAppLogo";
 import { getHomePathByRole } from "../utils/navigation";
 import { getPendingUsersCount } from "../api";
+import NotificacoesBell from "./NotificacoesBell";
+import NotificacaoPendenteBanner from "./NotificacaoPendenteBanner";
 
 import homeIcon from "../assets/home.svg";
 import clubesIcon from "../assets/clubes.svg";
@@ -80,23 +82,87 @@ export default function SideMenu({
 
     const [pendingCount, setPendingCount] = useState(0);
 
-    // Buscar contagem de utilizadores pendentes para admins e secretários
+    // ── Notificações (bell + banner) ────────────────────────────────────────
+    // Usa getPendingUsersCount (conta utilizadores pendentes reais no DB).
+    // canReceiveNotifications: qualquer ADMINISTRADOR aprovado ou SUPER_ADMIN.
+    // Não depende de privilegiosAtivos da sessão (pode estar desatualizado em
+    // sessões antigas) — o backend valida as permissões reais.
+    const canReceiveNotifications =
+        user?.role === "SUPER_ADMIN" || user?.role === "ADMINISTRADOR";
+
+    const [notifCount, setNotifCount] = useState(0);
+    const prevNotifCountRef = useRef(-1);   // -1 = primeira carga
+    const soundPlayedRef    = useRef(false); // som toca uma vez por visita
+
+    function tocarSomNotificacao() {
+        if (soundPlayedRef.current) return;
+        soundPlayedRef.current = true;
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const t = ctx.currentTime;
+            [0, 0.22].forEach((offset) => {
+                const osc  = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = "sine";
+                osc.frequency.value = 880;
+                gain.gain.setValueAtTime(0, t + offset);
+                gain.gain.linearRampToValueAtTime(0.15, t + offset + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + offset + 0.18);
+                osc.start(t + offset);
+                osc.stop(t + offset + 0.2);
+            });
+        } catch { /* bloqueado pelo browser — ignorado */ }
+    }
+
+    const fetchPendingCount = useCallback(() => {
+        if (!canReceiveNotifications) return;
+        getPendingUsersCount()
+            .then(data => {
+                const n = Number(data?.count ?? 0);
+                setNotifCount(n);
+                // Também actualiza o drawer badge
+                setPendingCount(n);
+
+                if (prevNotifCountRef.current === -1) {
+                    if (n > 0) tocarSomNotificacao();
+                } else if (n > prevNotifCountRef.current) {
+                    soundPlayedRef.current = false; // permite novo som para novas notificações
+                    tocarSomNotificacao();
+                }
+                prevNotifCountRef.current = n;
+            })
+            .catch(() => {});
+    }, [canReceiveNotifications]); // eslint-disable-line react-hooks/exhaustive-deps
+
     useEffect(() => {
-        if (!isAdmin && !isSecretario) return;
-        let cancelled = false;
-        function fetchCount() {
-            getPendingUsersCount()
-                .then(data => { if (!cancelled) setPendingCount(data?.count ?? 0); })
-                .catch(() => {});
+        if (!canReceiveNotifications) {
+            // Secretário: usar contagem separada (sem sino/som)
+            if (!isSecretario) return;
+            let cancelled = false;
+            function fetchSec() {
+                getPendingUsersCount()
+                    .then(d => { if (!cancelled) setPendingCount(Number(d?.count ?? 0)); })
+                    .catch(() => {});
+            }
+            fetchSec();
+            const iv = setInterval(fetchSec, 60_000);
+            return () => { cancelled = true; clearInterval(iv); };
         }
-        fetchCount();
-        const interval = setInterval(fetchCount, 60_000);
-        return () => { cancelled = true; clearInterval(interval); };
-    }, [isAdmin, isSecretario]);
+
+        fetchPendingCount();
+        const interval = setInterval(fetchPendingCount, 30_000);
+        window.addEventListener("notificacoes-refresh", fetchPendingCount);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener("notificacoes-refresh", fetchPendingCount);
+        };
+    }, [canReceiveNotifications, isSecretario, fetchPendingCount]);
+    // ────────────────────────────────────────────────────────────────────────
 
     // Determinar o link do logo com base no perfil
     const logoHref = useMemo(() => getHomePathByRole(user), [user]);
-
 
     function closeMenu() {
         setOpen(false);
@@ -142,8 +208,17 @@ export default function SideMenu({
                     </Link>
                 </div>
 
-                <UserAvatar />
+                <div className="appbar-right-actions">
+                    {/* Sino de notificações — só aparece quando há pendentes */}
+                    {canReceiveNotifications && <NotificacoesBell count={notifCount} />}
+                    <UserAvatar />
+                </div>
             </header>
+
+            {/* Banner de alerta abaixo do header — só para admins com pendentes */}
+            {canReceiveNotifications && (
+                <NotificacaoPendenteBanner count={notifCount} />
+            )}
 
             {showBurger && (
                 <>

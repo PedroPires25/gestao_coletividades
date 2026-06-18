@@ -11,7 +11,7 @@ import {
     getClubes,
     getColetividades,
     getModalidades,
-    getAtividades,
+    getAtividadesDaColetividade,
 } from "../api";
 
 export default function AdminApprovedUsersPage() {
@@ -36,7 +36,8 @@ export default function AdminApprovedUsersPage() {
     const [clubes, setClubes] = useState([]);
     const [coletividades, setColetividades] = useState([]);
     const [modalidades, setModalidades] = useState([]);
-    const [atividades, setAtividades] = useState([]);
+
+    const [atividadesPorColetividade, setAtividadesPorColetividade] = useState({});
 
     const [perfilDrafts, setPerfilDrafts] = useState({});
     const [afetacaoDrafts, setAfetacaoDrafts] = useState({});
@@ -73,14 +74,12 @@ export default function AdminApprovedUsersPage() {
                 clubesData,
                 coletividadesData,
                 modalidadesData,
-                atividadesData,
             ] = await Promise.all([
                 getAdminUsers("APROVADO"),
                 isSuperAdmin ? getAdminProfiles() : Promise.resolve([]),
                 getClubes().catch(() => []),
                 getColetividades().catch(() => []),
                 getModalidades({ ativas: true }).catch(() => []),
-                getAtividades().catch(() => []),
             ]);
             const listaUsers = Array.isArray(usersData) ? usersData : [];
             const listaProfiles = Array.isArray(profilesData) ? profilesData : [];
@@ -89,7 +88,21 @@ export default function AdminApprovedUsersPage() {
             setClubes(Array.isArray(clubesData) ? clubesData : []);
             setColetividades(Array.isArray(coletividadesData) ? coletividadesData : []);
             setModalidades(Array.isArray(modalidadesData) ? modalidadesData : []);
-            setAtividades(Array.isArray(atividadesData) ? atividadesData : []);
+
+            // Pré-carregar atividades de cada coletividade presente na lista (para exibição)
+            const uniqueCols = [...new Set(listaUsers.map((u) => u.coletividadeId).filter(Boolean))];
+            const atividadesLoaded = {};
+            await Promise.all(
+                uniqueCols.map(async (cid) => {
+                    try {
+                        const data = await getAtividadesDaColetividade(cid);
+                        atividadesLoaded[String(cid)] = Array.isArray(data) ? data : [];
+                    } catch {
+                        atividadesLoaded[String(cid)] = [];
+                    }
+                })
+            );
+
             const perfisMap = {};
             const afetacoesMap = {};
             const editMap = {};
@@ -106,6 +119,7 @@ export default function AdminApprovedUsersPage() {
             setPerfilDrafts(perfisMap);
             setAfetacaoDrafts(afetacoesMap);
             setEditingAfetacao(editMap);
+            setAtividadesPorColetividade(atividadesLoaded);
         } catch (e) {
             setErro(e.message || "Erro ao carregar utilizadores aprovados.");
         } finally {
@@ -114,56 +128,8 @@ export default function AdminApprovedUsersPage() {
     }
 
     useEffect(() => {
-        let active = true;
-        (async () => {
-            try {
-                const [
-                    usersData,
-                    profilesData,
-                    clubesData,
-                    coletividadesData,
-                    modalidadesData,
-                    atividadesData,
-                ] = await Promise.all([
-                    getAdminUsers("APROVADO"),
-                    isSuperAdmin ? getAdminProfiles() : Promise.resolve([]),
-                    getClubes().catch(() => []),
-                    getColetividades().catch(() => []),
-                    getModalidades({ ativas: true }).catch(() => []),
-                    getAtividades().catch(() => []),
-                ]);
-                if (!active) return;
-                const listaUsers = Array.isArray(usersData) ? usersData : [];
-                const listaProfiles = Array.isArray(profilesData) ? profilesData : [];
-                setUsers(listaUsers);
-                setProfiles(listaProfiles);
-                setClubes(Array.isArray(clubesData) ? clubesData : []);
-                setColetividades(Array.isArray(coletividadesData) ? coletividadesData : []);
-                setModalidades(Array.isArray(modalidadesData) ? modalidadesData : []);
-                setAtividades(Array.isArray(atividadesData) ? atividadesData : []);
-                const perfisMap = {};
-                const afetacoesMap = {};
-                const editMap = {};
-                for (const u of listaUsers) {
-                    perfisMap[u.id] = u.role;
-                    afetacoesMap[u.id] = {
-                        clubeId: u.clubeId ?? "",
-                        modalidadeId: u.modalidadeId ?? "",
-                        coletividadeId: u.coletividadeId ?? "",
-                        atividadeId: u.atividadeId ?? "",
-                    };
-                    editMap[u.id] = false;
-                }
-                setPerfilDrafts(perfisMap);
-                setAfetacaoDrafts(afetacoesMap);
-                setEditingAfetacao(editMap);
-            } catch (e) {
-                if (active) setErro(e.message || "Erro ao carregar utilizadores aprovados.");
-            } finally {
-                if (active) setLoading(false);
-            }
-        })();
-        return () => { active = false; };
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        void carregar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -182,10 +148,34 @@ export default function AdminApprovedUsersPage() {
         [modalidades]
     );
 
-    const atividadesMap = useMemo(
-        () => Object.fromEntries(atividades.map((a) => [String(a.id), a.nome])),
-        [atividades]
-    );
+    const atividadesMap = useMemo(() => {
+        // Constrói o mapa de nomes a partir de todas as atividades carregadas por coletividade
+        const map = {};
+        for (const lista of Object.values(atividadesPorColetividade)) {
+            for (const ca of lista) {
+                if (ca.atividadeId && ca.atividade?.nome) {
+                    map[String(ca.atividadeId)] = ca.atividade.nome;
+                }
+            }
+        }
+        return map;
+    }, [atividadesPorColetividade]);
+
+    // Carrega as atividades de uma coletividade (com cache)
+    async function carregarAtividadesParaColetividade(coletividadeId) {
+        if (!coletividadeId) return;
+        const key = String(coletividadeId);
+        if (atividadesPorColetividade[key]) return;
+        try {
+            const data = await getAtividadesDaColetividade(coletividadeId);
+            setAtividadesPorColetividade((prev) => ({
+                ...prev,
+                [key]: Array.isArray(data) ? data : [],
+            }));
+        } catch {
+            // falha silenciosa: atividades não carregadas para esta coletividade
+        }
+    }
 
     const filtrados = useMemo(() => {
         const term = q.trim().toLowerCase();
@@ -204,8 +194,13 @@ export default function AdminApprovedUsersPage() {
             [userId]: {
                 ...(prev[userId] || {}),
                 [field]: value,
+                // Limpar atividade ao mudar coletividade
+                ...(field === "coletividadeId" ? { atividadeId: "" } : {}),
             },
         }));
+        if (field === "coletividadeId" && value) {
+            carregarAtividadesParaColetividade(value);
+        }
     }
 
     function toggleEditarAfetacao(userId, open) {
@@ -213,6 +208,12 @@ export default function AdminApprovedUsersPage() {
             ...prev,
             [userId]: open,
         }));
+        if (open) {
+            const draft = afetacaoDrafts[userId] || {};
+            if (draft.coletividadeId) {
+                carregarAtividadesParaColetividade(draft.coletividadeId);
+            }
+        }
     }
 
     async function guardarPerfil(u) {
@@ -459,8 +460,10 @@ export default function AdminApprovedUsersPage() {
                                                             disabled={saving}
                                                         >
                                                             <option value="">Sem atividade</option>
-                                                            {atividades.map((a) => (
-                                                                <option key={a.id} value={a.id}>{a.nome}</option>
+                                                            {(atividadesPorColetividade[String(draft.coletividadeId)] || []).map((ca) => (
+                                                                <option key={ca.atividadeId} value={ca.atividadeId}>
+                                                                    {ca.atividade?.nome || ca.atividadeId}
+                                                                </option>
                                                             ))}
                                                         </select>
                                                     </div>

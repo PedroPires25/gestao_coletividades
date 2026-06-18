@@ -466,4 +466,70 @@ public class StaffDAO {
             return false;
         }
     }
+
+    /**
+     * Returns all active trainers (cargo containing "Treinador") for a given club,
+     * with their effective email for notifications.
+     */
+    public List<Map<String, Object>> listarTreinadoresPorClube(int clubeId) {
+        String sql = """
+            SELECT DISTINCT s.id,
+                   COALESCE(u.nome, s.nome) AS nome,
+                   COALESCE(
+                       NULLIF(TRIM(u.email_notificacoes), ''),
+                       NULLIF(TRIM(u.utilizador), ''),
+                       NULLIF(TRIM(s.email), '')
+                   ) AS email_efetivo
+            FROM staff s
+            LEFT JOIN utilizadores u ON u.id = s.utilizador_id
+            JOIN staff_afetacao sa ON sa.staff_id = s.id
+            JOIN cargo_staff cs ON cs.id = sa.cargo_id
+            WHERE sa.clube_id = ?
+              AND (sa.data_fim IS NULL OR sa.data_fim >= CURDATE())
+              AND LOWER(cs.nome) LIKE '%treinador%'
+        """;
+        List<Map<String, Object>> lista = new ArrayList<>();
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, clubeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", rs.getInt("id"));
+                    row.put("nome", rs.getString("nome"));
+                    row.put("emailEfetivo", rs.getString("email_efetivo"));
+                    lista.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.severe(e.toString());
+        }
+        return lista;
+    }
+
+    /**
+     * Returns the effective email for a staff member for notifications.
+     */
+    public String obterEmailEfetivo(int staffId) {
+        String sql = """
+            SELECT COALESCE(
+                NULLIF(TRIM(u.email_notificacoes), ''),
+                NULLIF(TRIM(u.utilizador), ''),
+                NULLIF(TRIM(s.email), '')
+            ) AS email_efetivo
+            FROM staff s
+            LEFT JOIN utilizadores u ON u.id = s.utilizador_id
+            WHERE s.id = ?
+        """;
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, staffId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("email_efetivo");
+            }
+        } catch (SQLException e) {
+            LOGGER.severe(e.toString());
+        }
+        return null;
+    }
 }
