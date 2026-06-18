@@ -8,7 +8,9 @@ import com.gestaoclubes.api.model.Staff;
 import com.gestaoclubes.api.model.Utente;
 import com.gestaoclubes.api.model.Utilizador;
 import com.gestaoclubes.api.security.SecurityUtils;
+import com.gestaoclubes.api.service.EmailService;
 import com.gestaoclubes.api.util.ConexoBD;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +41,9 @@ public class AdminRestController {
     private final StaffDAO staffDAO = new StaffDAO();
     private final StaffAfetacaoDAO staffAfetacaoDAO = new StaffAfetacaoDAO();
     private final StaffColetividadeDAO staffColetividadeDAO = new StaffColetividadeDAO();
+
+    @Autowired
+    private EmailService emailService;
 
     public static class UtilizadorAdminDto {
         public int id;
@@ -175,6 +180,10 @@ public class AdminRestController {
         if (PerfilDAO.SUPER_ADMIN.equals(perfilNovo)) {
             utilizadorDAO.atualizarEstadoRegisto(id, "APROVADO");
             utilizadorDAO.atualizarAfetacao(id, null, null, null, null);
+            Utilizador uAprovado = utilizadorDAO.buscarPorId(id);
+            if (uAprovado != null) {
+                emailService.enviarEmailRegistoAprovado(uAprovado.getUtilizador());
+            }
         }
 
         Utilizador depois = utilizadorDAO.buscarPorId(id);
@@ -247,6 +256,8 @@ public class AdminRestController {
             try {
                 materializarNoDominioSeNecessario(role, depois);
                 depois = utilizadorDAO.buscarPorId(id);
+                // Enviar email ao utilizador após a aprovação e materialização bem-sucedida
+                emailService.enviarEmailRegistoAprovado(depois.getUtilizador());
             } catch (IllegalArgumentException e) {
                 // Dados inválidos — revert para PENDENTE
                 utilizadorDAO.atualizarEstadoRegisto(id, "PENDENTE");

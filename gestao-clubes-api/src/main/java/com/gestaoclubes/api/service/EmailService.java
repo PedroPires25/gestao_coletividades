@@ -75,6 +75,29 @@ public class EmailService {
         }
     }
 
+    public void enviarEmailRegistoPendente(String emailDestino) {
+        String subject = "Registo na Plataforma de Gestão de Coletividades";
+        String text = "Olá,\n\n" +
+                "O seu registo na plataforma foi efetuado com sucesso e encontra-se a aguardar aprovação.\n\n" +
+                "Receberá um novo email assim que o seu acesso for aprovado.\n\n" +
+                "Cumprimentos,\n" +
+                "Equipa Gestao de Coletividades";
+
+        sendBrevoEmail(emailDestino, emailDestino, subject, text);
+    }
+
+    public void enviarEmailRegistoAprovado(String emailDestino) {
+        String subject = "Registo Aprovado - Plataforma de Gestão de Coletividades";
+        String text = "Olá,\n\n" +
+                "O seu registo na plataforma foi aprovado com sucesso.\n\n" +
+                "Pode agora aceder à plataforma através do seguinte link:\n" +
+                "https://gestao-coletividades.vercel.app/login\n\n" +
+                "Cumprimentos,\n" +
+                "Equipa Gestao de Coletividades";
+
+        sendBrevoEmail(emailDestino, emailDestino, subject, text);
+    }
+
     public void enviarEmailRecuperacao(String emailDestino, String link) {
         String subject = "Recuperação de Palavra-passe - Plataforma de Gestão de Coletividades";
         String text = "Olá,\n\n" +

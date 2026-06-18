@@ -9,6 +9,7 @@ import com.gestaoclubes.api.dao.UtilizadorDAO;
 import com.gestaoclubes.api.model.Staff;
 import com.gestaoclubes.api.model.Utilizador;
 import com.gestaoclubes.api.security.JwtUtil;
+import com.gestaoclubes.api.service.EmailService;
 import com.gestaoclubes.api.util.PasswordPolicyUtil;
 import com.gestaoclubes.api.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,9 @@ public class AuthRestController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private EmailService emailService;
 
     public static class LoginRequest {
         public String email;
@@ -646,6 +650,7 @@ public class AuthRestController {
         }
 
         if ("PENDENTE".equals(estadoRegisto)) {
+            emailService.enviarEmailRegistoPendente(email);
             String mensagemAprovacao = PerfilDAO.ADMINISTRADOR.equals(perfil)
                     ? "Utilizador registado com sucesso. Aguarda aprovação de um super administrador."
                     : "Utilizador registado com sucesso. Aguarda aprovação do administrador da estrutura.";
