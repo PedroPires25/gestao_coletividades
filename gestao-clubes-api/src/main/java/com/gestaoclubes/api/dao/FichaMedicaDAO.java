@@ -86,7 +86,11 @@ public class FichaMedicaDAO {
         m.put("contactoEmergenciaNome", rs.getString("contacto_emergencia_nome"));
         m.put("contactoEmergenciaTelefone", rs.getString("contacto_emergencia_telefone"));
         m.put("notasGerais", rs.getString("notas_gerais"));
-        m.put("atualizadoEm", rs.getTimestamp("atualizado_em"));
+        m.put("atualizadoEm", tsStr(rs.getTimestamp("atualizado_em")));
         return m;
+    }
+
+    private static String tsStr(java.sql.Timestamp t) {
+        return t != null ? t.toString().substring(0, 19) : null;
     }
 }

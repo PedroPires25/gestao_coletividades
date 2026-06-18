@@ -161,4 +161,79 @@ public class EmailService {
                 nomeClube;
         sendBrevoEmail(emailDestino, nomeAtleta, subject, text);
     }
+
+    // ==========================================
+    // NOTIFICAÇÕES MÉDICAS
+    // ==========================================
+
+    /**
+     * Sends a detailed medical update notification to the athlete.
+     */
+    public void enviarNotificacaoMedicaAtleta(String emailDestino, String nomeAtleta,
+                                               String tipoRegisto, String acao, String detalhes) {
+        String subject = "Atualização clínica: " + tipoRegisto + " — Plataforma Gestão de Coletividades";
+        StringBuilder texto = new StringBuilder();
+        texto.append("Olá ").append(nomeAtleta).append(",\n\n");
+        texto.append("Foi ").append(acao).append(" uma atualização clínica relativa à sua ficha médica.\n\n");
+        texto.append("─────────────────────────────\n");
+        texto.append("Tipo: ").append(tipoRegisto).append("\n");
+        if (detalhes != null && !detalhes.isBlank()) {
+            texto.append("Detalhe: ").append(detalhes).append("\n");
+        }
+        texto.append("─────────────────────────────\n\n");
+        texto.append("Para consultar o registo completo, aceda à plataforma.\n\n");
+        texto.append("Cumprimentos,\n");
+        texto.append("Departamento Médico — Gestão de Coletividades");
+        sendBrevoEmail(emailDestino, nomeAtleta, subject, texto.toString());
+    }
+
+    /**
+     * Sends a non-clinical notification to a trainer about an athlete's medical update.
+     * If confidential, sends only a generic message.
+     */
+    public void enviarNotificacaoMedicaTreinador(String emailDestino, String nomeTreinador,
+                                                  String nomeAtleta, String tipoRegisto,
+                                                  String acao, String resumoPublico,
+                                                  boolean confidencial) {
+        String subject = "Atualização clínica — " + nomeAtleta;
+        StringBuilder texto = new StringBuilder();
+        texto.append("Olá").append(nomeTreinador != null && !nomeTreinador.isBlank() ? " " + nomeTreinador : "").append(",\n\n");
+        if (confidencial) {
+            texto.append("Foi registada uma atualização clínica relativa ao atleta ")
+                 .append(nomeAtleta)
+                 .append(".\n\n")
+                 .append("Consulte a plataforma para mais informações.\n");
+        } else {
+            texto.append("Existe uma nova atualização clínica relativa ao atleta ").append(nomeAtleta).append(":\n\n");
+            texto.append("  → ").append(tipoRegisto).append(" ").append(acao).append(".\n");
+            if (resumoPublico != null && !resumoPublico.isBlank()) {
+                texto.append("  → ").append(resumoPublico).append("\n");
+            }
+            texto.append("\nPara detalhes clínicos, contacte o departamento médico.\n");
+        }
+        texto.append("\nCumprimentos,\n");
+        texto.append("Departamento Médico — Gestão de Coletividades");
+        sendBrevoEmail(emailDestino, nomeTreinador, subject, texto.toString());
+    }
+
+    /**
+     * Sends a medical update notification to a staff member.
+     */
+    public void enviarNotificacaoMedicaStaff(String emailDestino, String nomeStaff,
+                                              String tipoRegisto, String acao, String detalhes) {
+        String subject = "Atualização clínica: " + tipoRegisto + " — Plataforma Gestão de Coletividades";
+        StringBuilder texto = new StringBuilder();
+        texto.append("Olá ").append(nomeStaff != null && !nomeStaff.isBlank() ? nomeStaff : "").append(",\n\n");
+        texto.append("Foi ").append(acao).append(" uma atualização clínica relativa à sua ficha médica.\n\n");
+        texto.append("─────────────────────────────\n");
+        texto.append("Tipo: ").append(tipoRegisto).append("\n");
+        if (detalhes != null && !detalhes.isBlank()) {
+            texto.append("Detalhe: ").append(detalhes).append("\n");
+        }
+        texto.append("─────────────────────────────\n\n");
+        texto.append("Para consultar o registo completo, aceda à plataforma.\n\n");
+        texto.append("Cumprimentos,\n");
+        texto.append("Departamento Médico — Gestão de Coletividades");
+        sendBrevoEmail(emailDestino, nomeStaff, subject, texto.toString());
+    }
 }
