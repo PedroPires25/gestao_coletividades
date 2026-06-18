@@ -304,6 +304,94 @@ export default function ColetividadesPage() {
                 </div>
 
                 <div className="stack-sections">
+                    {!isAdmin && erro && <div className="alert error">{erro}</div>}
+                    {!isAdmin && msg && <div className="alert ok">{msg}</div>}
+
+                    <section className="card">
+                        <h2>Lista</h2>
+                        <p className="subtle">{loading ? "A carregar..." : `${coletividadesFiltradas.length} coletividade(s) encontrada(s).`}</p>
+
+                        <div className="searchbar">
+                            <input
+                                className="input"
+                                placeholder="Pesquisar por nome, email, NIF, morada, código postal ou localidade..."
+                                value={q}
+                                onChange={(e) => setQ(e.target.value)}
+                            />
+                            <button className="btn" type="button" onClick={() => setQ("")}>Limpar</button>
+                        </div>
+
+                        <div className="table-wrap">
+                            <table>
+                                <thead>
+                                <tr>
+                                    <th>Logo</th>
+                                    <th>ID</th>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Telefone</th>
+                                    <th>NIF</th>
+                                    <th>Morada</th>
+                                    <th>Cód. Postal</th>
+                                    <th>Localidade</th>
+                                    <th>Data fundação</th>
+                                    {isAdmin && <th>Ações</th>}
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {coletividadesFiltradas.map((c) => (
+                                    <tr key={c.id}>
+                                        <td>
+                                            <img
+                                                src={c.logoPath ? getUploadUrl(c.logoPath) : defaultLogo}
+                                                alt="Logo"
+                                                style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6 }}
+                                            />
+                                        </td>
+                                        <td className="nowrap">{c.id}</td>
+                                        <td>
+                                            <Link
+                                                className="club-link"
+                                                to={`/coletividades/${c.id}`}
+                                                title="Abrir submenu da coletividade"
+                                            >
+                                                {c.nome}
+                                            </Link>
+                                        </td>
+                                        <td className="cell-muted">{c.email || "-"}</td>
+                                        <td className="nowrap">{c.telefone || "-"}</td>
+                                        <td className="nowrap">{c.nif || "-"}</td>
+                                        <td className="cell-muted">{c.morada || "-"}</td>
+                                        <td className="nowrap">{c.codigoPostal || c.codigo_postal || "-"}</td>
+                                        <td className="cell-muted">{c.localidade || "-"}</td>
+                                        <td className="nowrap">{formatDateISOToPt(c.dataFundacao) || "-"}</td>
+                                        {isAdmin && (
+                                            <td>
+                                                <div className="table-actions">
+                                                    {canManageColetividade(c.id) && (
+                                                        <button className="btn" onClick={() => openEditModal(c)}>Editar</button>
+                                                    )}
+                                                    {isSuperAdmin && (
+                                                        <button className="btn btn-danger" onClick={() => onDelete(c.id)}>Apagar</button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
+
+                                {!loading && coletividadesFiltradas.length === 0 && (
+                                    <tr>
+                                        <td colSpan={isAdmin ? 11 : 10} className="cell-muted" style={{ padding: 14 }}>
+                                            Sem resultados para a pesquisa.
+                                        </td>
+                                    </tr>
+                                )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
                     {isSuperAdmin && (
                         <section className="card" id="criar-coletividade">
                             <h2>Criar coletividade</h2>
@@ -393,94 +481,6 @@ export default function ColetividadesPage() {
                             </div>
                         </section>
                     )}
-
-                    {!isAdmin && erro && <div className="alert error">{erro}</div>}
-                    {!isAdmin && msg && <div className="alert ok">{msg}</div>}
-
-                    <section className="card">
-                        <h2>Lista</h2>
-                        <p className="subtle">{loading ? "A carregar..." : `${coletividadesFiltradas.length} coletividade(s) encontrada(s).`}</p>
-
-                        <div className="searchbar">
-                            <input
-                                className="input"
-                                placeholder="Pesquisar por nome, email, NIF, morada, código postal ou localidade..."
-                                value={q}
-                                onChange={(e) => setQ(e.target.value)}
-                            />
-                            <button className="btn" type="button" onClick={() => setQ("")}>Limpar</button>
-                        </div>
-
-                        <div className="table-wrap">
-                            <table>
-                                <thead>
-                                <tr>
-                                    <th>Logo</th>
-                                    <th>ID</th>
-                                    <th>Nome</th>
-                                    <th>Email</th>
-                                    <th>Telefone</th>
-                                    <th>NIF</th>
-                                    <th>Morada</th>
-                                    <th>Cód. Postal</th>
-                                    <th>Localidade</th>
-                                    <th>Data fundação</th>
-                                    {isAdmin && <th>Ações</th>}
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {coletividadesFiltradas.map((c) => (
-                                    <tr key={c.id}>
-                                        <td>
-                                            <img
-                                                src={c.logoPath ? getUploadUrl(c.logoPath) : defaultLogo}
-                                                alt="Logo"
-                                                style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6 }}
-                                            />
-                                        </td>
-                                        <td className="nowrap">{c.id}</td>
-                                        <td>
-                                            <Link
-                                                className="club-link"
-                                                to={`/coletividades/${c.id}`}
-                                                title="Abrir submenu da coletividade"
-                                            >
-                                                {c.nome}
-                                            </Link>
-                                        </td>
-                                        <td className="cell-muted">{c.email || "-"}</td>
-                                        <td className="nowrap">{c.telefone || "-"}</td>
-                                        <td className="nowrap">{c.nif || "-"}</td>
-                                        <td className="cell-muted">{c.morada || "-"}</td>
-                                        <td className="nowrap">{c.codigoPostal || c.codigo_postal || "-"}</td>
-                                        <td className="cell-muted">{c.localidade || "-"}</td>
-                                        <td className="nowrap">{formatDateISOToPt(c.dataFundacao) || "-"}</td>
-                                        {isAdmin && (
-                                            <td>
-                                                <div className="table-actions">
-                                                    {canManageColetividade(c.id) && (
-                                                        <button className="btn" onClick={() => openEditModal(c)}>Editar</button>
-                                                    )}
-                                                    {isSuperAdmin && (
-                                                        <button className="btn btn-danger" onClick={() => onDelete(c.id)}>Apagar</button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        )}
-                                    </tr>
-                                ))}
-
-                                {!loading && coletividadesFiltradas.length === 0 && (
-                                    <tr>
-                                        <td colSpan={isAdmin ? 11 : 10} className="cell-muted" style={{ padding: 14 }}>
-                                            Sem resultados para a pesquisa.
-                                        </td>
-                                    </tr>
-                                )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
                 </div>
 
                 {isAdmin && editOpen && (

@@ -427,88 +427,6 @@ export default function ColetividadeAtividadesPage() {
                 {msg && <div className="alert ok">{msg}</div>}
 
                 <div className="stack-sections">
-                    {isAdmin && (
-                        <>
-                            <section className="card">
-                                <h2>Criar atividade</h2>
-                                <p className="subtle">
-                                    Cria uma nova atividade no catálogo geral.
-                                </p>
-
-                                <div className="row">
-                                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                        <span className="modalidade-figura-circle" style={{ width: 74, height: 74 }}>
-                                            <span className="menu-style-icon" style={{ width: 48, height: 48 }}>
-                                                <img
-                                                    className="atividade-generated-icon"
-                                                    src={getAtividadeIcon(novoNome || "Nova atividade")}
-                                                    alt={novoNome || "Nova atividade"}
-                                                />
-                                            </span>
-                                        </span>
-                                        <span className="subtle">
-                                            Se existir um SVG em <code>src/assets/atividades</code> com o nome da atividade, ele é usado; caso contrário, o ícone é gerado automaticamente.
-                                        </span>
-                                    </div>
-
-                                    <input
-                                        className="input"
-                                        placeholder="Nome da atividade *"
-                                        value={novoNome}
-                                        onChange={(e) => setNovoNome(e.target.value)}
-                                    />
-                                    <input
-                                        className="input"
-                                        placeholder="Descrição"
-                                        value={novaDescricao}
-                                        onChange={(e) => setNovaDescricao(e.target.value)}
-                                    />
-
-                                    <div className="actions">
-                                        <button className="btn btn-primary" type="button" onClick={onCriar}>
-                                            Criar
-                                        </button>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <section className="card">
-                                <h2>Anexar atividade existente</h2>
-                                <p className="subtle">
-                                    Associa uma atividade já existente à coletividade e ao ano escolhido.
-                                </p>
-
-                                <div className="row2">
-                                    <select
-                                        className="input"
-                                        value={atividadeExistenteId}
-                                        onChange={(e) => setAtividadeExistenteId(e.target.value)}
-                                    >
-                                        <option value="">Selecione uma atividade</option>
-                                        {atividadesDisponiveisParaAnexar.map((a) => (
-                                            <option key={a.id} value={a.id}>
-                                                {a.nome}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    <input
-                                        className="input"
-                                        placeholder="Ano"
-                                        value={anoNovaAssociacao}
-                                        onChange={(e) => setAnoNovaAssociacao(e.target.value)}
-                                    />
-                                </div>
-
-                                <div className="actions">
-                                    <button className="btn btn-primary" type="button" onClick={onAnexarExistente}>
-                                        Anexar
-                                    </button>
-                                </div>
-                            </section>
-                        </>
-                    )}
-
                     <section className="card">
                         <div className="modalidades-toolbar">
                             <div className="toolbar-title-group">
@@ -646,6 +564,88 @@ export default function ColetividadeAtividadesPage() {
                             </div>
                         )}
                     </section>
+
+                    {isAdmin && (
+                        <>
+                            <section className="card">
+                                <h2>Criar atividade</h2>
+                                <p className="subtle">
+                                    Cria uma nova atividade no catálogo geral.
+                                </p>
+
+                                <div className="row">
+                                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                        <span className="modalidade-figura-circle" style={{ width: 74, height: 74 }}>
+                                            <span className="menu-style-icon" style={{ width: 48, height: 48 }}>
+                                                <img
+                                                    className="atividade-generated-icon"
+                                                    src={getAtividadeIcon(novoNome || "Nova atividade")}
+                                                    alt={novoNome || "Nova atividade"}
+                                                />
+                                            </span>
+                                        </span>
+                                        <span className="subtle">
+                                            Se existir um SVG em <code>src/assets/atividades</code> com o nome da atividade, ele é usado; caso contrário, o ícone é gerado automaticamente.
+                                        </span>
+                                    </div>
+
+                                    <input
+                                        className="input"
+                                        placeholder="Nome da atividade *"
+                                        value={novoNome}
+                                        onChange={(e) => setNovoNome(e.target.value)}
+                                    />
+                                    <input
+                                        className="input"
+                                        placeholder="Descrição"
+                                        value={novaDescricao}
+                                        onChange={(e) => setNovaDescricao(e.target.value)}
+                                    />
+
+                                    <div className="actions">
+                                        <button className="btn btn-primary" type="button" onClick={onCriar}>
+                                            Criar
+                                        </button>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section className="card">
+                                <h2>Anexar atividade existente</h2>
+                                <p className="subtle">
+                                    Associa uma atividade já existente à coletividade e ao ano escolhido.
+                                </p>
+
+                                <div className="row2">
+                                    <select
+                                        className="input"
+                                        value={atividadeExistenteId}
+                                        onChange={(e) => setAtividadeExistenteId(e.target.value)}
+                                    >
+                                        <option value="">Selecione uma atividade</option>
+                                        {atividadesDisponiveisParaAnexar.map((a) => (
+                                            <option key={a.id} value={a.id}>
+                                                {a.nome}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <input
+                                        className="input"
+                                        placeholder="Ano"
+                                        value={anoNovaAssociacao}
+                                        onChange={(e) => setAnoNovaAssociacao(e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="actions">
+                                    <button className="btn btn-primary" type="button" onClick={onAnexarExistente}>
+                                        Anexar
+                                    </button>
+                                </div>
+                            </section>
+                        </>
+                    )}
                 </div>
 
                 {editOpen && (

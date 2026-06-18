@@ -427,143 +427,6 @@ export default function ClubeModalidadesPage() {
                 {erro && <div className="alert error">{erro}</div>}
                 {msg && <div className="alert ok">{msg}</div>}
 
-                <div className="card" style={{ marginBottom: 16 }}>
-                    <h2>Filtrar por época</h2>
-
-                    <div className="row2">
-                        <div className="row">
-                            <select
-                                className="input"
-                                value={epocaSelecionada}
-                                onChange={(e) => setEpocaSelecionada(e.target.value)}
-                            >
-                                <option value="">Todas</option>
-                                {epocasParaFiltro.map((ep) => (
-                                    <option key={ep} value={ep}>
-                                        {ep}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="filter-checkbox-wrap">
-                            <label className="filter-checkbox">
-                                <input
-                                    type="checkbox"
-                                    checked={apenasAtivas}
-                                    onChange={(e) => setApenasAtivas(e.target.checked)}
-                                />
-                                Apenas ativas
-                            </label>
-                        </div>
-                    </div>
-
-                    <div className="actions filters-actions">
-                        <button className="btn" type="button" onClick={carregar}>
-                            Recarregar
-                        </button>
-                        <Link className="btn" to={`/clubes/${clubeId}`}>
-                            ← Voltar
-                        </Link>
-                    </div>
-                </div>
-
-                {podeGerir && (
-                    <div className="card" style={{ marginBottom: 16 }}>
-                        <h2>Anexar modalidade existente ao clube</h2>
-
-                        <div className="row">
-                            <div className="row2">
-                                <select
-                                    className="input"
-                                    value={modalidadeExistenteId}
-                                    onChange={(e) => setModalidadeExistenteId(e.target.value)}
-                                >
-                                    <option value="">Selecionar modalidade</option>
-                                    {modalidadesDisponiveisParaAnexar.map((m) => (
-                                        <option key={m.id} value={m.id}>
-                                            {m.nome}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                <select
-                                    className="input"
-                                    value={epocaNovaAssociacao}
-                                    onChange={(e) => setEpocaNovaAssociacao(e.target.value)}
-                                >
-                                    {epocasGeradas.map((ep) => (
-                                        <option key={ep} value={ep}>
-                                            {ep}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {modalidadesDisponiveisParaAnexar.length === 0 && (
-                                <p className="subtle">
-                                    Não existem modalidades disponíveis para anexar nesta época.
-                                </p>
-                            )}
-
-                            <div className="actions">
-                                <button
-                                    className="btn btn-primary"
-                                    type="button"
-                                    onClick={onAnexarExistente}
-                                    disabled={!modalidadeExistenteId}
-                                >
-                                    Anexar ao clube
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {podeGerir && (
-                    <div className="card" style={{ marginBottom: 16 }}>
-                        <h2>Criar nova modalidade</h2>
-
-                        <div className="row">
-                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                <span className="modalidade-figura-circle" style={{ width: 74, height: 74 }}>
-                                    <span className="menu-style-icon" style={{ width: 48, height: 48 }}>
-                                        <img
-                                            className="atividade-generated-icon"
-                                            src={getModalidadeIcon(novoNome || "Modalidade")}
-                                            alt={novoNome || "Modalidade"}
-                                        />
-                                    </span>
-                                </span>
-                                <span className="subtle" style={{ fontSize: 13 }}>
-                                    Pré-visualização do ícone gerado automaticamente
-                                </span>
-                            </div>
-
-                            <div className="row2">
-                                <input
-                                    className="input"
-                                    placeholder="Nome *"
-                                    value={novoNome}
-                                    onChange={(e) => setNovoNome(e.target.value)}
-                                />
-                                <input
-                                    className="input"
-                                    placeholder="Descrição (opcional)"
-                                    value={novaDescricao}
-                                    onChange={(e) => setNovaDescricao(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="actions">
-                                <button className="btn btn-primary" type="button" onClick={onCriar}>
-                                    Criar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 <div className="card">
                     <div className="modalidades-toolbar">
                         <div className="toolbar-title-group">
@@ -673,6 +536,143 @@ export default function ClubeModalidadesPage() {
                                 })}
                                 </tbody>
                             </table>
+                        </div>
+                    )}
+                </div>
+
+                <div className="stack-sections">
+                    <div className="card" style={{ marginBottom: 16 }}>
+                        <h2>Filtrar por época</h2>
+
+                        <div className="row2">
+                            <div className="row">
+                                <select
+                                    className="input"
+                                    value={epocaSelecionada}
+                                    onChange={(e) => setEpocaSelecionada(e.target.value)}
+                                >
+                                    <option value="">Todas</option>
+                                    {epocasParaFiltro.map((ep) => (
+                                        <option key={ep} value={ep}>
+                                            {ep}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="filter-checkbox-wrap">
+                                <label className="filter-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        checked={apenasAtivas}
+                                        onChange={(e) => setApenasAtivas(e.target.checked)}
+                                    />
+                                    Apenas ativas
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="actions filters-actions">
+                            <button className="btn" type="button" onClick={carregar}>
+                                Recarregar
+                            </button>
+                            <Link className="btn" to={`/clubes/${clubeId}`}>
+                                ← Voltar
+                            </Link>
+                        </div>
+                    </div>
+
+                    {podeGerir && (
+                        <div className="card" style={{ marginBottom: 16 }}>
+                            <h2>Anexar modalidade existente ao clube</h2>
+
+                            <div className="row">
+                                <div className="row2">
+                                    <select
+                                        className="input"
+                                        value={modalidadeExistenteId}
+                                        onChange={(e) => setModalidadeExistenteId(e.target.value)}
+                                    >
+                                        <option value="">Selecionar modalidade</option>
+                                        {modalidadesDisponiveisParaAnexar.map((m) => (
+                                            <option key={m.id} value={m.id}>
+                                                {m.nome}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <select
+                                        className="input"
+                                        value={epocaNovaAssociacao}
+                                        onChange={(e) => setEpocaNovaAssociacao(e.target.value)}
+                                    >
+                                        {epocasGeradas.map((ep) => (
+                                            <option key={ep} value={ep}>
+                                                {ep}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {modalidadesDisponiveisParaAnexar.length === 0 && (
+                                    <p className="subtle">
+                                        Não existem modalidades disponíveis para anexar nesta época.
+                                    </p>
+                                )}
+
+                                <div className="actions">
+                                    <button
+                                        className="btn btn-primary"
+                                        type="button"
+                                        onClick={onAnexarExistente}
+                                        disabled={!modalidadeExistenteId}
+                                    >
+                                        Anexar ao clube
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {podeGerir && (
+                        <div className="card" style={{ marginBottom: 16 }}>
+                            <h2>Criar nova modalidade</h2>
+
+                            <div className="row">
+                                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                    <span className="modalidade-figura-circle" style={{ width: 74, height: 74 }}>
+                                        <span className="menu-style-icon" style={{ width: 48, height: 48 }}>
+                                            <img
+                                                className="atividade-generated-icon"
+                                                src={getModalidadeIcon(novoNome || "Modalidade")}
+                                                alt={novoNome || "Modalidade"}
+                                            />
+                                        </span>
+                                    </span>
+                                    <span className="subtle" style={{ fontSize: 13 }}>
+                                        Pré-visualização do ícone gerado automaticamente
+                                    </span>
+                                </div>
+
+                                <input
+                                    className="input"
+                                    placeholder="Nome *"
+                                    value={novoNome}
+                                    onChange={(e) => setNovoNome(e.target.value)}
+                                />
+                                <input
+                                    className="input"
+                                    placeholder="Descrição (opcional)"
+                                    value={novaDescricao}
+                                    onChange={(e) => setNovaDescricao(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="actions">
+                                <button className="btn btn-primary" type="button" onClick={onCriar}>
+                                    Criar
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
