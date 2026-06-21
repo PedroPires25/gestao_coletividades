@@ -68,6 +68,54 @@ public class EventoColetividadeDAO {
         return lista;
     }
 
+    public List<Map<String, Object>> listarTodosEventos(String estado) {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("""
+            SELECT ce.id, ce.coletividade_id, ce.coletividade_atividade_id, ce.titulo, ce.descricao,
+                   ce.data_evento, ce.hora_inicio, ce.hora_fim, ce.local_evento, ce.responsavel,
+                   ce.max_participantes, ce.permite_inscricao, ce.estado, ce.criado_por,
+                   ce.created_at, ce.updated_at,
+                   a.nome AS atividade_nome,
+                   (
+                       SELECT COUNT(*)
+                       FROM coletividade_evento_inscricao cei
+                       WHERE cei.evento_id = ce.id
+                         AND cei.estado = 'Confirmado'
+                   ) AS participantes_confirmados
+            FROM coletividade_evento ce
+            LEFT JOIN coletividade_atividade ca ON ca.id = ce.coletividade_atividade_id
+            LEFT JOIN atividade a ON a.id = ca.atividade_id
+            WHERE ce.data_evento >= CURRENT_DATE
+        """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (estado != null && !estado.isBlank()) {
+            sql.append(" AND ce.estado = ?");
+            params.add(estado);
+        }
+
+        sql.append(" ORDER BY ce.data_evento ASC, ce.hora_inicio ASC, ce.titulo");
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapEvento(rs));
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.severe(e.toString());
+        }
+
+        return lista;
+    }
+
     public Map<String, Object> obterEvento(int id) {
         String sql = """
             SELECT ce.id, ce.coletividade_id, ce.coletividade_atividade_id, ce.titulo, ce.descricao,

@@ -41,6 +41,16 @@ public class EventoColetividadeRestController {
         public String nomeParticipante;
     }
 
+    @GetMapping("/eventos")
+    public ResponseEntity<List<Map<String, Object>>> listarTodosEventos(
+            @RequestParam(required = false) String estado
+    ) {
+        if (!SecurityUtils.isSuperAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas Super-Administradores podem listar todos os eventos de coletividades.");
+        }
+        return ResponseEntity.ok(eventoDAO.listarTodosEventos(estado));
+    }
+
     @GetMapping("/{coletividadeId}/eventos")
     public ResponseEntity<List<Map<String, Object>>> listarEventos(
             @PathVariable int coletividadeId,

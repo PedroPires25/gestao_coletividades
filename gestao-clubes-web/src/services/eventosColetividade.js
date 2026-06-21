@@ -47,6 +47,13 @@ export async function getEventosColetividade(coletividadeId, params = {}) {
     return http(`/coletividades/${coletividadeId}/eventos${suffix}`);
 }
 
+export async function getTodosEventosColetividade(params = {}) {
+    const search = new URLSearchParams();
+    if (params.estado) search.set("estado", params.estado);
+    const suffix = search.toString() ? `?${search.toString()}` : "";
+    return http(`/coletividades/eventos${suffix}`);
+}
+
 export async function criarEventoColetividade(coletividadeId, body) {
     return http(`/coletividades/${coletividadeId}/eventos`, {
         method: "POST",
