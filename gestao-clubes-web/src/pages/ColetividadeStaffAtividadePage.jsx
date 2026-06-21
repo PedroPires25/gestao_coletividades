@@ -12,7 +12,7 @@ import {
     removerAfetacaoStaff,
     updateStaffColetividade,
 } from "../services/staffColetividade";
-import atletasIcon from "../assets/atletas.svg";
+import { getModalidadeIcon } from "../assets/modalidade-icons";
 import { validateTelefone } from "../utils/validation";
 
 function formatDateOnly(value) {
@@ -109,7 +109,7 @@ export default function ColetividadeStaffAtividadePage() {
             setAtividadeAtiva(atividade || null);
             setRows(Array.isArray(staffRows) ? staffRows : []);
             setCargos(cargosLista);
-            setForm((prev) => ({ ...prev, cargoId: prev.cargoId || String(cargosLista[0]?.id || "") }));
+            setForm((prev) => ({ ...prev, cargoId: String(cargosLista[0]?.id || "") }));
         } catch (e) {
             setErro(e.message || "Não foi possível carregar o staff.");
         } finally {
@@ -241,6 +241,8 @@ export default function ColetividadeStaffAtividadePage() {
         }
     }
 
+    const iconSrc = atividadeAtiva ? getModalidadeIcon(atividadeAtiva.atividade?.nome) : null;
+
     return (
         <>
             <SideMenu title="Gestão de Coletividades" subtitle={coletividade?.nome || "Coletividade"} logoHref="/menu" logoSrc="/LOGO_GCDC04.png" items={menuItems} />
@@ -248,7 +250,7 @@ export default function ColetividadeStaffAtividadePage() {
                 <div className="page-title page-title-with-icon">
                     <div className="page-title-main-wrap">
                         <span className="page-title-icon-circle">
-                            <img src={atletasIcon} alt="Staff" className="page-title-icon" />
+                            <img src={iconSrc} alt="Staff" className="page-title-icon" />
                         </span>
                         <div className="page-title-texts">
                             <h1>{atividadeAtiva?.atividade?.nome || "Staff da atividade"}</h1>

@@ -5,7 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 import { getColetividadeById } from "../api";
 import { getAtividadesByColetividade } from "../services/coletividadeAtividades";
 import atletasIcon from "../assets/atletas.svg";
-import { getAtividadeIcon } from "../assets/atividade-icons";
+import { getModalidadeIcon } from "../assets/modalidade-icons";
 
 const COLOR_CLASSES = ["icon-turquoise", "icon-orange", "icon-red", "icon-green", "icon-purple"];
 
@@ -102,7 +102,7 @@ export default function ColetividadeStaffPage() {
                                     >
                                         <span className="modalidade-figura-circle">
                                             <span className="menu-style-icon">
-                                                <img className="atividade-generated-icon" src={getAtividadeIcon(nome)} alt={nome} />
+                                                <img className="atividade-generated-icon" src={getModalidadeIcon(nome)} alt={nome} />
                                             </span>
                                         </span>
                                         <span className="modalidade-figura-label">{nome}</span>
