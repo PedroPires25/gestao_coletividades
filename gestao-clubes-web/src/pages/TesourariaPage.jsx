@@ -175,7 +175,7 @@ export default function TesourariaPage() {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setErro("");
         if (tab === 0) carregarTaxasMens();
-        else if (tab === 1) carregarTaxasIns();
+        else if (tab === 1) { carregarTaxasIns(); carregarInscricoes(); }
         else if (tab === 2) carregarPagamentos();
         else if (tab === 3) carregarDividas();
         else if (tab === 4) carregarRecebimentos();
@@ -486,105 +486,122 @@ export default function TesourariaPage() {
     // ==========================================
     // EXPORTAÇÃO
     // ==========================================
-    function exportPagamentosCsv() {
-        const cols = [
-            { key: "atletaNome", label: "Atleta" }, { key: "escalaoNome", label: "Escalão" },
-            { key: "mes", label: "Mês" }, { key: "ano", label: "Ano" },
-            { key: "valorDevido", label: "Valor Devido (€)" }, { key: "valorPago", label: "Valor Pago (€)" },
-            { key: "valorDivida", label: "Dívida (€)" }, { key: "estado", label: "Estado" },
-            { key: "dataPagamento", label: "Data Pagamento" }, { key: "metodoPagamento", label: "Método" },
-        ];
-        const data = pagamentos.map((r) => ({ ...r, mes: nomeMes(r.mes) }));
-        exportToCsv(data, cols, `pagamentos_${clube?.nome || clubeId}.csv`);
+    function getDadosExportacaoTesouraria() {
+        const nomeClube = clube?.nome || `clube_${clubeId}`;
+        switch (tab) {
+            case 0: // Mensalidades
+                return {
+                    data: escaloes.map(e => ({ escalao: e.nome, valor: editMens[e.id] || "0.00" })),
+                    cols: [{ key: "escalao", label: "Escalão" }, { key: "valor", label: "Valor Mensal (€)" }],
+                    title: `Mensalidades por Escalão (${epocaMens})`,
+                    filename: `Tesouraria_Mensalidades_${epocaMens.replace("/", "-")}_${nomeClube}`
+                };
+            case 1: // Inscrições
+                return {
+                    data: inscricoes,
+                    cols: [
+                        { key: "atletaNome", label: "Atleta" }, { key: "epoca", label: "Época" },
+                        { key: "valorInscricao", label: "Valor €" }, { key: "estado", label: "Estado" },
+                        { key: "dataPagamento", label: "Data" }, { key: "metodoPagamento", label: "Método" },
+                    ],
+                    title: "Inscrições de Atletas",
+                    filename: `Tesouraria_Inscricoes_${filtroInsc.epoca.replace("/", "-")}_${nomeClube}`
+                };
+            case 2: // Pagamentos
+                return {
+                    data: pagamentos.map(p => ({ ...p, mes: nomeMes(p.mes) })),
+                    cols: [
+                        { key: "atletaNome", label: "Atleta" }, { key: "escalaoNome", label: "Escalão" },
+                        { key: "mes", label: "Mês" }, { key: "ano", label: "Ano" },
+                        { key: "valorDevido", label: "Valor Devido (€)" }, { key: "valorPago", label: "Valor Pago (€)" },
+                        { key: "valorDivida", label: "Dívida (€)" }, { key: "estado", label: "Estado" },
+                        { key: "dataPagamento", label: "Data Pagamento" }, { key: "metodoPagamento", label: "Método" },
+                    ],
+                    title: "Pagamentos de Mensalidades",
+                    filename: `Tesouraria_Pagamentos_${filtroPag.ano}-${filtroPag.mes}_${nomeClube}`
+                };
+            case 3: // Dívidas
+                return {
+                    data: dividas.map(d => ({ ...d, mes: nomeMes(d.mes) })),
+                    cols: [
+                        { key: "atletaNome", label: "Atleta" }, { key: "escalaoNome", label: "Escalão" },
+                        { key: "mes", label: "Mês" }, { key: "ano", label: "Ano" },
+                        { key: "valorDevido", label: "Devido €" }, { key: "valorPago", label: "Pago €" },
+                        { key: "valorDivida", label: "Dívida €" }, { key: "estado", label: "Estado" },
+                    ],
+                    title: "Mensalidades em Dívida",
+                    filename: `Tesouraria_Dividas_${filtroDiv.ano}-${filtroDiv.mes}_${nomeClube}`
+                };
+            case 4: // Recebimentos
+                return {
+                    data: recebimentos,
+                    cols: [
+                        { key: "escalaoNome", label: "Escalão" }, { key: "numAtletas", label: "Nº Atletas" },
+                        { key: "totalPrevisto", label: "Total Previsto €" }, { key: "totalRecebido", label: "Total Recebido €" },
+                        { key: "totalDivida", label: "Total Dívida €" }, { key: "percentagemCobranca", label: "Cobrança %" },
+                    ],
+                    title: "Recebimentos por Escalão",
+                    filename: `Tesouraria_Recebimentos_${filtroRec.ano}-${filtroRec.mes}_${nomeClube}`
+                };
+            case 5: // Avisos
+                return {
+                    data: avisoAtletas.filter(a => avisoSelecionados.includes(a.atletaId)),
+                    cols: [
+                        { key: "atletaNome", label: "Atleta" }, { key: "mes", label: "Mês" },
+                        { key: "ano", label: "Ano" }, { key: "valorDivida", label: "Dívida (€)" }
+                    ],
+                    title: "Avisos de Pagamento",
+                    filename: `Tesouraria_Avisos_${avisoAno}-${avisoMes}_${nomeClube}`
+                };
+            case 6: // Seguros
+                return {
+                    data: seguros,
+                    cols: [
+                        { key: "atletaNome", label: "Atleta" }, { key: "escalaoNome", label: "Escalão" },
+                        { key: "epoca", label: "Época" },
+                        { key: "valorDevido", label: "Valor Devido (€)" }, { key: "valorPago", label: "Valor Pago (€)" },
+                        { key: "valorDivida", label: "Dívida (€)" }, { key: "estado", label: "Estado" },
+                        { key: "dataPagamento", label: "Data Pagamento" }, { key: "metodoPagamento", label: "Método" },
+                    ],
+                    title: "Seguros de Atletas",
+                    filename: `Tesouraria_Seguros_${filtroSeg.epoca.replace("/", "-")}_${nomeClube}`
+                };
+            default:
+                return null;
+        }
     }
 
-    function exportPagamentosPdf() {
-        const cols = [
-            { key: "atletaNome", label: "Atleta" }, { key: "escalaoNome", label: "Escalão" },
-            { key: "mes", label: "Mês" }, { key: "ano", label: "Ano" },
-            { key: "valorDevido", label: "Devido €" }, { key: "valorPago", label: "Pago €" },
-            { key: "estado", label: "Estado" },
-        ];
-        const data = pagamentos.map((r) => ({ ...r, mes: nomeMes(r.mes) }));
-        exportToPdf({ data, columns: cols, title: "Pagamentos de Mensalidades", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `pagamentos_${clube?.nome || clubeId}.pdf`, generatedText: "Documento emitido em" });
-    }
+    function handleExport(format) {
+        const exportData = getDadosExportacaoTesouraria();
+        if (!exportData || exportData.data.length === 0) {
+            setErro("Não existem dados para exportar.");
+            return;
+        }
 
-    function exportDividasCsv() {
-        const cols = [
-            { key: "atletaNome", label: "Atleta" }, { key: "escalaoNome", label: "Escalão" },
-            { key: "mes", label: "Mês" }, { key: "ano", label: "Ano" },
-            { key: "valorDevido", label: "Devido €" }, { key: "valorPago", label: "Pago €" },
-            { key: "valorDivida", label: "Dívida €" }, { key: "estado", label: "Estado" },
-        ];
-        const data = dividas.map((r) => ({ ...r, mes: nomeMes(r.mes) }));
-        exportToCsv(data, cols, `dividas_${clube?.nome || clubeId}.csv`);
-    }
-
-    function exportDividasPdf() {
-        const cols = [
-            { key: "atletaNome", label: "Atleta" }, { key: "escalaoNome", label: "Escalão" },
-            { key: "mes", label: "Mês" }, { key: "ano", label: "Ano" },
-            { key: "valorDivida", label: "Dívida €" }, { key: "estado", label: "Estado" },
-        ];
-        const data = dividas.map((r) => ({ ...r, mes: nomeMes(r.mes) }));
-        exportToPdf({ data, columns: cols, title: "Mensalidades em Dívida", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `dividas_${clube?.nome || clubeId}.pdf`, generatedText: "Relatório criado em" });
-    }
-
-    function exportRecebimentosCsv() {
-        const cols = [
-            { key: "escalaoNome", label: "Escalão" }, { key: "numAtletas", label: "Nº Atletas" },
-            { key: "totalPrevisto", label: "Total Previsto €" }, { key: "totalRecebido", label: "Total Recebido €" },
-            { key: "totalDivida", label: "Total Dívida €" }, { key: "percentagemCobranca", label: "Cobrança %" },
-        ];
-        exportToCsv(recebimentos, cols, `recebimentos_${clube?.nome || clubeId}.csv`);
-    }
-
-    function exportRecebimentosPdf() {
-        const cols = [
-            { key: "escalaoNome", label: "Escalão" }, { key: "numAtletas", label: "Atletas" },
-            { key: "totalPrevisto", label: "Previsto €" }, { key: "totalRecebido", label: "Recebido €" },
-            { key: "totalDivida", label: "Dívida €" }, { key: "percentagemCobranca", label: "%" },
-        ];
-        exportToPdf({ data: recebimentos, columns: cols, title: "Recebimentos por Escalão", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `recebimentos_${clube?.nome || clubeId}.pdf`, generatedText: "Relatório criado em" });
-    }
-
-    function exportInscricoesCsv() {
-        const cols = [
-            { key: "atletaNome", label: "Atleta" }, { key: "epoca", label: "Época" },
-            { key: "valorInscricao", label: "Valor €" }, { key: "estado", label: "Estado" },
-            { key: "dataPagamento", label: "Data" }, { key: "metodoPagamento", label: "Método" },
-        ];
-        exportToCsv(inscricoes, cols, `inscricoes_${clube?.nome || clubeId}.csv`);
-    }
-
-    function exportInscricoesPdf() {
-        const cols = [
-            { key: "atletaNome", label: "Atleta" }, { key: "epoca", label: "Época" },
-            { key: "valorInscricao", label: "Valor €" }, { key: "estado", label: "Estado" },
-            { key: "dataPagamento", label: "Data" },
-        ];
-        exportToPdf({ data: inscricoes, columns: cols, title: "Inscrições de Atletas", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `inscricoes_${clube?.nome || clubeId}.pdf`, generatedText: "Documento emitido em" });
-    }
-
-    function exportSegurosCsv() {
-        const cols = [
-            { key: "atletaNome", label: "Atleta" }, { key: "escalaoNome", label: "Escalão" },
-            { key: "epoca", label: "Época" },
-            { key: "valorDevido", label: "Valor Devido (€)" }, { key: "valorPago", label: "Valor Pago (€)" },
-            { key: "valorDivida", label: "Dívida (€)" }, { key: "estado", label: "Estado" },
-            { key: "dataPagamento", label: "Data Pagamento" }, { key: "metodoPagamento", label: "Método" },
-        ];
-        exportToCsv(seguros, cols, `seguros_${clube?.nome || clubeId}.csv`);
-    }
-
-    function exportSegurosPdf() {
-        const cols = [
-            { key: "atletaNome", label: "Atleta" }, { key: "escalaoNome", label: "Escalão" },
-            { key: "epoca", label: "Época" },
-            { key: "valorDevido", label: "Devido €" }, { key: "valorPago", label: "Pago €" },
-            { key: "estado", label: "Estado" },
-        ];
-        exportToPdf({ data: seguros, columns: cols, title: "Seguros de Atletas", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), filename: `seguros_${clube?.nome || clubeId}.pdf`, generatedText: "Documento emitido em" });
+        const { data, cols, title, filename } = exportData;
+        
+        if (format === 'csv') {
+            exportToCsv(data, cols, `${filename}.csv`);
+        } else if (format === 'pdf') {
+            exportToPdf({
+                data,
+                columns: cols,
+                title,
+                clubName: clube?.nome,
+                clubLogoUrl: getUploadUrl(clube?.logoPath),
+                filename: `${filename}.pdf`,
+                generatedText: "Documento emitido em"
+            });
+        } else if (format === 'print') {
+            printPdf({
+                data,
+                columns: cols,
+                title,
+                clubName: clube?.nome,
+                clubLogoUrl: getUploadUrl(clube?.logoPath),
+                generatedText: "Documento emitido em"
+            });
+        }
     }
 
     // ==========================================
@@ -638,6 +655,9 @@ export default function TesourariaPage() {
                                                 {EPOCAS.map((ep) => <option key={ep} value={ep}>{ep}</option>)}
                                             </select>
                                             <button type="button" className="btn btn-sm" onClick={carregarTaxasMens}>Carregar</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('csv')}>CSV</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('pdf')}>PDF</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('print')}>Imprimir</button>
                                         </div>
                                     </div>
                                     <p className="cell-muted" style={{ marginBottom: 12, fontSize: "0.85rem" }}>
@@ -722,11 +742,9 @@ export default function TesourariaPage() {
                                             <span className="toolbar-count">{inscricoes.length}</span>
                                         </div>
                                         <div style={{ display: "flex", gap: 6 }}>
-                                            {inscricoes.length > 0 && <>
-                                                <button type="button" className="btn btn-sm" onClick={exportInscricoesCsv}>CSV</button>
-                                                <button type="button" className="btn btn-sm" onClick={exportInscricoesPdf}>PDF</button>
-                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: inscricoes.map((r) => ({ ...r })), columns: [{ key: "atletaNome", label: "Atleta" }, { key: "estado", label: "Estado" }], title: "Inscrições", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), generatedText: "Documento emitido em" })}>Imprimir</button>
-                                            </>}
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('csv')}>CSV</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('pdf')}>PDF</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('print')}>Imprimir</button>
                                             <button type="button" className="btn" onClick={() => { setShowFormInsc((p) => !p); setEditInscId(null); }}>
                                                 {showFormInsc ? "Fechar" : "Registar inscrição"}
                                             </button>
@@ -838,11 +856,9 @@ export default function TesourariaPage() {
                                             <span className="toolbar-count">{pagamentos.length}</span>
                                         </div>
                                         <div style={{ display: "flex", gap: 6 }}>
-                                            {pagamentos.length > 0 && <>
-                                                <button type="button" className="btn btn-sm" onClick={exportPagamentosCsv}>CSV</button>
-                                                <button type="button" className="btn btn-sm" onClick={exportPagamentosPdf}>PDF</button>
-                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: pagamentos.map((r) => ({ ...r, mes: nomeMes(r.mes) })), columns: [{ key: "atletaNome", label: "Atleta" }, { key: "mes", label: "Mês" }, { key: "ano", label: "Ano" }, { key: "estado", label: "Estado" }], title: "Pagamentos", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), generatedText: "Documento emitido em" })}>Imprimir</button>
-                                            </>}
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('csv')}>CSV</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('pdf')}>PDF</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('print')}>Imprimir</button>
                                             <button type="button" className="btn" onClick={() => setShowFormPag((p) => !p)}>
                                                 {showFormPag ? "Fechar" : "Registar pagamento"}
                                             </button>
@@ -979,13 +995,11 @@ export default function TesourariaPage() {
                                             <h2>Mensalidades em Dívida</h2>
                                             <span className="toolbar-count">{dividas.length}</span>
                                         </div>
-                                        {dividas.length > 0 && (
-                                            <div style={{ display: "flex", gap: 6 }}>
-                                                <button type="button" className="btn btn-sm" onClick={exportDividasCsv}>CSV</button>
-                                                <button type="button" className="btn btn-sm" onClick={exportDividasPdf}>PDF</button>
-                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: dividas.map((r) => ({ ...r, mes: nomeMes(r.mes) })), columns: [{ key: "atletaNome", label: "Atleta" }, { key: "mes", label: "Mês" }, { key: "ano", label: "Ano" }, { key: "valorDivida", label: "Dívida €" }], title: "Mensalidades em Dívida", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), generatedText: "Relatório criado em" })}>Imprimir</button>
-                                            </div>
-                                        )}
+                                        <div style={{ display: "flex", gap: 6 }}>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('csv')}>CSV</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('pdf')}>PDF</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('print')}>Imprimir</button>
+                                        </div>
                                     </div>
                                     {/* Filtros */}
                                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
@@ -1040,11 +1054,9 @@ export default function TesourariaPage() {
                                     <div className="modalidades-toolbar">
                                         <div className="toolbar-title-group"><h2>Recebimentos por Escalão</h2></div>
                                         <div style={{ display: "flex", gap: 6 }}>
-                                            {recebimentos.length > 0 && <>
-                                                <button type="button" className="btn btn-sm" onClick={exportRecebimentosCsv}>CSV</button>
-                                                <button type="button" className="btn btn-sm" onClick={exportRecebimentosPdf}>PDF</button>
-                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: recebimentos, columns: [{ key: "escalaoNome", label: "Escalão" }, { key: "totalRecebido", label: "Recebido €" }, { key: "totalDivida", label: "Dívida €" }], title: "Recebimentos", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), generatedText: "Relatório criado em" })}>Imprimir</button>
-                                            </>}
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('csv')}>CSV</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('pdf')}>PDF</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('print')}>Imprimir</button>
                                         </div>
                                     </div>
                                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
@@ -1105,6 +1117,11 @@ export default function TesourariaPage() {
                                 <div className="card">
                                     <div className="modalidades-toolbar">
                                         <div className="toolbar-title-group"><h2>Avisos de Pagamento</h2></div>
+                                        <div style={{ display: "flex", gap: 6 }}>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('csv')}>CSV</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('pdf')}>PDF</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('print')}>Imprimir</button>
+                                        </div>
                                     </div>
                                     <p className="cell-muted" style={{ marginBottom: 16, fontSize: "0.85rem" }}>
                                         Envie um aviso de pagamento por email aos atletas com mensalidades em dívida.
@@ -1213,11 +1230,9 @@ export default function TesourariaPage() {
                                             <span className="toolbar-count">{seguros.length}</span>
                                         </div>
                                         <div style={{ display: "flex", gap: 6 }}>
-                                            {seguros.length > 0 && <>
-                                                <button type="button" className="btn btn-sm" onClick={exportSegurosCsv}>CSV</button>
-                                                <button type="button" className="btn btn-sm" onClick={exportSegurosPdf}>PDF</button>
-                                                <button type="button" className="btn btn-sm" onClick={() => printPdf({ data: seguros, columns: [{ key: "atletaNome", label: "Atleta" }, { key: "epoca", label: "Época" }, { key: "estado", label: "Estado" }], title: "Seguros de Atletas", clubName: clube?.nome, clubLogoUrl: getUploadUrl(clube?.logoPath), generatedText: "Documento emitido em" })}>Imprimir</button>
-                                            </>}
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('csv')}>CSV</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('pdf')}>PDF</button>
+                                            <button type="button" className="btn btn-sm" onClick={() => handleExport('print')}>Imprimir</button>
                                             <button type="button" className="btn" onClick={() => { setShowFormSeg((p) => !p); setEditSegId(null); }}>
                                                 {showFormSeg ? "Fechar" : "Registar seguro"}
                                             </button>
