@@ -1864,14 +1864,19 @@ body.theme-light .menu-icon-purple {
 }
 
 .event-reminder-card {
-    background: var(--bg-card-soft);
-    border: 1px solid #f59e0b;
+    background: rgba(13, 20, 38, 0.95);
+    border: 1px solid rgba(245, 158, 11, 0.6);
     border-left: 4px solid #f59e0b;
     border-radius: 14px;
-    padding: 18px 20px;
-    max-width: 340px;
+    padding: 20px 22px;
+    max-width: 380px;
     width: calc(100vw - 48px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.55),
+        0 2px 8px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -1887,14 +1892,14 @@ body.theme-light .menu-icon-purple {
 .event-reminder-title {
     font-size: 0.85rem;
     font-weight: 700;
-    color: #f59e0b;
+    color: #fbbf24;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
 .event-reminder-subtitle {
     font-size: 0.8rem;
-    color: var(--muted);
+    color: #94a3b8;
     margin: 4px 0 6px;
     font-weight: 500;
 }
@@ -1908,23 +1913,28 @@ body.theme-light .menu-icon-purple {
 
 .event-reminder-nav-count {
     font-size: 0.8rem;
-    color: var(--muted);
+    color: #94a3b8;
 }
 
 .event-reminder-close {
     background: none;
     border: none;
-    color: var(--muted);
+    color: #94a3b8;
     font-size: 1.1rem;
     cursor: pointer;
     padding: 0 4px;
     line-height: 1;
+    transition: color 0.15s;
+}
+
+.event-reminder-close:hover {
+    color: #e2e8f0;
 }
 
 .event-reminder-event-name {
     font-size: 1rem;
     font-weight: 700;
-    color: var(--text);
+    color: #f1f5f9;
     margin: 0;
 }
 
@@ -1933,7 +1943,7 @@ body.theme-light .menu-icon-purple {
     flex-direction: column;
     gap: 4px;
     font-size: 0.85rem;
-    color: var(--muted);
+    color: #cbd5e1;
 }
 
 .event-reminder-actions {
