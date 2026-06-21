@@ -473,4 +473,41 @@ public class UtenteDAO {
 
         return lista;
     }
+
+    /**
+     * Devolve os nomes das atividades associadas ao utente/inscrito (por e-mail) numa coletividade.
+     * Suporta múltiplas inscrições ativas.
+     */
+    public List<String> listarNomesAtividadesPorEmailEColetividade(String email, int coletividadeId) {
+        List<String> nomes = new ArrayList<>();
+        if (email == null || email.isBlank()) return nomes;
+
+        String sql = """
+            SELECT DISTINCT a.nome
+            FROM inscrito i
+            INNER JOIN inscrito_coletividade_atividade ica ON ica.inscrito_id = i.id
+            INNER JOIN coletividade_atividade ca ON ca.id = ica.coletividade_atividade_id
+            INNER JOIN atividade a ON a.id = ca.atividade_id
+            WHERE LOWER(i.email) = LOWER(?)
+              AND ca.coletividade_id = ?
+              AND (ica.data_fim IS NULL OR ica.data_fim >= CURDATE())
+              AND ica.ativo = 1
+            ORDER BY a.nome
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email.trim());
+            ps.setInt(2, coletividadeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    nomes.add(rs.getString("nome"));
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.severe("listarNomesAtividadesPorEmailEColetividade (utente): " + e.getMessage());
+        }
+
+        return nomes;
+    }
 }

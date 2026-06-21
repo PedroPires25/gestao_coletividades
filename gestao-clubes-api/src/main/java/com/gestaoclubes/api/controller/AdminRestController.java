@@ -57,6 +57,7 @@ public class AdminRestController {
         public Integer modalidadeId;
         public Integer coletividadeId;
         public Integer atividadeId;
+        public String atividadeNome;
         public String nome;
         public String logoPath;
 
@@ -146,7 +147,12 @@ public class AdminRestController {
 
         return lista.stream()
                 .filter(u -> podeConsultarUtilizador(estadoFiltro, u))
-                .map(u -> new UtilizadorAdminDto(u, perfilDAO.obterDescricaoPerfil(u.getPerfilId())))
+                .map(u -> {
+                    String role = perfilDAO.obterDescricaoPerfil(u.getPerfilId());
+                    UtilizadorAdminDto dto = new UtilizadorAdminDto(u, role);
+                    dto.atividadeNome = obterAtividadeNomeParaUtilizador(role, u);
+                    return dto;
+                })
                 .toList();
     }
 
@@ -842,5 +848,30 @@ public class AdminRestController {
 
     private boolean isGestorLocal() {
         return SecurityUtils.isAdministradorEstrutura() || SecurityUtils.isSecretario();
+    }
+
+    /**
+     * Obtém os nomes das atividades associadas ao utilizador a partir das tabelas de domínio.
+     * Usada para enriquecer o DTO da listagem de utilizadores aprovados.
+     */
+    private String obterAtividadeNomeParaUtilizador(String role, Utilizador u) {
+        if (u == null || u.getColetividadeId() == null || u.getUtilizador() == null) return null;
+
+        int coletividadeId = u.getColetividadeId();
+        String email = u.getUtilizador();
+
+        List<String> nomes;
+        if (PerfilDAO.UTENTE.equals(role)) {
+            nomes = utenteDAO.listarNomesAtividadesPorEmailEColetividade(email, coletividadeId);
+        } else if (PerfilDAO.STAFF.equals(role)
+                || PerfilDAO.PROFESSOR.equals(role)
+                || PerfilDAO.SECRETARIO.equals(role)
+                || "TREINADOR_COLETIVIDADE".equals(role)) {
+            nomes = staffColetividadeDAO.listarNomesAtividadesPorEmailEColetividade(email, coletividadeId);
+        } else {
+            return null;
+        }
+
+        return nomes.isEmpty() ? null : String.join(", ", nomes);
     }
 }

@@ -15,7 +15,16 @@ import {
 } from "../api";
 
 export default function AdminApprovedUsersPage() {
-    const { logout, isSuperAdmin } = useAuth();
+    const {
+        logout,
+        isSuperAdmin,
+        isScopedAdmin,
+        clubeId: adminClubeId,
+        coletividadeId: adminColetividadeId,
+    } = useAuth();
+
+    const isAdminClube = isScopedAdmin && !!adminClubeId && !adminColetividadeId;
+    const isAdminColetividade = isScopedAdmin && !!adminColetividadeId && !adminClubeId;
     const navigate = useNavigate();
 
     const PERFIL_LABELS = {
@@ -113,6 +122,7 @@ export default function AdminApprovedUsersPage() {
                     modalidadeId: u.modalidadeId ?? "",
                     coletividadeId: u.coletividadeId ?? "",
                     atividadeId: u.atividadeId ?? "",
+                    atividadeNome: u.atividadeNome ?? "",
                 };
                 editMap[u.id] = false;
             }
@@ -195,7 +205,9 @@ export default function AdminApprovedUsersPage() {
                 ...(prev[userId] || {}),
                 [field]: value,
                 // Limpar atividade ao mudar coletividade
-                ...(field === "coletividadeId" ? { atividadeId: "" } : {}),
+                ...(field === "coletividadeId" ? { atividadeId: "", atividadeNome: "" } : {}),
+                // Limpar nome em cache ao mudar atividade directamente
+                ...(field === "atividadeId" ? { atividadeNome: "" } : {}),
             },
         }));
         if (field === "coletividadeId" && value) {
@@ -210,8 +222,11 @@ export default function AdminApprovedUsersPage() {
         }));
         if (open) {
             const draft = afetacaoDrafts[userId] || {};
-            if (draft.coletividadeId) {
-                carregarAtividadesParaColetividade(draft.coletividadeId);
+            const coletividadeToLoad = isAdminColetividade
+                ? adminColetividadeId
+                : (draft.coletividadeId || null);
+            if (coletividadeToLoad) {
+                carregarAtividadesParaColetividade(coletividadeToLoad);
             }
         }
     }
@@ -259,13 +274,34 @@ export default function AdminApprovedUsersPage() {
 
         const draft = afetacaoDrafts[u.id] || {};
 
+        // Determinar os valores finais consoante o tipo de administrador
+        let finalClubeId, finalModalidadeId, finalColetividadeId, finalAtividadeId;
+
+        if (isAdminClube) {
+            finalClubeId = adminClubeId;
+            finalModalidadeId = draft.modalidadeId === "" ? null : Number(draft.modalidadeId) || null;
+            finalColetividadeId = null;
+            finalAtividadeId = null;
+        } else if (isAdminColetividade) {
+            finalClubeId = null;
+            finalModalidadeId = null;
+            finalColetividadeId = adminColetividadeId;
+            finalAtividadeId = draft.atividadeId === "" ? null : Number(draft.atividadeId) || null;
+        } else {
+            // Super Admin — todos os campos livres
+            finalClubeId = draft.clubeId === "" ? null : Number(draft.clubeId) || null;
+            finalModalidadeId = draft.modalidadeId === "" ? null : Number(draft.modalidadeId) || null;
+            finalColetividadeId = draft.coletividadeId === "" ? null : Number(draft.coletividadeId) || null;
+            finalAtividadeId = draft.atividadeId === "" ? null : Number(draft.atividadeId) || null;
+        }
+
         try {
             await updateUserAfetacao(
                 u.id,
-                draft.clubeId === "" ? null : Number(draft.clubeId),
-                draft.modalidadeId === "" ? null : Number(draft.modalidadeId),
-                draft.coletividadeId === "" ? null : Number(draft.coletividadeId),
-                draft.atividadeId === "" ? null : Number(draft.atividadeId)
+                finalClubeId,
+                finalModalidadeId,
+                finalColetividadeId,
+                finalAtividadeId
             );
 
             setMsg(`Afetação de ${u.email} atualizada.`);
@@ -282,11 +318,22 @@ export default function AdminApprovedUsersPage() {
     }
 
     function renderResumoAfetacao(draft) {
+        if (isAdminClube) {
+            const modalidadeNome = draft?.modalidadeId ? modalidadesMap[String(draft.modalidadeId)] || "—" : "—";
+            return <div className="hint">Modalidade: {modalidadeNome}</div>;
+        }
+        if (isAdminColetividade) {
+            // Prefer enriched name from backend domain tables; fall back to map lookup
+            const atividadeNome = draft?.atividadeNome
+                || (draft?.atividadeId ? atividadesMap[String(draft.atividadeId)] || "—" : "—");
+            return <div className="hint">Atividade: {atividadeNome}</div>;
+        }
+        // Super Admin — informação completa
         const clubeNome = draft?.clubeId ? clubesMap[String(draft.clubeId)] || "—" : "—";
         const modalidadeNome = draft?.modalidadeId ? modalidadesMap[String(draft.modalidadeId)] || "—" : "—";
         const coletividadeNome = draft?.coletividadeId ? coletividadesMap[String(draft.coletividadeId)] || "—" : "—";
-        const atividadeNome = draft?.atividadeId ? atividadesMap[String(draft.atividadeId)] || "—" : "—";
-
+        const atividadeNome = draft?.atividadeNome
+            || (draft?.atividadeId ? atividadesMap[String(draft.atividadeId)] || "—" : "—");
         return (
             <div className="hint">
                 <div>Clube: {clubeNome} | Modalidade: {modalidadeNome}</div>
@@ -341,7 +388,7 @@ export default function AdminApprovedUsersPage() {
                                 <th>Email</th>
                                 {isSuperAdmin && <th>Perfil</th>}
                                 {isSuperAdmin && <th>Privilégios</th>}
-                                <th>Afetação</th>
+                                <th>{isAdminClube ? "Modalidade" : isAdminColetividade ? "Atividade" : "Afetação"}</th>
                                 <th>Ações</th>
                             </tr>
                             </thead>
@@ -409,24 +456,13 @@ export default function AdminApprovedUsersPage() {
                                         </td>
                                         )}
 
-                                        <td style={{ minWidth: 420 }}>
+                                        <td style={{ minWidth: isAdminClube || isAdminColetividade ? 240 : 420 }}>
                                             {isSuperAdminUser ? (
                                                 <div className="hint">Super administrador não precisa de afetação.</div>
                                             ) : isEditing ? (
-                                                <>
+                                                isAdminClube ? (
+                                                    // Admin Clube — apenas modalidade
                                                     <div className="row" style={{ gap: 8 }}>
-                                                        <select
-                                                            className="input"
-                                                            value={draft.clubeId ?? ""}
-                                                            onChange={(e) => updateAfetacaoField(u.id, "clubeId", e.target.value)}
-                                                            disabled={saving}
-                                                        >
-                                                            <option value="">Sem clube</option>
-                                                            {clubes.map((c) => (
-                                                                <option key={c.id} value={c.id}>{c.nome}</option>
-                                                            ))}
-                                                        </select>
-
                                                         <select
                                                             className="input"
                                                             value={draft.modalidadeId ?? ""}
@@ -439,20 +475,9 @@ export default function AdminApprovedUsersPage() {
                                                             ))}
                                                         </select>
                                                     </div>
-
-                                                    <div className="row" style={{ gap: 8, marginTop: 8 }}>
-                                                        <select
-                                                            className="input"
-                                                            value={draft.coletividadeId ?? ""}
-                                                            onChange={(e) => updateAfetacaoField(u.id, "coletividadeId", e.target.value)}
-                                                            disabled={saving}
-                                                        >
-                                                            <option value="">Sem coletividade</option>
-                                                            {coletividades.map((c) => (
-                                                                <option key={c.id} value={c.id}>{c.nome}</option>
-                                                            ))}
-                                                        </select>
-
+                                                ) : isAdminColetividade ? (
+                                                    // Admin Coletividade — apenas atividade
+                                                    <div className="row" style={{ gap: 8 }}>
                                                         <select
                                                             className="input"
                                                             value={draft.atividadeId ?? ""}
@@ -460,14 +485,71 @@ export default function AdminApprovedUsersPage() {
                                                             disabled={saving}
                                                         >
                                                             <option value="">Sem atividade</option>
-                                                            {(atividadesPorColetividade[String(draft.coletividadeId)] || []).map((ca) => (
+                                                            {(atividadesPorColetividade[String(adminColetividadeId)] || []).map((ca) => (
                                                                 <option key={ca.atividadeId} value={ca.atividadeId}>
                                                                     {ca.atividade?.nome || ca.atividadeId}
                                                                 </option>
                                                             ))}
                                                         </select>
                                                     </div>
-                                                </>
+                                                ) : (
+                                                    // Super Admin — todos os campos
+                                                    <>
+                                                        <div className="row" style={{ gap: 8 }}>
+                                                            <select
+                                                                className="input"
+                                                                value={draft.clubeId ?? ""}
+                                                                onChange={(e) => updateAfetacaoField(u.id, "clubeId", e.target.value)}
+                                                                disabled={saving}
+                                                            >
+                                                                <option value="">Sem clube</option>
+                                                                {clubes.map((c) => (
+                                                                    <option key={c.id} value={c.id}>{c.nome}</option>
+                                                                ))}
+                                                            </select>
+
+                                                            <select
+                                                                className="input"
+                                                                value={draft.modalidadeId ?? ""}
+                                                                onChange={(e) => updateAfetacaoField(u.id, "modalidadeId", e.target.value)}
+                                                                disabled={saving}
+                                                            >
+                                                                <option value="">Sem modalidade</option>
+                                                                {modalidades.map((m) => (
+                                                                    <option key={m.id} value={m.id}>{m.nome}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+
+                                                        <div className="row" style={{ gap: 8, marginTop: 8 }}>
+                                                            <select
+                                                                className="input"
+                                                                value={draft.coletividadeId ?? ""}
+                                                                onChange={(e) => updateAfetacaoField(u.id, "coletividadeId", e.target.value)}
+                                                                disabled={saving}
+                                                            >
+                                                                <option value="">Sem coletividade</option>
+                                                                {coletividades.map((c) => (
+                                                                    <option key={c.id} value={c.id}>{c.nome}</option>
+                                                                ))}
+                                                            </select>
+
+                                                            <select
+                                                                className="input"
+                                                                value={draft.atividadeId ?? ""}
+                                                                onChange={(e) => updateAfetacaoField(u.id, "atividadeId", e.target.value)}
+                                                                disabled={saving}
+                                                            >
+                                                                <option value="">Sem atividade</option>
+                                                                {(atividadesPorColetividade[String(draft.coletividadeId)] || []).map((ca) => (
+                                                                    <option key={ca.atividadeId} value={ca.atividadeId}>
+                                                                        {ca.atividade?.nome || ca.atividadeId}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </>
+                                                )
                                             ) : (
                                                 renderResumoAfetacao(draft)
                                             )}

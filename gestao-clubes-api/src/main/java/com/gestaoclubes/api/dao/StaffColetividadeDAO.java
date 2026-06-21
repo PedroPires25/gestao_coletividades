@@ -326,4 +326,41 @@ public class StaffColetividadeDAO {
         if (value == null || value.isBlank()) ps.setNull(index, Types.VARCHAR);
         else ps.setString(index, value);
     }
+
+    /**
+     * Devolve os nomes das atividades atribuídas ao staff (por e-mail) numa coletividade.
+     * Suporta múltiplas afetações ativas.
+     */
+    public List<String> listarNomesAtividadesPorEmailEColetividade(String email, int coletividadeId) {
+        List<String> nomes = new ArrayList<>();
+        if (email == null || email.isBlank()) return nomes;
+
+        String sql = """
+            SELECT DISTINCT a.nome
+            FROM staff_coletividade_afetacao sca
+            INNER JOIN staff_coletividade sc ON sc.id = sca.staff_coletividade_id
+            LEFT JOIN coletividade_atividade ca ON ca.id = sca.coletividade_atividade_id
+            LEFT JOIN atividade a ON a.id = ca.atividade_id
+            WHERE LOWER(sc.email) = LOWER(?)
+              AND sca.coletividade_id = ?
+              AND (sca.data_fim IS NULL OR sca.data_fim >= CURDATE())
+              AND a.nome IS NOT NULL
+            ORDER BY a.nome
+        """;
+
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email.trim());
+            ps.setInt(2, coletividadeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    nomes.add(rs.getString("nome"));
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.severe("listarNomesAtividadesPorEmailEColetividade (staff): " + e.getMessage());
+        }
+
+        return nomes;
+    }
 }
