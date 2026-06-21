@@ -1221,7 +1221,7 @@ table td:last-child {
 
 .appbar-logo img {
     height: 76px;
-    width: auto;
+    width: 200px;
     object-fit: contain;
     filter: drop-shadow(0 12px 20px rgba(0,0,0,0.55));
     transition: transform 160ms ease, filter 160ms ease, opacity 160ms ease;
@@ -2725,11 +2725,7 @@ body.theme-light .badge {
 
     .appbar-logo img {
         height: 54px;
-    }
-
-    /* Page title font size */
-    .page-title h1 {
-        font-size: 24px;
+        width: 160px;
     }
 
     /* Toolbar search full width */
@@ -3832,9 +3828,8 @@ img.avatar-circle-sm {
 
     .appbar-logo img {
         height: 42px;
+        width: 130px;
     }
-
-    /* Burger menor */
     .burger {
         width: 40px;
         height: 40px;

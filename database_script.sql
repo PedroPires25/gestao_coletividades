@@ -679,6 +679,7 @@ CREATE TABLE IF NOT EXISTS consulta_medica (
   atleta_id INT NOT NULL,
   staff_id INT NULL,
   data_consulta DATE NOT NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'REALIZADA',
   tipo VARCHAR(60) NOT NULL,
   motivo TEXT,
   diagnostico TEXT,

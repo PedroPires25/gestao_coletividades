@@ -17,6 +17,30 @@ public class StaffAfetacaoEscalaoDAO {
      * Returns the escalões assigned to the trainer (identified by {@code utilizadorId})
      * in the given clube + clube_modalidade, for active afetações.
      */
+    public List<Integer> listarIdsEscaloesPorTreinadorNoClube(int utilizadorId, int clubeId) {
+        List<Integer> ids = new ArrayList<>();
+        String sql = """
+            SELECT DISTINCT sae.escalao_id
+            FROM staff s
+            JOIN staff_afetacao sa ON sa.staff_id = s.id
+            JOIN staff_afetacao_escalao sae ON sae.staff_afetacao_id = sa.id
+            WHERE s.utilizador_id = ?
+              AND sa.clube_id = ?
+              AND (sa.data_fim IS NULL OR sa.data_fim >= CURDATE())
+        """;
+        try (Connection conn = ConexoBD.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, utilizadorId);
+            ps.setInt(2, clubeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) ids.add(rs.getInt(1));
+            }
+        } catch (SQLException e) {
+            LOGGER.severe(e.toString());
+        }
+        return ids;
+    }
+
     public List<Map<String, Object>> listarEscaloesPorTreinador(int utilizadorId, int clubeId, int clubeModalidadeId) {
         List<Map<String, Object>> lista = new ArrayList<>();
         String sql = """

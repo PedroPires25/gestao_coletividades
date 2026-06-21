@@ -186,9 +186,12 @@ public class MedicoRestController {
         if (body.dataConsulta == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "dataConsulta é obrigatório.");
         if (body.tipo == null || body.tipo.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "tipo é obrigatório.");
 
+        Date data = parseDate(body.dataConsulta, "dataConsulta");
+        String estado = determinarEstado(body.estado, data);
+
         int id = consultaMedicaDAO.inserir(
                 clubeId, body.atletaId, body.staffId,
-                parseDate(body.dataConsulta, "dataConsulta"), body.tipo, body.motivo, body.diagnostico, body.notas
+                data, estado, body.tipo, body.motivo, body.diagnostico, body.notas
         );
         if (id <= 0) throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível registar a consulta.");
         try {
@@ -210,9 +213,13 @@ public class MedicoRestController {
         exigirAcessoMedico(clubeId);
         Map<String, Object> registo = consultaMedicaDAO.buscarPorId(id);
         verificarPertenceAoClube(registo, clubeId, "Consulta não encontrada.");
+
+        Date data = parseDate(body.dataConsulta, "dataConsulta");
+        String estado = determinarEstado(body.estado, data);
+
         boolean ok = consultaMedicaDAO.atualizar(
-                id, body.staffId, parseDate(body.dataConsulta, "dataConsulta"),
-                body.tipo, body.motivo, body.diagnostico, body.notas
+                id, body.staffId, data,
+                estado, body.tipo, body.motivo, body.diagnostico, body.notas
         );
         if (ok) {
             try {
@@ -477,6 +484,20 @@ public class MedicoRestController {
         }
     }
 
+    private static String determinarEstado(String estadoRecebido, Date data) {
+        String estado = (estadoRecebido != null && !estadoRecebido.isBlank()) ? estadoRecebido.toUpperCase() : null;
+        boolean dataFutura = data != null && data.toLocalDate().isAfter(java.time.LocalDate.now());
+
+        if ("REALIZADA".equals(estado) && dataFutura) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Não é possível registar uma consulta como Realizada com data futura.");
+        }
+        if (estado == null) {
+            return dataFutura ? "AGENDADA" : "REALIZADA";
+        }
+        return estado;
+    }
+
     // ==========================================
     // Request bodies
     // ==========================================
@@ -507,6 +528,7 @@ public class MedicoRestController {
         public Integer atletaId;
         public Integer staffId;
         public String dataConsulta;
+        public String estado;
         public String tipo;
         public String motivo;
         public String diagnostico;

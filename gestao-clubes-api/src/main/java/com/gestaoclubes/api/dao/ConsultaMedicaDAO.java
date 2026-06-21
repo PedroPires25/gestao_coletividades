@@ -77,12 +77,12 @@ public class ConsultaMedicaDAO {
     }
 
     public int inserir(int clubeId, int atletaId, Integer staffId,
-                       Date dataConsulta, String tipo, String motivo,
+                       Date dataConsulta, String estado, String tipo, String motivo,
                        String diagnostico, String notas) {
         String sql = """
             INSERT INTO consulta_medica
-              (clube_id, atleta_id, staff_id, data_consulta, tipo, motivo, diagnostico, notas)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              (clube_id, atleta_id, staff_id, data_consulta, estado, tipo, motivo, diagnostico, notas)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -90,10 +90,11 @@ public class ConsultaMedicaDAO {
             ps.setInt(2, atletaId);
             setNullableInt(ps, 3, staffId);
             ps.setDate(4, dataConsulta);
-            ps.setString(5, tipo);
-            ps.setString(6, motivo);
-            ps.setString(7, diagnostico);
-            ps.setString(8, notas);
+            ps.setString(5, estado != null ? estado : "REALIZADA");
+            ps.setString(6, tipo);
+            ps.setString(7, motivo);
+            ps.setString(8, diagnostico);
+            ps.setString(9, notas);
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) return keys.getInt(1);
@@ -103,21 +104,22 @@ public class ConsultaMedicaDAO {
     }
 
     public boolean atualizar(int id, Integer staffId, Date dataConsulta,
-                             String tipo, String motivo, String diagnostico, String notas) {
+                             String estado, String tipo, String motivo, String diagnostico, String notas) {
         String sql = """
             UPDATE consulta_medica SET
-              staff_id=?, data_consulta=?, tipo=?, motivo=?, diagnostico=?, notas=?
+              staff_id=?, data_consulta=?, estado=?, tipo=?, motivo=?, diagnostico=?, notas=?
             WHERE id=?
         """;
         try (Connection conn = ConexoBD.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             setNullableInt(ps, 1, staffId);
             ps.setDate(2, dataConsulta);
-            ps.setString(3, tipo);
-            ps.setString(4, motivo);
-            ps.setString(5, diagnostico);
-            ps.setString(6, notas);
-            ps.setInt(7, id);
+            ps.setString(3, estado != null ? estado : "REALIZADA");
+            ps.setString(4, tipo);
+            ps.setString(5, motivo);
+            ps.setString(6, diagnostico);
+            ps.setString(7, notas);
+            ps.setInt(8, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) { LOGGER.severe(e.toString()); return false; }
     }
@@ -143,6 +145,7 @@ public class ConsultaMedicaDAO {
         m.put("staffId", rs.getObject("staff_id"));
         m.put("staffNome", rs.getString("staff_nome"));
         m.put("dataConsulta", dateStr(rs.getDate("data_consulta")));
+        m.put("estado", rs.getString("estado") != null ? rs.getString("estado") : "REALIZADA");
         m.put("tipo", rs.getString("tipo"));
         m.put("motivo", rs.getString("motivo"));
         m.put("diagnostico", rs.getString("diagnostico"));

@@ -9,6 +9,28 @@ import { getAtletasByClube } from "../services/atletas";
 
 const TIPOS_CONSULTA = ["Triagem", "Avaliação", "Seguimento", "Urgência", "Pré-competição", "Pós-lesão", "Outro"];
 
+const ESTADOS_CONSULTA = [
+    { value: "AGENDADA", label: "Agendada" },
+    { value: "REALIZADA", label: "Realizada" },
+    { value: "CANCELADA", label: "Cancelada" },
+    { value: "NAO_COMPARECEU", label: "Não compareceu" },
+];
+
+const ESTADO_BADGE = {
+    AGENDADA: { label: "Agendada", color: "#5b8cff" },
+    REALIZADA: { label: "Realizada", color: "#28c76f" },
+    CANCELADA: { label: "Cancelada", color: "#ff5c5c" },
+    NAO_COMPARECEU: { label: "Não compareceu", color: "#f3a32d" },
+};
+
+function estadoSugerido(dataStr) {
+    if (!dataStr) return "REALIZADA";
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const data = new Date(dataStr + "T00:00:00");
+    return data > hoje ? "AGENDADA" : "REALIZADA";
+}
+
 function fmt(val) {
     if (!val) return "-";
     return String(val).includes("T") ? String(val).split("T")[0] : String(val).slice(0, 10);
@@ -18,6 +40,7 @@ const EMPTY_FORM = {
     atletaId: "",
     staffId: "",
     dataConsulta: new Date().toISOString().slice(0, 10),
+    estado: "REALIZADA",
     tipo: "",
     motivo: "",
     diagnostico: "",
@@ -25,6 +48,21 @@ const EMPTY_FORM = {
 };
 
 function FormFields({ values, onChange: onCh, atletasList, staffList }) {
+    const isRealizada = values.estado === "REALIZADA";
+
+    function handleDateChange(e) {
+        const { value } = e.target;
+        onCh(e);
+        // Auto-suggest estado when date changes, but only if currently AGENDADA or REALIZADA
+        const currentEstado = values.estado;
+        if (currentEstado === "AGENDADA" || currentEstado === "REALIZADA") {
+            const sugerido = estadoSugerido(value);
+            if (sugerido !== currentEstado) {
+                onCh({ target: { name: "estado", value: sugerido } });
+            }
+        }
+    }
+
     return (
         <>
             <div className="row2">
@@ -50,28 +88,40 @@ function FormFields({ values, onChange: onCh, atletasList, staffList }) {
             <div className="row2">
                 <div className="row">
                     <label className="field-label">Data da consulta *</label>
-                    <input className="input" name="dataConsulta" type="date" value={values.dataConsulta} onChange={onCh} required />
+                    <input className="input" name="dataConsulta" type="date" value={values.dataConsulta} onChange={handleDateChange} required />
                 </div>
                 <div className="row">
-                    <label className="field-label">Tipo *</label>
-                    <select className="input" name="tipo" value={values.tipo} onChange={onCh} required>
-                        <option value="">Selecionar tipo</option>
-                        {TIPOS_CONSULTA.map((t) => <option key={t} value={t}>{t}</option>)}
+                    <label className="field-label">Estado *</label>
+                    <select className="input" name="estado" value={values.estado} onChange={onCh} required>
+                        {ESTADOS_CONSULTA.map((e) => (
+                            <option key={e.value} value={e.value}>{e.label}</option>
+                        ))}
                     </select>
                 </div>
+            </div>
+            <div className="row">
+                <label className="field-label">Tipo *</label>
+                <select className="input" name="tipo" value={values.tipo} onChange={onCh} required>
+                    <option value="">Selecionar tipo</option>
+                    {TIPOS_CONSULTA.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
             </div>
             <div className="row">
                 <label className="field-label">Motivo</label>
                 <textarea className="input" name="motivo" value={values.motivo} onChange={onCh} rows={2} placeholder="Motivo da consulta..." />
             </div>
-            <div className="row">
-                <label className="field-label">Diagnóstico</label>
-                <textarea className="input" name="diagnostico" value={values.diagnostico} onChange={onCh} rows={3} placeholder="Diagnóstico clínico..." />
-            </div>
-            <div className="row">
-                <label className="field-label">Notas</label>
-                <textarea className="input" name="notas" value={values.notas} onChange={onCh} rows={2} placeholder="Notas adicionais..." />
-            </div>
+            {isRealizada && (
+                <>
+                    <div className="row">
+                        <label className="field-label">Diagnóstico</label>
+                        <textarea className="input" name="diagnostico" value={values.diagnostico} onChange={onCh} rows={3} placeholder="Diagnóstico clínico..." />
+                    </div>
+                    <div className="row">
+                        <label className="field-label">Notas</label>
+                        <textarea className="input" name="notas" value={values.notas} onChange={onCh} rows={2} placeholder="Notas adicionais..." />
+                    </div>
+                </>
+            )}
         </>
     );
 }
@@ -142,6 +192,10 @@ export default function ConsultasMedicasPage() {
         if (!form.atletaId) { setErro("Atleta é obrigatório."); return; }
         if (!form.tipo) { setErro("Tipo de consulta é obrigatório."); return; }
         if (!form.dataConsulta) { setErro("Data é obrigatória."); return; }
+        if (form.estado === "REALIZADA" && estadoSugerido(form.dataConsulta) === "AGENDADA") {
+            setErro("Não é possível registar uma consulta como Realizada com data futura.");
+            return;
+        }
         setErro(""); setMsg(""); setSaving(true);
         try {
             await createConsulta(clubeId, {
@@ -167,6 +221,7 @@ export default function ConsultasMedicasPage() {
             atletaId: String(row.atletaId || ""),
             staffId: String(row.staffId || ""),
             dataConsulta: fmt(row.dataConsulta) !== "-" ? fmt(row.dataConsulta) : "",
+            estado: row.estado || "REALIZADA",
             tipo: row.tipo || "",
             motivo: row.motivo || "",
             diagnostico: row.diagnostico || "",
@@ -234,6 +289,7 @@ export default function ConsultasMedicasPage() {
                                         <tr>
                                             <th>Atleta</th>
                                             <th>Data</th>
+                                            <th>Estado</th>
                                             <th>Tipo</th>
                                             <th>Motivo</th>
                                             <th>Diagnóstico</th>
@@ -242,19 +298,34 @@ export default function ConsultasMedicasPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {consultas.map((row) => (
-                                            <tr key={row.id}>
-                                                <td>{row.atletaNome || `#${row.atletaId}`}</td>
-                                                <td>{fmt(row.dataConsulta)}</td>
-                                                <td>{row.tipo}</td>
-                                                <td className="cell-muted" style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.motivo || "-"}</td>
-                                                <td className="cell-muted" style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.diagnostico || "-"}</td>
-                                                <td className="cell-muted">{row.staffNome || "-"}</td>
-                                                <td>
-                                                    <button type="button" className="btn" onClick={() => abrirEditar(row)}>Editar</button>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        {consultas.map((row) => {
+                                            const badge = ESTADO_BADGE[row.estado] || { label: row.estado || "—", color: "#888" };
+                                            return (
+                                                <tr key={row.id}>
+                                                    <td>{row.atletaNome || `#${row.atletaId}`}</td>
+                                                    <td>{fmt(row.dataConsulta)}</td>
+                                                    <td>
+                                                        <span style={{
+                                                            display: "inline-block",
+                                                            padding: "2px 10px",
+                                                            borderRadius: 99,
+                                                            fontSize: "0.78rem",
+                                                            fontWeight: 600,
+                                                            background: badge.color + "22",
+                                                            color: badge.color,
+                                                            border: `1px solid ${badge.color}44`,
+                                                        }}>{badge.label}</span>
+                                                    </td>
+                                                    <td>{row.tipo}</td>
+                                                    <td className="cell-muted" style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.motivo || "-"}</td>
+                                                    <td className="cell-muted" style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.diagnostico || "-"}</td>
+                                                    <td className="cell-muted">{row.staffNome || "-"}</td>
+                                                    <td>
+                                                        <button type="button" className="btn" onClick={() => abrirEditar(row)}>Editar</button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>

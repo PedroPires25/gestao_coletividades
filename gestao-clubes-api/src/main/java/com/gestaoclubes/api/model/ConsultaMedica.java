@@ -8,6 +8,7 @@ public class ConsultaMedica {
     private int atletaId;
     private Integer staffId;
     private Date dataConsulta;
+    private String estado;
     private String tipo;
     private String motivo;
     private String diagnostico;
@@ -16,13 +17,14 @@ public class ConsultaMedica {
     public ConsultaMedica() {}
 
     public ConsultaMedica(int id, int clubeId, int atletaId, Integer staffId,
-                          Date dataConsulta, String tipo, String motivo,
+                          Date dataConsulta, String estado, String tipo, String motivo,
                           String diagnostico, String notas) {
         this.id = id;
         this.clubeId = clubeId;
         this.atletaId = atletaId;
         this.staffId = staffId;
         this.dataConsulta = dataConsulta;
+        this.estado = estado;
         this.tipo = tipo;
         this.motivo = motivo;
         this.diagnostico = diagnostico;
@@ -34,6 +36,7 @@ public class ConsultaMedica {
     public int getAtletaId() { return atletaId; }
     public Integer getStaffId() { return staffId; }
     public Date getDataConsulta() { return dataConsulta; }
+    public String getEstado() { return estado; }
     public String getTipo() { return tipo; }
     public String getMotivo() { return motivo; }
     public String getDiagnostico() { return diagnostico; }

@@ -100,7 +100,7 @@ public class EventoDAO {
         String sql = """
             SELECT e.id, e.titulo, e.descricao, e.data_hora, e.data_hora_fim, e.local, e.observacoes,
                    e.tipo, e.clube_modalidade_id, e.coletividade_atividade_id, e.criado_por,
-                    e.latitude, e.longitude,
+                    e.latitude, e.longitude, e.escalao_id,
                     cm.clube_id,
                     c.nome AS clube_nome,
                     m.nome AS modalidade_nome,

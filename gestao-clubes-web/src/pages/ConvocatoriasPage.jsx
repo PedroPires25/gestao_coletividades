@@ -123,7 +123,19 @@ export default function ConvocatoriasPage() {
                 getModalidadesDoClube(clubeId, { apenasAtivas: true }),
             ]);
             setClubeInfo(clubeData || null);
-            setEventos(Array.isArray(eventosData) ? eventosData : []);
+            const lista = Array.isArray(eventosData) ? eventosData : [];
+            lista.sort((a, b) => {
+                const now = Date.now();
+                const ta = a.dataHora ? Number(a.dataHora) : 0;
+                const tb = b.dataHora ? Number(b.dataHora) : 0;
+                const aFuturo = ta >= now;
+                const bFuturo = tb >= now;
+                if (aFuturo && !bFuturo) return -1;
+                if (!aFuturo && bFuturo) return 1;
+                if (aFuturo && bFuturo) return ta - tb;  // futuros: mais próximo primeiro
+                return tb - ta;  // passados: mais recente primeiro
+            });
+            setEventos(lista);
             const escaloesLista = Array.isArray(escaloesData) ? escaloesData : [];
             const modalidadesLista = Array.isArray(modalidadesData) ? modalidadesData : [];
             setEscaloes(escaloesLista);
@@ -172,6 +184,7 @@ export default function ConvocatoriasPage() {
     }
 
     async function abrirEditar(evento) {
+        if (evento.podeEditar === false) return;
         try {
             const conv = await getConvocadosConvocatoriaTreinador(clubeId, evento.id);
             const ids = (Array.isArray(conv) ? conv : []).map((a) => a.id);
@@ -556,7 +569,10 @@ export default function ConvocatoriasPage() {
                                                 </button>
                                             </td>
                                             <td>
-                                                <button type="button" className="btn btn-sm" onClick={() => abrirEditar(ev)}>Editar</button>
+                                                {ev.podeEditar
+                                                    ? <button type="button" className="btn btn-sm" onClick={() => abrirEditar(ev)}>Editar</button>
+                                                    : <span className="subtle" style={{ fontSize: "0.82em" }}>Só leitura</span>
+                                                }
                                             </td>
                                         </tr>
                                     );

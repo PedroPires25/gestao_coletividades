@@ -30,7 +30,12 @@ async function authFetch(path, options = {}) {
     const response = await fetch(`${API_URL}${path}`, { ...options, headers });
     if (!response.ok) {
         const text = await response.text().catch(() => "");
-        throw new Error(text || `Erro HTTP ${response.status}`);
+        let msg = text;
+        try {
+            const json = JSON.parse(text);
+            msg = json.message || json.error || text;
+        } catch { /* not JSON — use raw text */ }
+        throw new Error(msg || `Erro HTTP ${response.status}`);
     }
     const ct = response.headers.get("content-type") || "";
     if (ct.includes("application/json")) return response.json();

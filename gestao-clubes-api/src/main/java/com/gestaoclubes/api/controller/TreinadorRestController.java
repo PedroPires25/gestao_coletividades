@@ -118,16 +118,26 @@ public class TreinadorRestController {
         exigirAcessoConvocatorias(clubeId);
         if (temGestaoTotalConvocatorias()) {
             return eventoDAO.listarPorClube(clubeId).stream()
-                    .peek(ev -> ev.put("subtipo", ev.get("observacoes")))
+                    .peek(ev -> {
+                        ev.put("subtipo", ev.get("observacoes"));
+                        ev.put("podeEditar", true);
+                    })
                     .toList();
         }
 
         Integer clubeModalidadeId = exigirModalidadeTreinadorNoClube(clubeId);
-        int treinadorId = SecurityUtils.currentUserId();
-        List<Integer> escalaoIds = idsEscaloesTreinador(clubeId, clubeModalidadeId);
+        int currentUserId = exigirUtilizadorAutenticado();
+        List<Integer> escalaoIds = staffAfetacaoEscalaoDAO.listarIdsEscaloesPorTreinadorNoClube(currentUserId, clubeId);
 
-        return eventoDAO.listarPorClubeModalidadeEEscaloes(clubeId, clubeModalidadeId, escalaoIds, treinadorId).stream()
-                .peek(ev -> ev.put("subtipo", ev.get("observacoes")))
+        return eventoDAO.listarPorClube(clubeId).stream()
+                .peek(ev -> {
+                    ev.put("subtipo", ev.get("observacoes"));
+                    Integer evEscalaoId = numeroParaInt(ev.get("escalaoId"));
+                    Integer criadoPor = numeroParaInt(ev.get("criadoPor"));
+                    boolean podeEditar = (evEscalaoId != null && escalaoIds.contains(evEscalaoId))
+                            || Objects.equals(criadoPor, currentUserId);
+                    ev.put("podeEditar", podeEditar);
+                })
                 .toList();
     }
 
@@ -618,31 +628,24 @@ public class TreinadorRestController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento não encontrado.");
         }
 
-        Integer criadoPor = numeroParaInt(existente.get("criadoPor"));
         Integer eventoClubeId = numeroParaInt(existente.get("clubeId"));
-        Integer eventoModalidadeId = numeroParaInt(existente.get("clubeModalidadeId"));
         String tipo = Objects.toString(existente.get("tipo"), null);
 
-        boolean criadoPorTreinador = Objects.equals(criadoPor, treinadorId);
-        boolean clubeCorreto = Objects.equals(eventoClubeId, clubeId);
-        boolean modalidadeCorreta = Objects.equals(eventoModalidadeId, clubeModalidadeId);
-        boolean tipoPermitido = "MODALIDADE".equals(tipo);
-
-        if (!criadoPorTreinador || !clubeCorreto || !modalidadeCorreta || !tipoPermitido) {
+        if (!Objects.equals(eventoClubeId, clubeId) || !"MODALIDADE".equals(tipo)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não tem permissão para gerir este evento.");
         }
 
         Integer eventoEscalaoId = numeroParaInt(existente.get("escalaoId"));
-        if (eventoEscalaoId != null) {
-            int utilizadorId = SecurityUtils.currentUserId();
-            List<Map<String, Object>> treinadorEscaloes = staffAfetacaoEscalaoDAO
-                    .listarEscaloesPorTreinador(utilizadorId, clubeId, clubeModalidadeId);
-            boolean escalaoAtribuido = treinadorEscaloes.stream()
-                    .anyMatch(e -> eventoEscalaoId.equals(((Number) e.get("id")).intValue()));
-            if (!escalaoAtribuido) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Não tem permissão para editar eventos deste escalão.");
-            }
+        Integer criadoPor = numeroParaInt(existente.get("criadoPor"));
+
+        List<Integer> escalaoIds = staffAfetacaoEscalaoDAO
+                .listarIdsEscaloesPorTreinadorNoClube(treinadorId, clubeId);
+        boolean escalaoAtribuido = eventoEscalaoId != null && escalaoIds.contains(eventoEscalaoId);
+        boolean criouEvento = Objects.equals(criadoPor, treinadorId);
+
+        if (!escalaoAtribuido && !criouEvento) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Não tem permissão para editar este evento.");
         }
 
         return existente;

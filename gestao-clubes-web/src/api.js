@@ -31,7 +31,12 @@ async function http(path, options = {}) {
 
     if (!res.ok) {
         const text = await res.text().catch(() => "");
-        throw new Error(text || `Erro HTTP ${res.status}`);
+        let msg = text;
+        try {
+            const json = JSON.parse(text);
+            msg = json.message || json.error || text;
+        } catch { /* not JSON — use raw text */ }
+        throw new Error(msg || `Erro HTTP ${res.status}`);
     }
 
     const ct = res.headers.get("content-type") || "";
