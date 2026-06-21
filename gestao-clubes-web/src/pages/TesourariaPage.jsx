@@ -3,8 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById, getUploadUrl } from "../api";
-import { getEscaloes, getAtletasByClube } from "../services/atletas";
+import { getEscaloes } from "../services/atletas";
 import {
+    getAtletasTesouraria,
     getTaxasMensalidade, upsertTaxaMensalidade,
     getTaxasInscricao, upsertTaxaInscricao,
     getPagamentos, criarPagamento, atualizarPagamento,
@@ -154,7 +155,7 @@ export default function TesourariaPage() {
                 const [clubeData, escData, atlData] = await Promise.all([
                     getClubeById(clubeId),
                     getEscaloes(),
-                    getAtletasByClube(clubeId),
+                    getAtletasTesouraria(clubeId),
                 ]);
                 setClube(clubeData || null);
                 setEscaloes(Array.isArray(escData) ? escData : []);

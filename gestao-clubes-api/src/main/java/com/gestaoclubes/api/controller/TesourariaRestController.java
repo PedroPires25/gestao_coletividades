@@ -1,5 +1,6 @@
 package com.gestaoclubes.api.controller;
 
+import com.gestaoclubes.api.dao.AtletaDAO;
 import com.gestaoclubes.api.dao.AuditLogDAO;
 import com.gestaoclubes.api.dao.TesourariaDAO;
 import com.gestaoclubes.api.security.SecurityUtils;
@@ -20,6 +21,7 @@ import java.util.Map;
 public class TesourariaRestController {
 
     private final TesourariaDAO tesourariaDAO = new TesourariaDAO();
+    private final AtletaDAO atletaDAO = new AtletaDAO();
     private final AuditLogDAO auditLogDAO = new AuditLogDAO();
     private final EmailService emailService;
 
@@ -41,6 +43,12 @@ public class TesourariaRestController {
         int mes = hoje.getMonthValue();
         if (mes >= 8) return ano + "/" + (ano + 1);
         return (ano - 1) + "/" + ano;
+    }
+
+    @GetMapping("/atletas")
+    public List<Map<String, Object>> getAtletasTesouraria(@PathVariable int clubeId) {
+        exigirAcessoTesouraria(clubeId);
+        return atletaDAO.listarPorClube(clubeId);
     }
 
     // ==========================================

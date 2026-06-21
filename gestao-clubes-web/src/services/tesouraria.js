@@ -28,6 +28,10 @@ async function authFetch(path, options = {}) {
     return res.json().catch(() => null);
 }
 
+export function getAtletasTesouraria(clubeId) {
+    return authFetch(`/clubes/${clubeId}/tesouraria/atletas`);
+}
+
 // ==========================================
 // MENSALIDADES POR ESCALÃO
 // ==========================================
