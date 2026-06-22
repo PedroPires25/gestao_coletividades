@@ -96,11 +96,11 @@ public class FileUploadService {
         validar(file);
         String extension = getExtension(file.getOriginalFilename());
         if (!ALLOWED_DOCUMENT_EXTENSIONS.contains(extension.toLowerCase())) {
-            throw new IllegalArgumentException("Extensão não permitida. Use: " + ALLOWED_DOCUMENT_EXTENSIONS);
+            throw new IllegalArgumentException("guardarDocumento(): Extensão não permitida. Use: " + ALLOWED_DOCUMENT_EXTENSIONS);
         }
         String mimeType = file.getContentType();
         if (mimeType == null || !ALLOWED_DOCUMENT_MIME_TYPES.contains(mimeType.toLowerCase())) {
-            throw new IllegalArgumentException("Tipo de ficheiro (MIME type) não permitido.");
+            throw new IllegalArgumentException("guardarDocumento(): Tipo de ficheiro (MIME type) não permitido.");
         }
 
         if (useCloudinary) {
@@ -113,7 +113,7 @@ public class FileUploadService {
         validar(file);
         String extension = getExtension(file.getOriginalFilename());
         if (!ALLOWED_IMAGE_EXTENSIONS.contains(extension.toLowerCase())) {
-            throw new IllegalArgumentException("Extensão não permitida. Use: " + ALLOWED_IMAGE_EXTENSIONS);
+            throw new IllegalArgumentException("guardarAvatar(): Extensão não permitida. Use: " + ALLOWED_IMAGE_EXTENSIONS);
         }
         BufferedImage original = ImageIO.read(file.getInputStream());
         if (original == null) throw new IllegalArgumentException("Não foi possível ler a imagem.");
