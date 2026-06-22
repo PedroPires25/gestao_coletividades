@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
 import { getClubeById, getUploadUrl } from "../api";
@@ -46,9 +46,10 @@ function convertToServerFormat(datetimeLocalValue) {
 }
 
 export default function EventosPage() {
-  const { isAdmin, isTreinador } = useAuth();
+  const { isAdmin, isTreinador, logout } = useAuth();
   const { clubeId, clubeModalidadeId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isConvocatoriasMode = location.pathname.includes("/treinador/convocatorias");
 
@@ -69,6 +70,19 @@ export default function EventosPage() {
   });
 
   const [atletasSearch, setAtletasSearch] = useState("");
+
+  const menuItems = useMemo(() => [
+    { label: "Clube", to: `/clubes/${clubeId}` },
+    { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
+    { label: "Atletas", to: `/clubes/${clubeId}/clube-modalidade/${clubeModalidadeId}/atletas` },
+    { label: "Staff", to: `/clubes/${clubeId}/clube-modalidade/${clubeModalidadeId}/staff` },
+    { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
+    { label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` },
+    { label: "Módulo de Treinador", to: `/clubes/${clubeId}/treinador` },
+    { label: "Tesouraria", to: `/clubes/${clubeId}/tesouraria` },
+    { label: "Direção", to: `/clubes/${clubeId}/direcao` },
+    { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
+  ], [clubeId, clubeModalidadeId, logout, navigate]);
 
   useEffect(() => {
     async function carregar() {
@@ -282,6 +296,7 @@ export default function EventosPage() {
           subtitle="A carregar..."
           logoHref="/menu"
           logoSrc="/LOGO_GCDC04.png"
+          items={menuItems}
         />
         <div className="container" style={{ paddingTop: 24 }}>
           <p>Carregando...</p>
@@ -297,6 +312,7 @@ export default function EventosPage() {
         subtitle={clube?.nome || "Clube"}
         logoHref="/menu"
         logoSrc="/LOGO_GCDC04.png"
+        items={menuItems}
       />
 
       <div
