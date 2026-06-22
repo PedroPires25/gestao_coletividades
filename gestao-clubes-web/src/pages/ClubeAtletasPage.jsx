@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import TelefoneInput from "../components/TelefoneInput";
@@ -180,6 +182,9 @@ export default function ClubeAtletasPage() {
         dataFim: "",
         ativo: true,
     });
+
+    const { paginated: atletasPaginados, ...atletasPaginationProps } =
+        usePagination(atletasRows, 25);
 
     const menuItems = useMemo(
         () => [
@@ -480,6 +485,7 @@ export default function ClubeAtletasPage() {
                         ) : atletasRows.length === 0 ? (
                             <p className="subtle">Sem atletas registados neste clube.</p>
                         ) : (
+                            <>
                             <div className="table-wrap">
                                 <table className="dashboard-table">
                                     <thead>
@@ -494,7 +500,7 @@ export default function ClubeAtletasPage() {
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {atletasRows.map((atleta) => {
+                                    {atletasPaginados.map((atleta) => {
                                         const pendingName = hasPendingName(atleta.nome);
                                         const clubeModalidadeId = String(atleta?.clubeModalidadeId ?? "");
                                         const modalidadeNome =
@@ -541,6 +547,8 @@ export default function ClubeAtletasPage() {
                                     </tbody>
                                 </table>
                             </div>
+                            <Pagination {...atletasPaginationProps} />
+                            </>
                         )}
                     </section>
 

@@ -13,6 +13,8 @@ import {
 } from "../services/staff";
 import { exportToCsv, exportToPdf, printPdf } from "../utils/export";
 import { validateTelefone } from "../utils/validation";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 
 import atletasIcon from "../assets/atletas.svg";
 import direcaoIcon from "../assets/direcao.svg";
@@ -199,6 +201,8 @@ export default function ClubeStaffPage() {
         ativo: true,
         escaloesIds: [],
     });
+
+    const { paginated: staffPaginados, ...paginationProps } = usePagination(staffRows, 25);
 
     const menuItems = useMemo(
         () => [
@@ -531,7 +535,7 @@ export default function ClubeStaffPage() {
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {staffRows.map((row) => {
+                                    {staffPaginados.map((row) => {
                                         const pendingName = hasPendingName(row.nome);
                                         const destination = getStaffDestination(clubeId, row);
 
@@ -573,6 +577,7 @@ export default function ClubeStaffPage() {
                                 </table>
                             </div>
                         )}
+                        <Pagination {...paginationProps} />
                     </section>
 
                     <section className="card no-print">

@@ -11,6 +11,8 @@ import {
     criarAtividade,
     editarAtividade,
 } from "../services/coletividadeAtividades";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 
 import modalidadesIcon from "../assets/modalidades.svg";
 import { getAtividadeIcon } from "../assets/atividade-icons";
@@ -393,6 +395,8 @@ export default function ColetividadeAtividadesPage() {
         return lista;
     }, [atividadesColetividade, pesquisa, ordenacao]);
 
+    const { paginated: atividadesPaginadas, ...paginationProps } = usePagination(atividadesVisiveis, 25);
+
     const subtitle = coletividade?.nome ? coletividade.nome : `Coletividade #${coletividadeId}`;
 
     return (
@@ -496,7 +500,7 @@ export default function ColetividadeAtividadesPage() {
                                     </thead>
 
                                     <tbody>
-                                    {atividadesVisiveis.map((row) => {
+                                    {atividadesPaginadas.map((row) => {
                                         const nomeAtividade = row?.atividade?.nome || "Atividade";
                                         return (
                                         <tr key={row.id}>
@@ -563,6 +567,7 @@ export default function ColetividadeAtividadesPage() {
                                 </table>
                             </div>
                         )}
+                        <Pagination {...paginationProps} />
                     </section>
 
                     {isAdmin && (

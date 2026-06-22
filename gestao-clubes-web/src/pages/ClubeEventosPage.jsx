@@ -7,6 +7,8 @@ import { getClubeById, getUploadUrl } from "../api";
 import { getEventosPorClube, listarAtletasEvento } from "../services/eventos";
 import eventosIcon from "../assets/eventos.svg";
 import EventCarousel from "../components/EventCarousel";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 
 export default function ClubeEventosPage() {
     const { clubeId } = useParams();
@@ -22,6 +24,8 @@ export default function ClubeEventosPage() {
     const [viewingConvocados, setViewingConvocados] = useState(null);
     const [convocadosList, setConvocadosList] = useState([]);
     const [loadingConvocados, setLoadingConvocados] = useState(false);
+
+    const { paginated: convocadosPaginados, ...paginationProps } = usePagination(convocadosList, 10);
 
     const carregar = useCallback(async () => {
         if (!clubeId) return;
@@ -165,40 +169,43 @@ export default function ClubeEventosPage() {
                             ) : convocadosList.length === 0 ? (
                                 <p className="subtle">Sem convocados registados.</p>
                             ) : (
-                                <ul style={{
-                                    listStyle: "none", padding: 0, margin: 0,
-                                    display: "grid",
-                                    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-                                    gap: 8,
-                                }}>
-                                    {convocadosList.map((c) => (
-                                        <li key={c.id} style={{
-                                            padding: "8px 12px",
-                                            background: "var(--bg-card-soft)",
-                                            borderRadius: 8,
-                                            border: "1px solid var(--border)",
-                                            fontSize: "0.875rem",
-                                            color: "var(--text)",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: "0.5rem",
-                                        }}>
-                                            {c.fotoPath ? (
-                                                <img src={getUploadUrl(c.fotoPath)} alt={c.nome} className="avatar-circle-sm" />
-                                            ) : (
-                                                <span className="avatar-circle-sm avatar-initials-sm">{(c.nome || "?")[0].toUpperCase()}</span>
-                                            )}
-                                            <div>
-                                                <span style={{ fontWeight: 600 }}>{c.nome}</span>
-                                                {c.escalao && (
-                                                    <span className="subtle" style={{ display: "block", fontSize: "0.78rem" }}>
-                                                        {c.escalao}
-                                                    </span>
+                                <>
+                                    <ul style={{
+                                        listStyle: "none", padding: 0, margin: 0,
+                                        display: "grid",
+                                        gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+                                        gap: 8,
+                                    }}>
+                                        {convocadosPaginados.map((c) => (
+                                            <li key={c.id} style={{
+                                                padding: "8px 12px",
+                                                background: "var(--bg-card-soft)",
+                                                borderRadius: 8,
+                                                border: "1px solid var(--border)",
+                                                fontSize: "0.875rem",
+                                                color: "var(--text)",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "0.5rem",
+                                            }}>
+                                                {c.fotoPath ? (
+                                                    <img src={getUploadUrl(c.fotoPath)} alt={c.nome} className="avatar-circle-sm" />
+                                                ) : (
+                                                    <span className="avatar-circle-sm avatar-initials-sm">{(c.nome || "?")[0].toUpperCase()}</span>
                                                 )}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
+                                                <div>
+                                                    <span style={{ fontWeight: 600 }}>{c.nome}</span>
+                                                    {c.escalao && (
+                                                        <span className="subtle" style={{ display: "block", fontSize: "0.78rem" }}>
+                                                            {c.escalao}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <Pagination {...paginationProps} />
+                                </>
                             )}
                         </div>
                     </div>

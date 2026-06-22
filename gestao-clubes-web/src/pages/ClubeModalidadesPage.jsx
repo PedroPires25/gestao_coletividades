@@ -11,6 +11,8 @@ import {
     removerModalidadeDoClube,
     anexarModalidadeAoClube,
 } from "../api";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 
 import modalidadesIcon from "../assets/modalidades.svg";
 import { getModalidadeIcon } from "../assets/modalidade-icons";
@@ -394,6 +396,8 @@ export default function ClubeModalidadesPage() {
         return lista;
     }, [modalidadesClube, pesquisa, ordenacao]);
 
+    const { paginated: modalidadesPaginadas, ...paginationProps } = usePagination(modalidadesVisiveis, 25);
+
     const subtitle = clube?.nome ? clube.nome : `Clube #${clubeId}`;
 
     return (
@@ -474,7 +478,7 @@ export default function ClubeModalidadesPage() {
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {modalidadesVisiveis.map((cm) => {
+                                {modalidadesPaginadas.map((cm) => {
                                     const epocaAtual = normalizeEpoca(cm?.epoca) === currentEpoca();
 
                                     return (
@@ -538,6 +542,7 @@ export default function ClubeModalidadesPage() {
                             </table>
                         </div>
                     )}
+                    <Pagination {...paginationProps} />
                 </div>
 
                 <div className="stack-sections">

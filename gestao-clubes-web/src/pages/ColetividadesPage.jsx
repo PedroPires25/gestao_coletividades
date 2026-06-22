@@ -8,6 +8,8 @@ import { createColetividade, deleteColetividade, getColetividades, updateColetiv
 import { useAuth } from "../auth/AuthContext";
 import defaultLogo from "../assets/default-logo.svg";
 import { validateNif, validateTelefone, validateCodigoPostal } from "../utils/validation";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 
 function formatDateISOToPt(dateISO) {
     if (!dateISO) return "";
@@ -63,6 +65,30 @@ export default function ColetividadesPage() {
     });
     const [editLogoFile, setEditLogoFile] = useState(null);
     const [editLogoPreview, setEditLogoPreview] = useState(null);
+
+    const coletividadesFiltradas = useMemo(() => {
+        const term = q.trim().toLowerCase();
+        if (!term) return coletividades;
+
+        return coletividades.filter((c) => {
+            const nome = (c.nome || "").toLowerCase();
+            const email = (c.email || "").toLowerCase();
+            const nif = (c.nif || "").toLowerCase();
+            const morada = (c.morada || "").toLowerCase();
+            const cp = (c.codigoPostal || c.codigo_postal || "").toLowerCase();
+            const loc = (c.localidade || "").toLowerCase();
+            return (
+                nome.includes(term) ||
+                email.includes(term) ||
+                nif.includes(term) ||
+                morada.includes(term) ||
+                cp.includes(term) ||
+                loc.includes(term)
+            );
+        });
+    }, [coletividades, q]);
+
+    const { paginated: coletividadesPaginadas, ...paginationProps } = usePagination(coletividadesFiltradas, 25);
 
     const carregar = useCallback(async () => {
         setErro("");
@@ -259,28 +285,6 @@ export default function ColetividadesPage() {
         }
     }
 
-    const coletividadesFiltradas = useMemo(() => {
-        const term = q.trim().toLowerCase();
-        if (!term) return coletividades;
-
-        return coletividades.filter((c) => {
-            const nome = (c.nome || "").toLowerCase();
-            const email = (c.email || "").toLowerCase();
-            const nif = (c.nif || "").toLowerCase();
-            const morada = (c.morada || "").toLowerCase();
-            const cp = (c.codigoPostal || c.codigo_postal || "").toLowerCase();
-            const loc = (c.localidade || "").toLowerCase();
-            return (
-                nome.includes(term) ||
-                email.includes(term) ||
-                nif.includes(term) ||
-                morada.includes(term) ||
-                cp.includes(term) ||
-                loc.includes(term)
-            );
-        });
-    }, [coletividades, q]);
-
     const menuItems = [
         { label: "Home", to: "/menu" },
         { label: "Clubes", to: "/clubes" },
@@ -339,7 +343,7 @@ export default function ColetividadesPage() {
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {coletividadesFiltradas.map((c) => (
+                                {coletividadesPaginadas.map((c) => (
                                     <tr key={c.id}>
                                         <td>
                                             <img
@@ -390,6 +394,7 @@ export default function ColetividadesPage() {
                                 </tbody>
                             </table>
                         </div>
+                        <Pagination {...paginationProps} />
                     </section>
 
                     {isSuperAdmin && (

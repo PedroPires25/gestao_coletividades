@@ -15,6 +15,8 @@ import {
 } from "../services/utentes";
 import atletasIcon from "../assets/atletas.svg";
 import { validateTelefone } from "../utils/validation";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 
 function formatDateOnly(value) {
     if (!value) return "-";
@@ -137,6 +139,8 @@ export default function ColetividadeUtentesPage() {
             return nomeOk && atividadeOk && estadoOk;
         });
     }, [filtros, inscritos]);
+
+    const { paginated: inscritosPaginados, ...paginationProps } = usePagination(inscritosFiltrados, 25);
 
     const atividadesDisponiveisGestao = useMemo(() => {
         if (!manageTarget || !Array.isArray(manageTarget.atividades)) return atividades;
@@ -429,7 +433,7 @@ export default function ColetividadeUtentesPage() {
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {inscritosFiltrados.map((item) => (
+                                    {inscritosPaginados.map((item) => (
                                         <tr key={item.id}>
                                             <td>{item.nome || "-"}</td>
                                             <td>{formatDateOnly(item.dataNascimento)}</td>
@@ -457,6 +461,7 @@ export default function ColetividadeUtentesPage() {
                                 </table>
                             </div>
                         )}
+                        <Pagination {...paginationProps} />
                     </section>
                 </div>
             </div>

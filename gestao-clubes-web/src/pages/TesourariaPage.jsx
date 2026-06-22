@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import { useAuth } from "../auth/AuthContext";
@@ -139,6 +141,11 @@ export default function TesourariaPage() {
     const [editSegId, setEditSegId] = useState(null);
     const [editFormSeg, setEditFormSeg] = useState({});
 
+    const { paginated: inscricoesPaginadas, resetPage: resetInsc, ...inscricoesPaginProps } = usePagination(inscricoes, 25);
+    const { paginated: pagamentosPaginados, resetPage: resetPag, ...pagamentosPaginProps } = usePagination(pagamentos, 25);
+    const { paginated: dividasPaginadas, resetPage: resetDiv, ...dividasPaginProps } = usePagination(dividas, 25);
+    const { paginated: segurosPaginados, resetPage: resetSeg, ...segurosPaginProps } = usePagination(seguros, 25);
+
     const menuItems = useMemo(() => [
         { label: "Clube", to: `/clubes/${clubeId}` },
         { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
@@ -217,6 +224,7 @@ export default function TesourariaPage() {
                 estado: filtroPag.estado || undefined,
             });
             setPagamentos(Array.isArray(data) ? data : []);
+            resetPag();
         } catch (e) { setErro(e.message); }
     }
 
@@ -229,6 +237,7 @@ export default function TesourariaPage() {
                 atletaId: filtroDiv.atletaId || undefined,
             });
             setDividas(Array.isArray(data) ? data : []);
+            resetDiv();
         } catch (e) { setErro(e.message); }
     }
 
@@ -250,6 +259,7 @@ export default function TesourariaPage() {
                 atletaId: filtroInsc.atletaId || undefined,
             });
             setInscricoes(Array.isArray(data) ? data : []);
+            resetInsc();
         } catch (e) { setErro(e.message); }
     }
 
@@ -280,6 +290,7 @@ export default function TesourariaPage() {
                 escalaoId: filtroSeg.escalaoId || undefined,
             });
             setSeguros(Array.isArray(data) ? data : []);
+            resetSeg();
         } catch (e) { setErro(e.message); }
     }
 
@@ -826,7 +837,7 @@ export default function TesourariaPage() {
                                             <tbody>
                                                 {inscricoes.length === 0 ? (
                                                     <tr><td colSpan={7} className="cell-muted">Sem inscrições.</td></tr>
-                                                ) : inscricoes.map((r) => (
+                                                ) : inscricoesPaginadas.map((r) => (
                                                     <tr key={r.id}>
                                                         <td>{r.atletaNome}</td>
                                                         <td>{r.epoca}</td>
@@ -842,6 +853,7 @@ export default function TesourariaPage() {
                                             </tbody>
                                         </table>
                                     </div>
+                                    <Pagination {...inscricoesPaginProps} />
                                 </div>
                             </div>
                         )}
@@ -964,7 +976,7 @@ export default function TesourariaPage() {
                                             <tbody>
                                                 {pagamentos.length === 0 ? (
                                                     <tr><td colSpan={9} className="cell-muted">Sem pagamentos.</td></tr>
-                                                ) : pagamentos.map((r) => (
+                                                ) : pagamentosPaginados.map((r) => (
                                                     <tr key={r.id}>
                                                         <td>{r.atletaNome}</td>
                                                         <td className="cell-muted">{r.escalaoNome || "—"}</td>
@@ -982,6 +994,7 @@ export default function TesourariaPage() {
                                             </tbody>
                                         </table>
                                     </div>
+                                    <Pagination {...pagamentosPaginProps} />
                                 </div>
                             </div>
                         )}
@@ -1029,7 +1042,7 @@ export default function TesourariaPage() {
                                             <tbody>
                                                 {dividas.length === 0 ? (
                                                     <tr><td colSpan={7} className="cell-muted">Sem dívidas.</td></tr>
-                                                ) : dividas.map((r) => (
+                                                ) : dividasPaginadas.map((r) => (
                                                     <tr key={r.id}>
                                                         <td>{r.atletaNome}</td>
                                                         <td className="cell-muted">{r.escalaoNome || "—"}</td>
@@ -1043,6 +1056,7 @@ export default function TesourariaPage() {
                                             </tbody>
                                         </table>
                                     </div>
+                                    <Pagination {...dividasPaginProps} />
                                 </div>
                             </div>
                         )}
@@ -1364,7 +1378,7 @@ export default function TesourariaPage() {
                                             <tbody>
                                                 {seguros.length === 0 ? (
                                                     <tr><td colSpan={10} className="cell-muted">Sem seguros registados.</td></tr>
-                                                ) : seguros.map((r) => (
+                                                ) : segurosPaginados.map((r) => (
                                                     <tr key={r.id}>
                                                         <td>{r.atletaNome}</td>
                                                         <td className="cell-muted">{r.escalaoNome || "—"}</td>
@@ -1386,6 +1400,7 @@ export default function TesourariaPage() {
                                             </tbody>
                                         </table>
                                     </div>
+                                    <Pagination {...segurosPaginProps} />
                                 </div>
                             </div>
                         )}

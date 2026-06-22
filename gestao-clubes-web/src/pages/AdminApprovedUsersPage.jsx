@@ -13,6 +13,8 @@ import {
     getModalidades,
     getAtividadesDaColetividade,
 } from "../api";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 
 export default function AdminApprovedUsersPage() {
     const {
@@ -197,6 +199,8 @@ export default function AdminApprovedUsersPage() {
             (u.nome || "").toLowerCase().includes(term)
         );
     }, [users, q]);
+
+    const { paginated: usersPaginados, ...paginationProps } = usePagination(filtrados, 25);
 
     function updateAfetacaoField(userId, field, value) {
         setAfetacaoDrafts((prev) => ({
@@ -401,7 +405,7 @@ export default function AdminApprovedUsersPage() {
                                 <tr>
                                     <td colSpan={isSuperAdmin ? 6 : 4} style={{ padding: 14 }}>Sem utilizadores aprovados.</td>
                                 </tr>
-                            ) : filtrados.map((u) => {
+                            ) : usersPaginados.map((u) => {
                                 const saving = savingId === u.id;
                                 const draft = afetacaoDrafts[u.id] || {};
                                 const isSuperAdminUser = (perfilDrafts[u.id] || u.role) === "SUPER_ADMIN";
@@ -592,6 +596,7 @@ export default function AdminApprovedUsersPage() {
                             </tbody>
                         </table>
                     </div>
+                    <Pagination {...paginationProps} />
                 </section>
             </div>
         </>

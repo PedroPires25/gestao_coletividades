@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import TelefoneInput from "../components/TelefoneInput";
@@ -153,6 +155,8 @@ export default function ClubeDepartamentoStaffPage() {
     const fotoInputRef = useRef(null);
     const formFotoInputRef = useRef(null);
     const [fotoTargetId, setFotoTargetId] = useState(null);
+
+    const { paginated: staffPaginados, ...staffPaginationProps } = usePagination(staffRows, 25);
 
     const deptCargos = useMemo(
         () => {
@@ -569,6 +573,7 @@ export default function ClubeDepartamentoStaffPage() {
                         ) : staffRows.length === 0 ? (
                             <p className="subtle">{config.emptyMsg}</p>
                         ) : (
+                            <>
                             <div className="table-wrap">
                                 <table className="dashboard-table">
                                     <thead>
@@ -584,7 +589,7 @@ export default function ClubeDepartamentoStaffPage() {
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {staffRows.map((row) => {
+                                    {staffPaginados.map((row) => {
                                         const pendingName = hasPendingName(row.nome);
                                         const canEdit = !isDepartamentoMedico || isOwnRow(row);
                                         return (
@@ -643,6 +648,8 @@ export default function ClubeDepartamentoStaffPage() {
                                     </tbody>
                                 </table>
                             </div>
+                            <Pagination {...staffPaginationProps} />
+                            </>
                         )}
                     </div>
 

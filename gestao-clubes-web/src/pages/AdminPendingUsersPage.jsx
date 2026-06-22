@@ -11,6 +11,8 @@ import {
     getModalidades,
     getAtividades,
 } from "../api";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 
 export default function AdminPendingUsersPage() {
     const { logout, isSuperAdmin, clubeId, coletividadeId } = useAuth();
@@ -111,6 +113,8 @@ export default function AdminPendingUsersPage() {
             (u.nome || "").toLowerCase().includes(term)
         );
     }, [users, q]);
+
+    const { paginated: usersPaginados, ...paginationProps } = usePagination(filtrados, 25);
 
     function updateAfetacaoField(userId, field, value) {
         setAfetacaoDrafts((prev) => ({
@@ -266,7 +270,7 @@ export default function AdminPendingUsersPage() {
                                 <tr>
                                     <td colSpan={isSuperAdmin ? 8 : 4} style={{ padding: 14 }}>Sem registos pendentes.</td>
                                 </tr>
-                            ) : filtrados.map((u) => {
+                            ) : usersPaginados.map((u) => {
                                 const saving = savingId === u.id;
                                 const draft = afetacaoDrafts[u.id] || {};
 
@@ -357,6 +361,7 @@ export default function AdminPendingUsersPage() {
                             </tbody>
                         </table>
                     </div>
+                    <Pagination {...paginationProps} />
                 </section>
             </div>
         </>
