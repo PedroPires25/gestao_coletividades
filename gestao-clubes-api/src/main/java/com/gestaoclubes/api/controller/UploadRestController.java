@@ -58,7 +58,7 @@ public class UploadRestController {
                 uploadService.removerFicheiro(clube.getLogoPath());
             }
 
-            String relativePath = uploadService.guardarFicheiro(file, "clubes");
+            String relativePath = uploadService.guardarAvatar(file, "clubes");
             clubeDAO.atualizarLogoPath(id, relativePath);
 
             return ResponseEntity.ok(Map.of(
@@ -87,7 +87,7 @@ public class UploadRestController {
                 uploadService.removerFicheiro(col.getLogoPath());
             }
 
-            String relativePath = uploadService.guardarFicheiro(file, "coletividades");
+            String relativePath = uploadService.guardarAvatar(file, "coletividades");
             coletividadeDAO.atualizarLogoPath(id, relativePath);
 
             return ResponseEntity.ok(Map.of(
@@ -205,7 +205,7 @@ public class UploadRestController {
             String oldPath = (String) exame.get("ficheiroPath");
             if (oldPath != null) uploadService.removerFicheiro(oldPath);
 
-            String relativePath = uploadService.guardarFicheiro(file, "exames");
+            String relativePath = uploadService.guardarDocumentoExame(file, "exames");
             new com.gestaoclubes.api.dao.ExameMedicoDAO().atualizarFicheiro(exameId, relativePath);
 
             return ResponseEntity.ok(Map.of(

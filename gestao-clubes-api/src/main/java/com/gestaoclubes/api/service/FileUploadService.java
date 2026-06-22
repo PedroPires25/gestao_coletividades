@@ -32,7 +32,16 @@ public class FileUploadService {
 
     private static final Logger LOGGER = Logger.getLogger(FileUploadService.class.getName());
 
-    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp");
+    private static final Set<String> ALLOWED_IMAGE_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp");
+    private static final Set<String> ALLOWED_DOCUMENT_EXTENSIONS = Set.of("pdf", "jpg", "jpeg", "png", "doc", "docx");
+    private static final Set<String> ALLOWED_DOCUMENT_MIME_TYPES = Set.of(
+            "application/pdf",
+            "image/jpeg",
+            "image/png",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
+
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
     private static final int AVATAR_SIZE = 400;
     private static final float JPEG_QUALITY = 0.80f;
@@ -79,12 +88,21 @@ public class FileUploadService {
         }
     }
 
-    public String guardarFicheiro(MultipartFile file, String subpasta) throws IOException {
+    public String guardarDocumentoExame(MultipartFile file, String subpasta) throws IOException {
+        return guardarDocumento(file, subpasta);
+    }
+
+    public String guardarDocumento(MultipartFile file, String subpasta) throws IOException {
         validar(file);
         String extension = getExtension(file.getOriginalFilename());
-        if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
-            throw new IllegalArgumentException("Extensão não permitida. Use: " + ALLOWED_EXTENSIONS);
+        if (!ALLOWED_DOCUMENT_EXTENSIONS.contains(extension.toLowerCase())) {
+            throw new IllegalArgumentException("Extensão não permitida. Use: " + ALLOWED_DOCUMENT_EXTENSIONS);
         }
+        String mimeType = file.getContentType();
+        if (mimeType == null || !ALLOWED_DOCUMENT_MIME_TYPES.contains(mimeType.toLowerCase())) {
+            throw new IllegalArgumentException("Tipo de ficheiro (MIME type) não permitido.");
+        }
+
         if (useCloudinary) {
             return uploadParaCloudinary(file.getBytes(), "gestao-clubes/" + subpasta, "auto");
         }
@@ -94,8 +112,8 @@ public class FileUploadService {
     public String guardarAvatar(MultipartFile file, String subpasta) throws IOException {
         validar(file);
         String extension = getExtension(file.getOriginalFilename());
-        if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
-            throw new IllegalArgumentException("Extensão não permitida. Use: " + ALLOWED_EXTENSIONS);
+        if (!ALLOWED_IMAGE_EXTENSIONS.contains(extension.toLowerCase())) {
+            throw new IllegalArgumentException("Extensão não permitida. Use: " + ALLOWED_IMAGE_EXTENSIONS);
         }
         BufferedImage original = ImageIO.read(file.getInputStream());
         if (original == null) throw new IllegalArgumentException("Não foi possível ler a imagem.");

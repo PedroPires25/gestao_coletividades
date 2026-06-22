@@ -183,8 +183,11 @@ export async function uploadExameFicheiro(clubeId, exameId, file) {
 
 export function getExameFileUrl(ficheiroPath) {
     if (!ficheiroPath) return null;
+    if (ficheiroPath.startsWith("http")) return ficheiroPath;
+    if (ficheiroPath.includes("cloudinary")) return `https://${ficheiroPath}`;
     return `${API_URL}/uploads/${ficheiroPath}`;
 }
+
 
 export async function getRelatorios(clubeId) {
     const data = await authFetch(`/clubes/${clubeId}/medico/relatorios`);
