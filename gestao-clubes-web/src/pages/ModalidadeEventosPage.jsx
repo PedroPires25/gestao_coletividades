@@ -57,6 +57,15 @@ export default function ModalidadeEventosPage() {
     }
 
     const menuItems = [
+        { label: "Clube", to: `/clubes/${clubeId}` },
+        { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
+        { label: "Atletas", to: `/clubes/${clubeId}/clube-modalidade/${clubeModalidadeId}/atletas` },
+        { label: "Staff", to: `/clubes/${clubeId}/clube-modalidade/${clubeModalidadeId}/staff` },
+        { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
+        { label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` },
+        { label: "Módulo de Treinador", to: `/clubes/${clubeId}/treinador` },
+        { label: "Tesouraria", to: `/clubes/${clubeId}/tesouraria` },
+        { label: "Direção", to: `/clubes/${clubeId}/direcao` },
         { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
     ];
 

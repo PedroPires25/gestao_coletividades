@@ -30,7 +30,6 @@ const ClubeDepartamentoStaffPage = lazy(() => import("./pages/ClubeDepartamentoS
 const ClubeModalidadesPage = lazy(() => import("./pages/ClubeModalidadesPage"));
 const ClubeTransferenciasPage = lazy(() => import("./pages/ClubeTransferenciasPage"));
 const ClubeEventosPage = lazy(() => import("./pages/ClubeEventosPage"));
-const EventosPage = lazy(() => import("./pages/EventosPage"));
 const GestaoEventosPage = lazy(() => import("./pages/GestaoEventosPage"));
 const ModalidadeEventosPage = lazy(() => import("./pages/ModalidadeEventosPage"));
 const ColetividadesPage = lazy(() => import("./pages/ColetividadesPage"));
@@ -307,22 +306,11 @@ export default function App() {
                 />
 
                 <Route
-                    path="/eventos"
-                    element={
-                        <RequireAuth>
-                            <RequireNotMedico>
-                                <EventosPage />
-                            </RequireNotMedico>
-                        </RequireAuth>
-                    }
-                />
-
-                <Route
                     path="/clubes/:clubeId/clube-modalidade/:clubeModalidadeId/eventos"
                     element={
                         <RequireAuth>
                             <RequireNotMedico>
-                                <EventosPage />
+                                <ModalidadeEventosPage />
                             </RequireNotMedico>
                         </RequireAuth>
                     }

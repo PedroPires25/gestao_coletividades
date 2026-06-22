@@ -13,8 +13,7 @@ import Pagination from "../components/Pagination";
 export default function ClubeEventosPage() {
     const { clubeId } = useParams();
     const navigate = useNavigate();
-    const { logout, modalidadeId, role, isTreinador } = useAuth(); // modalidadeId = clube_modalidade.id
-    const isDeptMedico = role === "DEPARTAMENTO_MEDICO";
+    const { logout, modalidadeId } = useAuth(); // modalidadeId = clube_modalidade.id
 
     const [clube, setClube] = useState(null);
     const [eventos, setEventos] = useState([]);
@@ -62,11 +61,15 @@ export default function ClubeEventosPage() {
     }
 
     const menuItems = [
-        isTreinador
-            ? { label: "Módulo de Treinador", onClick: () => navigate(`/clubes/${clubeId}/treinador`) }
-            : isDeptMedico
-                ? { label: "Módulo Clínico", onClick: () => navigate(`/clubes/${clubeId}/medico`) }
-                : { label: "Voltar ao Clube", onClick: () => navigate(`/clubes/${clubeId}`) },
+        { label: "Clube", to: `/clubes/${clubeId}` },
+        { label: "Modalidades do Clube", to: `/clubes/${clubeId}/modalidades` },
+        { label: "Atletas", to: `/clubes/${clubeId}/clube-modalidade/${modalidadeId}/atletas` },
+        { label: "Staff", to: `/clubes/${clubeId}/clube-modalidade/${modalidadeId}/staff` },
+        { label: "Transferências", to: `/clubes/${clubeId}/transferencias` },
+        { label: "Módulo Clínico", to: `/clubes/${clubeId}/medico` },
+        { label: "Módulo de Treinador", to: `/clubes/${clubeId}/treinador` },
+        { label: "Tesouraria", to: `/clubes/${clubeId}/tesouraria` },
+        { label: "Direção", to: `/clubes/${clubeId}/direcao` },
         { label: "Logout", onClick: () => { logout(); navigate("/login", { replace: true }); } },
     ];
 
@@ -102,28 +105,6 @@ export default function ClubeEventosPage() {
                         </div>
                     </div>
                     <div className="hint">{clube?.nome || ""}</div>
-                    {isDeptMedico && (
-                        <div className="actions">
-                            <button
-                                type="button"
-                                className="btn"
-                                onClick={() => navigate(`/clubes/${clubeId}/medico`)}
-                            >
-                                ← Módulo Clínico
-                            </button>
-                        </div>
-                    )}
-                    {isTreinador && (
-                        <div className="actions">
-                            <button
-                                type="button"
-                                className="btn"
-                                onClick={() => navigate(`/clubes/${clubeId}/treinador`)}
-                            >
-                                ← Módulo de Treinador
-                            </button>
-                        </div>
-                    )}
                 </div>
 
                 {erro && <div className="alert error">{erro}</div>}
